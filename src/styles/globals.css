@@ -144,12 +144,15 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Responsive grid overrides */
 @media (max-width: 1000px) {
-  .hero-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
+  /* minmax(0,1fr) lets the single column shrink below its content's
+     intrinsic min-width — otherwise the fixed-width dashboard would
+     force every sibling (title, paragraph, buttons) wider than the screen. */
+  .hero-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 48px !important; }
   .lect-grid,
   .market-grid,
   .matrix-grid,
   .calc-grid,
-  .price-grid { grid-template-columns: 1fr !important; }
+  .price-grid { grid-template-columns: minmax(0, 1fr) !important; }
   .stats-grid,
   .phases-grid,
   .diff-grid,
@@ -170,6 +173,13 @@ button { font-family: inherit; cursor: pointer; }
   .market-grid,
   .calc-grid { padding: 32px 24px !important; }
   .footer-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* Gauge + bars panels (hero dashboard, "3 lectures" preview): stack the
+     gauge above the bars so the fixed 150px gauge + 1fr bars stop forcing
+     ~400px of incompressible width on narrow screens. */
+  .dash-mock { max-width: 100% !important; }
+  .gauge-split { grid-template-columns: 1fr !important; gap: 18px !important; justify-items: center; }
+  .dash-chip { display: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

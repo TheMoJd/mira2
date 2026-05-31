@@ -6,7 +6,7 @@ import mira from '../../data/mira';
 export default function DashboardMock() {
   const jobs = mira.jobs;
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: 540 }}>
+    <div className="dash-mock" style={{ position: 'relative', width: '100%', maxWidth: 540 }}>
       <motion.div
         initial={{ opacity: 0, y: 40, rotateX: 8 }}
         animate={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -29,7 +29,7 @@ export default function DashboardMock() {
         </div>
 
         {/* body */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 22, alignItems: 'center', marginBottom: 18 }}>
+        <div className="gauge-split" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 22, alignItems: 'center', marginBottom: 18 }}>
           <div style={{ display: 'grid', placeItems: 'center', gap: 8 }}>
             <RadialGauge value={61} size={150} dark />
             <span style={{ fontSize: 12, color: 'var(--dk-mut)', textAlign: 'center', maxWidth: 130, lineHeight: 1.3 }}>Vulnérabilité organisationnelle</span>
@@ -50,6 +50,7 @@ export default function DashboardMock() {
 
       {/* floating chip: opportunité */}
       <motion.div
+        className="dash-chip"
         initial={{ opacity: 0, x: 30, y: 10 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
         transition={{ duration: 0.8, delay: 0.9 }}
@@ -68,6 +69,7 @@ export default function DashboardMock() {
 
       {/* floating chip: métiers */}
       <motion.div
+        className="dash-chip"
         initial={{ opacity: 0, x: -30, y: -10 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
         transition={{ duration: 0.8, delay: 1.1 }}

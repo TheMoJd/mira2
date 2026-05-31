@@ -16,7 +16,9 @@ export default function StyleSwitcher() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 1.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      style={{ position: 'fixed', bottom: 22, left: '50%', transform: 'translateX(-50%)', zIndex: 120 }}
+      // `x: '-50%'` centers via framer-motion's own transform. A CSS
+      // `transform: translateX(-50%)` would be overwritten by the `y` animation.
+      style={{ position: 'fixed', bottom: 22, left: '50%', x: '-50%', zIndex: 120, maxWidth: 'calc(100vw - 24px)' }}
     >
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6,

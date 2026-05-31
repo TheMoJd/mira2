@@ -26,7 +26,7 @@ function riskColor(r: string) {
 function LecturePreview({ which }: { which: number }) {
   if (which === 0) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 26, alignItems: 'center' }}>
+      <div className="gauge-split" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 26, alignItems: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <RadialGauge value={61} size={150} dark />
           <div style={{ fontSize: 12.5, color: 'var(--dk-mut)', marginTop: 8 }}>Vulnérabilité globale</div>
