@@ -18,30 +18,21 @@ const mira: MiraData = {
   ],
 
   hero: {
-    eyebrow: "Intelligence RH augmentée",
-    h1a: "L'IA redessine la carte",
-    h1b: "des compétences.",
-    h1c: "MIRA donne la boussole.",
-    sub: "Le protocole de diagnostic qui permet aux DRH d'anticiper, mesurer et piloter l'impact de l'IA sur leurs ressources humaines — du score d'exposition par métier au plan de transformation actionnable.",
+    eyebrow: "Diagnostic RH-IA · v1.0",
+    h1a: "L'IA redessine la carte des compétences,",
+    h1b: "MIRA donne la boussole.",
+    sub: "Le protocole de diagnostic qui permet aux organisations d'anticiper, mesurer et piloter l'impact de l'IA sur leurs ressources humaines — du score d'exposition par métier au plan de transformation actionnable.",
   },
 
   refs: ["OCDE", "McKinsey Global Institute", "World Economic Forum", "France Stratégie", "MIT Work of the Future"],
   refsLead: "Socle de connaissance croisé en continu avec les meilleurs rapports sectoriels",
 
   stats: [
-    { value: 72, suffix: " %", label: "des DRH n'ont aucun outil pour mesurer l'impact de l'IA", tone: "risk" },
-    { value: 39, suffix: " %", label: "des compétences actuelles obsolètes ou transformées d'ici 3 ans", tone: "amber" },
-    { value: 85, suffix: " %", label: "des emplois de 2030 n'existent pas encore sous leur forme actuelle", tone: "violet" },
-    { value: 3.2, suffix: " M", decimals: 1, label: "entretiens professionnels obligatoires réalisés chaque année en France", tone: "cyan" },
+    { value: 72, suffix: " %", label: "des DRH n'ont aucun outil pour mesurer l'impact de l'IA", tone: "risk", source: "Source à confirmer" },
+    { value: 39, suffix: " %", label: "des compétences actuelles obsolètes ou transformées d'ici 3 ans", tone: "amber", source: "Source à confirmer" },
+    { value: 85, suffix: " %", label: "des emplois de 2030 n'existent pas encore sous leur forme actuelle", tone: "violet", source: "World Economic Forum — Future of Jobs" },
+    { value: 3.2, suffix: " M", decimals: 1, label: "entretiens professionnels obligatoires réalisés chaque année en France", tone: "cyan", source: "Source à confirmer" },
   ],
-
-  market: {
-    kicker: "Le moment de marché",
-    title: "Une obligation légale. Aucun outil pour la piloter.",
-    body: "L'entretien professionnel est obligatoire tous les deux ans. Pourtant les directions RH avancent à l'aveugle sur l'impact réel de l'IA, métier par métier. MIRA transforme cette contrainte en intelligence organisationnelle.",
-    big: { value: 2.1, suffix: " Md€", label: "Marché adressable des solutions RH-IA en Europe d'ici 2028" },
-    side: { value: 4, prefix: "×", label: "Valeur perçue par rapport à un consultant RH externe" },
-  },
 
   phases: [
     {
@@ -50,7 +41,7 @@ const mira: MiraData = {
       title: "Pré-rapport contextuel automatisé",
       role: "Lead generation + éducation du marché",
       body: "Un formulaire de profilage (secteur, taille, métiers, maturité IA) croisé avec les rapports de référence génère un pré-rapport sectoriel personnalisé : grandes vulnérabilités et opportunités IA de votre périmètre RH.",
-      points: ["3 métiers analysés", "1 rapport de référence intégré", "Synthèse des risques sectoriels"],
+      points: ["Cartographie macro des métiers de votre secteur", "1 rapport de référence intégré", "Synthèse des risques sectoriels"],
     },
     {
       n: "02",
@@ -87,7 +78,7 @@ const mira: MiraData = {
     },
     {
       key: "individu",
-      label: "Fiche individuelle",
+      label: "Fiche individuelle métier",
       lead: "Trajectoire personnelle",
       desc: "Score d'exposition du poste, compétences à renforcer, activités susceptibles d'être augmentées ou automatisées, et parcours de formation adaptés au profil et aux aspirations.",
       bullets: ["Score d'exposition du poste", "Activités augmentées / automatisées", "Parcours de formation suggérés"],
@@ -110,7 +101,7 @@ const mira: MiraData = {
       sub: "Éduquer le marché, générer des leads qualifiés",
       cta: "Lancer mon pré-rapport",
       featured: false,
-      features: ["Profilage entreprise en 10 minutes", "Synthèse des risques IA sectoriels", "Pré-rapport limité à 3 métiers", "1 rapport de référence intégré"],
+      features: ["Profilage entreprise en 10 minutes", "Synthèse des risques IA sectoriels", "Pré-rapport macro de vos métiers", "1 rapport de référence intégré"],
     },
     {
       name: "MIRA Pro",
@@ -132,7 +123,7 @@ const mira: MiraData = {
 
   compliance: [
     { t: "Loi Avenir Professionnel", d: "Le module augmenté enrichit l'entretien obligatoire sans le remplacer. Le rapport sert de preuve de bilan à 6 ans." },
-    { t: "RGPD natif", d: "Pseudonymisation des données agrégées, droit d'accès individuel, consentement explicite, DPA signé avec chaque client." },
+    { t: "RGPD natif & IA Act", d: "Pseudonymisation des données agrégées, droit d'accès individuel, consentement explicite et DPA signé avec chaque client. Conforme à l'AI Act : usages RH documentés, transparence méthodologique, traçabilité et supervision humaine." },
     { t: "Éthique IA", d: "MIRA produit des diagnostics, jamais des décisions. Garde-fous anti-discrimination et transparence méthodologique." },
   ],
 

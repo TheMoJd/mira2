@@ -1,0 +1,68 @@
+# CLAUDE.md — Guide du projet MIRA
+
+Instructions pour les agents travaillant sur ce repo. Lire en complément du README.
+
+## Le projet
+
+Landing page marketing de **MIRA** (*Mapping des Impacts et des Risques IA*), un dispositif
+d'intelligence RH augmentée qui mesure et pilote l'impact de l'IA sur les métiers (cible : DRH /
+organisations). Ce repo ne contient **que la landing** aujourd'hui ; **le produit complet
+(pré-rapport, entretiens augmentés, dashboard) sera construit ici à terme** — anticiper que du
+routing, un backend, une base de données et de l'auth viendront s'ajouter.
+
+## Commandes
+
+```bash
+npm run dev      # serveur de dev Vite
+npm run build    # tsc -b (typecheck strict) + vite build → dist/
+npm run preview  # sert le build de prod
+```
+
+Il n'y a **pas** de linter ni de tests pour l'instant : le garde-fou qualité est le **typecheck
+TypeScript strict** lancé par `npm run build`. Toujours faire passer le build avant de livrer.
+
+## Architecture
+
+- **`src/App.tsx`** assemble une liste de sections (`<Nav/>`, `<Hero/>`, `<Stats/>`, … `<Footer/>`).
+  Ajouter/retirer une section = éditer cet assemblage.
+- **`src/data/mira.ts` est la source de vérité du contenu.** Tous les textes, chiffres et offres y
+  vivent, typés par `src/data/types.ts`. **Pour changer une copie, éditer les données — pas le JSX.**
+  Exception assumée : quelques `const` purement présentationnels restent locaux à leur composant
+  (ex. `ticker` dans `Hero.tsx`, `legend`/`discernement` dans `Matrix.tsx`, `team`/`skills` dans
+  `Lectures.tsx`, `footerLinks` dans `Footer.tsx`).
+- **`src/components/ui/`** : primitives réutilisables — `Button`, `Head` (kicker + titre + sous-titre),
+  `Logo`, `Reveal` (apparition au scroll), `StatCounter` (compteur animé).
+- **`src/components/charts/`** : visualisations SVG maison (pas de lib de graphes).
+- **`src/hooks/`** : `useCountTo`, `useInViewOnce`.
+
+## Conventions de style
+
+- **Pas de framework CSS.** Les couleurs/typo/rayons/ombres sont des **variables CSS** définies dans
+  `src/styles/globals.css` (`:root`). Toujours réutiliser ces tokens (`var(--violet)`, `var(--ink-2)`,
+  `var(--r-lg)`…) plutôt que des valeurs en dur.
+- Le style des composants est **inline** (`style={{…}}`) — convention héritée du handoff design. Les
+  pseudo-états (`:hover`) et le **responsive** passent par des classes dans `globals.css`
+  (media queries à `1000px` et `640px`).
+- **Pattern couleur sémantique** : les données portent un `tone` (`'risk' | 'amber' | 'violet' |
+  'cyan'`) et le composant mappe `tone → var(--…)` (cf. `toneColor` dans `Stats.tsx`). Réutiliser ce
+  pattern pour toute nouvelle donnée colorée.
+- **Navigation** : l'affichage desktop/mobile est piloté par les classes `.nav-links` / `.nav-actions`
+  / `.mobile-menu-btn` dans `globals.css` (et non en inline) pour que les media queries fonctionnent.
+  Sous 1000px, un menu hamburger (`Nav.tsx`) remplace la barre.
+- Animations : Framer Motion, easing récurrent `[0.22, 1, 0.36, 1]`.
+- Langue : **français** (textes, commentaires).
+
+## Garde-fous
+
+- **`docs/` est confidentiel et ignoré par git** (cap table, valorisation, pitch investisseurs).
+  Ne jamais le committer ni en exposer le contenu.
+- **Ne pas inventer de statistiques ni de sources.** Les chiffres affichés portent un champ `source`
+  dans `mira.ts` ; certains valent `"Source à confirmer"` en attendant des références réelles — les
+  remplacer uniquement par des sources vérifiées.
+- Conformité RGPD / IA Act : sujet sensible (cible RH). Toute affirmation de conformité doit être
+  validée côté métier/juridique avant mise en avant.
+
+## Déploiement
+
+Netlify : build `npm run build`, publication de `dist/`. `netlify.toml` gère le fallback SPA, les
+en-têtes de sécurité et le cache long-terme des assets `/assets/*` (fingerprintés par Vite).

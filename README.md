@@ -1,25 +1,66 @@
-# CODING AGENTS: READ THIS FIRST
+# MIRA — Landing page
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+> **MIRA** — *Mapping des Impacts et des Risques IA.*
+> L'IA redessine la carte des compétences. MIRA donne la boussole.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+Landing page marketing de MIRA, le dispositif d'intelligence RH augmentée qui mesure et pilote
+l'impact de l'IA sur les ressources humaines, métier par métier.
 
-## What you should do — IMPORTANT
+Application **React + TypeScript + Vite**, mono-page, responsive, animée avec Framer Motion.
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+---
 
-**Find the primary design file under `project/` and read it top to bottom.** The chat transcripts will tell you which file the user was last iterating on. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+## Démarrer
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+```bash
+npm install      # installer les dépendances
+npm run dev      # serveur de dev (http://localhost:5173)
+npm run build    # typecheck (tsc -b) + build de production dans dist/
+npm run preview  # prévisualiser le build de production
+```
 
-## About the design files
+Node 18+ recommandé.
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## Stack
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+| Rôle | Choix |
+|------|-------|
+| Framework | React 18 |
+| Langage | TypeScript 5 (mode strict) |
+| Build | Vite 6 |
+| Animations | Framer Motion 11 |
+| Styles | Tokens CSS (`src/styles/globals.css`) + styles inline par composant |
+| Déploiement | Netlify (`netlify.toml`) |
 
-## Bundle contents
+## Structure
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `mira` project files (HTML prototypes, assets, components)
+```
+src/
+├── main.tsx              # point d'entrée React
+├── App.tsx               # assemblage des sections de la page
+├── styles/globals.css    # design tokens (couleurs, typo, rayons…) + styles globaux
+├── data/
+│   ├── mira.ts           # ★ TOUT le contenu de la landing (textes, chiffres, offres)
+│   └── types.ts          # types du contenu
+├── hooks/
+│   ├── useCountTo.ts      # compteur animé
+│   └── useInViewOnce.ts   # déclenche une animation au scroll (une fois)
+└── components/
+    ├── ui/               # primitives réutilisables (Button, Head, Logo, Reveal, StatCounter)
+    ├── charts/           # visualisations SVG (DashboardMock, RadialGauge, ExposureBars, ScatterMatrix)
+    └── sections/         # sections de la page (Nav, Hero, Stats, Methode, Lectures, Matrix, Diff,
+                          #   Pricing, Conformite, FinalCTA, Footer…)
+```
+
+**Le contenu vit dans [`src/data/mira.ts`](src/data/mira.ts).** Pour modifier un texte, un chiffre ou une
+offre, on édite ce fichier — les composants ne font que le rendre. Voir [CLAUDE.md](CLAUDE.md) pour les
+conventions détaillées.
+
+## Déploiement
+
+Push sur `main` → build automatique sur Netlify (`npm run build`, publication de `dist/`).
+`netlify.toml` configure le fallback SPA, les en-têtes de sécurité et le cache des assets.
+
+## Note
+
+Le dossier `docs/` (documents business confidentiels) est **ignoré par git** et ne doit jamais être committé.

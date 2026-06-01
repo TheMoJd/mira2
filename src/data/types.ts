@@ -4,7 +4,6 @@ export interface HeroData {
   eyebrow: string;
   h1a: string;
   h1b: string;
-  h1c: string;
   sub: string;
 }
 
@@ -16,16 +15,7 @@ export interface Stat {
   label: string;
   tone: StatTone;
   decimals?: number;
-}
-
-export interface MarketBig { value: number; suffix: string; label: string; }
-export interface MarketSide { value: number; prefix: string; label: string; }
-export interface MarketData {
-  kicker: string;
-  title: string;
-  body: string;
-  big: MarketBig;
-  side: MarketSide;
+  source?: string;
 }
 
 export interface Phase {
@@ -77,7 +67,6 @@ export interface MiraData {
   refs: string[];
   refsLead: string;
   stats: Stat[];
-  market: MarketData;
   phases: Phase[];
   readings: Reading[];
   diff: Differentiator[];
@@ -87,5 +76,3 @@ export interface MiraData {
   compliance: ComplianceItem[];
   jobs: Job[];
 }
-
-export type Variation = 'a' | 'b' | 'c';

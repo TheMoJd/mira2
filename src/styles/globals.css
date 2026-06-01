@@ -139,6 +139,11 @@ button { font-family: inherit; cursor: pointer; }
   cursor: pointer;
 }
 
+/* Navigation — l'affichage est piloté par classes (et non en inline) pour que
+   les media queries puissent le surcharger sans recourir à !important. */
+.nav-links { display: flex; gap: 30px; }
+.nav-actions { display: flex; align-items: center; gap: 10px; }
+.mobile-menu-btn { display: none; }
 .nav-link:hover,
 .nav-login:hover { color: var(--violet) !important; }
 
@@ -149,7 +154,6 @@ button { font-family: inherit; cursor: pointer; }
      force every sibling (title, paragraph, buttons) wider than the screen. */
   .hero-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 48px !important; }
   .lect-grid,
-  .market-grid,
   .matrix-grid,
   .calc-grid,
   .price-grid { grid-template-columns: minmax(0, 1fr) !important; }
@@ -157,7 +161,9 @@ button { font-family: inherit; cursor: pointer; }
   .phases-grid,
   .diff-grid,
   .conf-grid { grid-template-columns: 1fr 1fr !important; }
-  .nav-links { display: none !important; }
+  .nav-links,
+  .nav-actions { display: none; }
+  .mobile-menu-btn { display: inline-flex; }
   .calc-total { border-left: none !important; padding-left: 0 !important; border-top: 1px solid var(--line); padding-top: 24px; }
   .ticker-grid { grid-template-columns: 1fr 1fr !important; }
 }
@@ -169,8 +175,6 @@ button { font-family: inherit; cursor: pointer; }
   .diff-grid,
   .conf-grid,
   .price-tiers { grid-template-columns: 1fr !important; }
-  .nav-login { display: none !important; }
-  .market-grid,
   .calc-grid { padding: 32px 24px !important; }
   .footer-grid { grid-template-columns: 1fr 1fr !important; }
 

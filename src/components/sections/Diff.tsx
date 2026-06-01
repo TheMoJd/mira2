@@ -6,7 +6,7 @@ export default function Diff() {
   return (
     <section id="produit" style={{ padding: '0 0 110px' }}>
       <div className="wrap">
-        <Head kicker="La douve" title="Pourquoi MIRA résiste." sub="Un protocole propriétaire, une conformité native et un effet de réseau qui se renforce vague après vague." center max={620} />
+        <Head kicker="Ce qui nous distingue" title="MIRA renforce votre orientation." sub="Un protocole propriétaire, une conformité native et un effet de réseau qui se renforce vague après vague." center max={620} />
         <div className="diff-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {mira.diff.map((f, i) => (
             <Reveal key={f.t} delay={(i % 3) * 0.08} y={24}>
