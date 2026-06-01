@@ -28,10 +28,10 @@ const mira: MiraData = {
   refsLead: "Socle de connaissance croisé en continu avec les meilleurs rapports sectoriels",
 
   stats: [
-    { value: 72, suffix: " %", label: "des DRH n'ont aucun outil pour mesurer l'impact de l'IA", tone: "risk", source: "Source à confirmer" },
-    { value: 39, suffix: " %", label: "des compétences actuelles obsolètes ou transformées d'ici 3 ans", tone: "amber", source: "Source à confirmer" },
-    { value: 85, suffix: " %", label: "des emplois de 2030 n'existent pas encore sous leur forme actuelle", tone: "violet", source: "World Economic Forum — Future of Jobs" },
-    { value: 3.2, suffix: " M", decimals: 1, label: "entretiens professionnels obligatoires réalisés chaque année en France", tone: "cyan", source: "Source à confirmer" },
+    { value: 63, suffix: " %", label: "des employeurs jugent le déficit de compétences comme leur principal frein à la transformation d'ici 2030", tone: "risk", source: "World Economic Forum — Future of Jobs Report 2025" },
+    { value: 39, suffix: " %", label: "des compétences actuelles seront transformées ou obsolètes d'ici 2030", tone: "amber", source: "World Economic Forum — Future of Jobs Report 2025" },
+    { value: 92, suffix: " M", label: "d'emplois menacés de disparition dans le monde d'ici 2030 (sur 170 M créés)", tone: "violet", source: "World Economic Forum — Future of Jobs Report 2025" },
+    { value: 21, suffix: " M", label: "de salariés du privé en France, soumis à l'entretien professionnel obligatoire", tone: "cyan", source: "INSEE, 2024" },
   ],
 
   phases: [
