@@ -19,7 +19,7 @@ export default function Button({ children, primary, dark, small, href = '#cta' }
     whiteSpace: 'nowrap',
   };
   const style: React.CSSProperties = primary
-    ? { ...base, background: 'var(--violet)', color: '#fff', boxShadow: '0 8px 22px -8px rgba(106,69,255,.6)' }
+    ? { ...base, background: 'var(--violet)', color: '#fff', boxShadow: '0 8px 22px -8px rgba(53,19,125,.6)' }
     : dark
       ? { ...base, background: 'rgba(255,255,255,.06)', color: 'var(--dk-ink)', borderColor: 'var(--dk-line)' }
       : { ...base, background: 'transparent', color: 'var(--ink)', borderColor: 'var(--line)' };

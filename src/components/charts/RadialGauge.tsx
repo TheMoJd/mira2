@@ -26,7 +26,7 @@ export default function RadialGauge({ value = 61, max = 100, size = 168, stroke 
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#6a45ff" />
+            <stop offset="0%" stopColor="#35137d" />
             <stop offset="60%" stopColor="#9a6bff" />
             <stop offset="100%" stopColor="#43c6e8" />
           </linearGradient>

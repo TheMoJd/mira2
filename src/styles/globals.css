@@ -16,8 +16,8 @@
   --line: rgba(22, 15, 46, 0.10);
   --line-soft: rgba(22, 15, 46, 0.06);
 
-  --violet: #6a45ff;
-  --violet-700: #5430d6;
+  --violet: #35137d;
+  --violet-700: #29105f;
   --violet-300: #b6a2ff;
   --violet-100: #ebe4ff;
 
@@ -44,7 +44,7 @@
   --shadow-sm: 0 1px 2px rgba(22,15,46,.06), 0 2px 6px rgba(22,15,46,.05);
   --shadow: 0 12px 30px -12px rgba(22,15,46,.18), 0 4px 12px -6px rgba(22,15,46,.10);
   --shadow-lg: 0 40px 80px -30px rgba(22,15,46,.40), 0 16px 40px -20px rgba(22,15,46,.22);
-  --shadow-violet: 0 30px 70px -25px rgba(106,69,255,.55);
+  --shadow-violet: 0 30px 70px -25px rgba(53,19,125,.55);
   --maxw: 1200px;
 }
 
@@ -127,7 +127,7 @@ button { font-family: inherit; cursor: pointer; }
   border-radius: 50%;
   background: #fff;
   border: 2px solid var(--violet);
-  box-shadow: 0 4px 12px rgba(106,69,255,.4);
+  box-shadow: 0 4px 12px rgba(53,19,125,.4);
   cursor: pointer;
 }
 .mira-range::-moz-range-thumb {

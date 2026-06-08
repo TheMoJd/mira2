@@ -5,7 +5,7 @@ import mira from '../../data/mira';
 export default function Methode() {
   return (
     <section id="methode" style={{ background: 'var(--dk)', color: 'var(--dk-ink)', padding: '110px 0', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '10%', left: '50%', width: 700, height: 700, transform: 'translateX(-50%)', background: 'radial-gradient(circle, rgba(106,69,255,.16), transparent 60%)', filter: 'blur(30px)' }} />
+      <div style={{ position: 'absolute', top: '10%', left: '50%', width: 700, height: 700, transform: 'translateX(-50%)', background: 'radial-gradient(circle, rgba(53,19,125,.34), transparent 60%)', filter: 'blur(30px)' }} />
       <div className="wrap" style={{ position: 'relative' }}>
         <Head dark kicker="Le protocole en 3 phases" title="Du pré-rapport sectoriel au plan de transformation." sub="MIRA n'est pas un chatbot RH. C'est un protocole de diagnostic structuré qui produit une intelligence organisationnelle actionnable." center max={680} />
         <div className="phases-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 22 }}>
@@ -14,7 +14,7 @@ export default function Methode() {
               <div style={{ background: 'linear-gradient(180deg, var(--dk-2), var(--dk-1))', border: '1px solid var(--dk-line)', borderRadius: 'var(--r-lg)', padding: '30px 28px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
                   <span className="tnum" style={{ fontFamily: 'var(--serif)', fontSize: 40, color: 'var(--violet-300)' }}>{p.n}</span>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--violet)', border: '1px solid rgba(106,69,255,.35)', borderRadius: 999, padding: '5px 11px' }}>{p.tag}</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--violet-300)', border: '1px solid rgba(182,162,255,.35)', borderRadius: 999, padding: '5px 11px' }}>{p.tag}</span>
                 </div>
                 <h3 style={{ fontFamily: 'var(--serif)', fontSize: 24, margin: '0 0 6px', color: '#fff', fontWeight: 500 }}>{p.title}</h3>
                 <div style={{ fontSize: 13, color: 'var(--violet-300)', marginBottom: 16, fontWeight: 500 }}>{p.role}</div>

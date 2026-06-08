@@ -38,7 +38,7 @@ export default function Pricing() {
                 padding: '34px 34px', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden',
               }}>
                 {p.featured && (
-                  <span style={{ position: 'absolute', top: 22, right: 22, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--violet-300)', border: '1px solid rgba(106,69,255,.4)', borderRadius: 999, padding: '4px 11px' }}>
+                  <span style={{ position: 'absolute', top: 22, right: 22, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--violet-300)', border: '1px solid rgba(182,162,255,.4)', borderRadius: 999, padding: '4px 11px' }}>
                     RECOMMANDÉ
                   </span>
                 )}

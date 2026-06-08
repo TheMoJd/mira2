@@ -8,7 +8,7 @@ export default function FinalCTA() {
       <div className="wrap">
         <div style={{ position: 'relative', background: 'var(--dk)', color: 'var(--dk-ink)', borderRadius: 'var(--r-xl)', padding: '84px 56px', textAlign: 'center', overflow: 'hidden' }}>
           <div className="grid-tex" style={{ position: 'absolute', inset: 0, opacity: 0.4, maskImage: 'radial-gradient(80% 80% at 50% 0%, #000, transparent 75%)' }} />
-          <div style={{ position: 'absolute', top: -120, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(circle, rgba(106,69,255,.3), transparent 60%)', filter: 'blur(40px)' }} />
+          <div style={{ position: 'absolute', top: -120, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(circle, rgba(53,19,125,.45), transparent 60%)', filter: 'blur(40px)' }} />
           <div style={{ position: 'relative' }}>
             <Reveal>
               <div className="kicker" style={{ color: 'var(--violet-300)', marginBottom: 22 }}>Validation en moins de 90 jours</div>

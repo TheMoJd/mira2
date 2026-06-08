@@ -20,7 +20,7 @@ export default function DashboardMock() {
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--violet)', boxShadow: '0 0 0 4px rgba(106,69,255,.2)' }} />
+            <span style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--violet-300)', boxShadow: '0 0 0 4px rgba(182,162,255,.25)' }} />
             <span style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.1em', color: 'var(--dk-mut)' }}>RAPPORT DE TRANSFORMATION</span>
           </div>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--opp)' }}>
@@ -55,7 +55,7 @@ export default function DashboardMock() {
         animate={{ opacity: 1, x: 0, y: 0 }}
         transition={{ duration: 0.8, delay: 0.9 }}
         style={{
-          position: 'absolute', right: -26, top: 38, background: 'var(--paper)', color: 'var(--ink)',
+          position: 'absolute', right: -20, top: -24, background: 'var(--paper)', color: 'var(--ink)',
           borderRadius: 14, padding: '12px 15px', boxShadow: 'var(--shadow)', border: '1px solid var(--line)',
           display: 'flex', alignItems: 'center', gap: 11,
         }}
@@ -74,7 +74,7 @@ export default function DashboardMock() {
         animate={{ opacity: 1, x: 0, y: 0 }}
         transition={{ duration: 0.8, delay: 1.1 }}
         style={{
-          position: 'absolute', left: -30, bottom: 30, background: 'var(--paper)', color: 'var(--ink)',
+          position: 'absolute', left: -24, bottom: -20, background: 'var(--paper)', color: 'var(--ink)',
           borderRadius: 14, padding: '11px 14px', boxShadow: 'var(--shadow)', border: '1px solid var(--line)',
           display: 'flex', alignItems: 'center', gap: 10,
         }}

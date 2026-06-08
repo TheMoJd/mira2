@@ -13,7 +13,7 @@ export default function Head({ kicker, title, sub, center, dark, max = 640 }: He
   return (
     <div style={{ maxWidth: max, margin: center ? '0 auto' : 0, textAlign: center ? 'center' : 'left', marginBottom: 50 }}>
       <Reveal y={14}>
-        <div className="kicker" style={{ color: 'var(--violet)', marginBottom: 16 }}>{kicker}</div>
+        <div className="kicker" style={{ color: dark ? 'var(--violet-300)' : 'var(--violet)', marginBottom: 16 }}>{kicker}</div>
       </Reveal>
       <Reveal y={18} delay={0.05}>
         <h2 className="display" style={{ fontSize: 'clamp(30px,3.6vw,46px)', margin: 0, color: dark ? 'var(--dk-ink)' : 'var(--ink)' }}>
