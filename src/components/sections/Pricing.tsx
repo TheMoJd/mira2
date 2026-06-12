@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Reveal from '../ui/Reveal';
 import Button from '../ui/Button';
 import Head from '../ui/Head';
+import SpotlightCard from '../ui/SpotlightCard';
 import mira from '../../data/mira';
 
 function priceFor(n: number): number | null {
@@ -27,11 +28,12 @@ export default function Pricing() {
   return (
     <section id="tarifs" style={{ padding: '110px 0', background: 'var(--paper)', borderTop: '1px solid var(--line-soft)' }}>
       <div className="wrap">
-        <Head kicker="Modèle économique" title="Gratuit pour découvrir. Dégressif pour déployer." center max={620} />
+        <Head split kicker="Modèle économique" title="Gratuit pour découvrir. Dégressif pour déployer." center max={620} />
 
         <div className="price-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, marginBottom: 30 }}>
           {mira.pricing.map((p) => (
             <Reveal key={p.name} y={24}>
+              <SpotlightCard dark={p.featured}>
               <div style={{
                 background: p.featured ? 'var(--dk-1)' : 'var(--bg)', color: p.featured ? 'var(--dk-ink)' : 'var(--ink)',
                 border: '1px solid', borderColor: p.featured ? 'var(--dk-line)' : 'var(--line)', borderRadius: 'var(--r-lg)',
@@ -57,6 +59,7 @@ export default function Pricing() {
                   <Button primary={p.featured} dark={p.featured} href="#cta">{p.cta}</Button>
                 </div>
               </div>
+              </SpotlightCard>
             </Reveal>
           ))}
         </div>

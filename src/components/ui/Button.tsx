@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
-import type { ReactNode } from 'react';
+import type { ReactNode, MouseEvent } from 'react';
+import Magnetic from './Magnetic';
+import { scrollToAnchor } from '../../lib/scroll';
 
 interface ButtonProps {
   children: ReactNode;
@@ -24,9 +26,17 @@ export default function Button({ children, primary, dark, small, href = '#cta' }
       ? { ...base, background: 'rgba(255,255,255,.06)', color: 'var(--dk-ink)', borderColor: 'var(--dk-line)' }
       : { ...base, background: 'transparent', color: 'var(--ink)', borderColor: 'var(--line)' };
 
+  const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!href.startsWith('#')) return;
+    e.preventDefault();
+    scrollToAnchor(href);
+  };
+
   return (
-    <motion.a href={href} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={style}>
-      {children}
-    </motion.a>
+    <Magnetic>
+      <motion.a href={href} onClick={onClick} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={style}>
+        {children}
+      </motion.a>
+    </Magnetic>
   );
 }

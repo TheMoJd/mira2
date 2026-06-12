@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useInViewOnce } from '../../hooks/useInViewOnce';
 import { useCountTo } from '../../hooks/useCountTo';
 
@@ -16,8 +17,15 @@ export default function StatCounter({ value, suffix = '', prefix = '', decimals 
     ? Number(n).toLocaleString('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
     : Number(n).toLocaleString('fr-FR');
   return (
-    <span ref={ref as React.RefObject<HTMLSpanElement>} className="tnum">
+    <motion.span
+      ref={ref as React.RefObject<HTMLSpanElement>}
+      className="tnum"
+      style={{ display: 'inline-block' }}
+      initial={{ filter: 'blur(6px)', opacity: 0.3 }}
+      animate={seen ? { filter: 'blur(0px)', opacity: 1 } : {}}
+      transition={{ duration: 0.9, ease: 'easeOut' }}
+    >
       {prefix}{display}{suffix}
-    </span>
+    </motion.span>
   );
 }

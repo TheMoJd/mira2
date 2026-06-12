@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../ui/Logo';
 import Button from '../ui/Button';
+import ScrollProgress from '../fx/ScrollProgress';
+import { useActiveSection } from '../../hooks/useActiveSection';
+import { scrollToAnchor, stopScroll, startScroll } from '../../lib/scroll';
 import mira from '../../data/mira';
+
+const sectionIds = mira.nav.map((l) => l.href.slice(1));
 
 export default function Nav() {
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
+  const active = useActiveSection(sectionIds);
 
   useEffect(() => {
     const on = () => setSolid(window.scrollY > 40);
@@ -16,9 +22,16 @@ export default function Nav() {
   }, []);
 
   // Verrouille le scroll de la page tant que le menu mobile est ouvert.
+  // Le lock body.overflow couvre le scroll natif ; stop/startScroll couvre
+  // Lenis (fenêtre étroite avec souris, où le hamburger coexiste avec Lenis).
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (open) stopScroll();
+    else startScroll();
+    return () => {
+      document.body.style.overflow = '';
+      startScroll();
+    };
   }, [open]);
 
   // Referme le menu si l'on repasse en desktop (≥ 1000px).
@@ -48,11 +61,27 @@ export default function Nav() {
         <Logo />
 
         <nav className="nav-links">
-          {mira.nav.map((l) => (
-            <a key={l.href} href={l.href} className="nav-link" style={{ fontSize: 14.5, color: 'var(--ink-2)', fontWeight: 500 }}>
-              {l.label}
-            </a>
-          ))}
+          {mira.nav.map((l) => {
+            const isActive = active === l.href.slice(1);
+            return (
+              <a
+                key={l.href}
+                href={l.href}
+                onClick={(e) => { e.preventDefault(); scrollToAnchor(l.href); }}
+                className="nav-link"
+                style={{ position: 'relative', fontSize: 14.5, color: isActive ? 'var(--violet)' : 'var(--ink-2)', fontWeight: 500, transition: 'color .25s' }}
+              >
+                {l.label}
+                {isActive && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    style={{ position: 'absolute', left: 0, right: 0, bottom: -7, height: 2, borderRadius: 2, background: 'var(--violet)' }}
+                  />
+                )}
+              </a>
+            );
+          })}
         </nav>
 
         <div className="nav-actions">
@@ -93,7 +122,7 @@ export default function Nav() {
                 <a
                   key={l.href}
                   href={l.href}
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => { e.preventDefault(); setOpen(false); scrollToAnchor(l.href); }}
                   className="nav-link"
                   style={{ fontSize: 16, color: 'var(--ink-1)', fontWeight: 500, padding: '14px 4px', borderBottom: '1px solid var(--line-soft)' }}
                 >
@@ -114,6 +143,8 @@ export default function Nav() {
           </motion.nav>
         )}
       </AnimatePresence>
+
+      <ScrollProgress />
     </motion.header>
   );
 }

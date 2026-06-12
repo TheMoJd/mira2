@@ -23,7 +23,7 @@ export default function Matrix() {
     <section style={{ padding: '20px 0 110px' }}>
       <div className="wrap matrix-grid" style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.2fr', gap: 50, alignItems: 'center' }}>
         <div>
-          <Head kicker="Scoring d'exposition" title="Chaque métier, situé." sub="MIRA ne se limite pas à l'exposition à l'automatisation : le score croise aussi le discernement humain requis et la criticité des données traitées. La carte de votre transformation, en un coup d'œil." max={440} />
+          <Head split kicker="Scoring d'exposition" title="Chaque métier, situé." sub="MIRA ne se limite pas à l'exposition à l'automatisation : le score croise aussi le discernement humain requis et la criticité des données traitées. La carte de votre transformation, en un coup d'œil." max={440} />
           <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
             {legend.map(([c, l]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-2)' }}>

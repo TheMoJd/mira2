@@ -1,5 +1,6 @@
 import Reveal from '../ui/Reveal';
 import Head from '../ui/Head';
+import SpotlightCard from '../ui/SpotlightCard';
 import mira from '../../data/mira';
 
 export default function Diff() {
@@ -10,11 +11,13 @@ export default function Diff() {
         <div className="diff-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {mira.diff.map((f, i) => (
             <Reveal key={f.t} delay={(i % 3) * 0.08} y={24}>
-              <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', padding: '28px 26px', height: '100%' }}>
-                <div className="tnum" style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--violet)', marginBottom: 16 }}>0{i + 1}</div>
-                <h3 style={{ fontSize: 18.5, margin: '0 0 9px', color: 'var(--ink)', fontWeight: 600 }}>{f.t}</h3>
-                <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--ink-2)', margin: 0 }}>{f.d}</p>
-              </div>
+              <SpotlightCard>
+                <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', padding: '28px 26px', height: '100%' }}>
+                  <div className="tnum" style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--violet)', marginBottom: 16 }}>0{i + 1}</div>
+                  <h3 style={{ fontSize: 18.5, margin: '0 0 9px', color: 'var(--ink)', fontWeight: 600 }}>{f.t}</h3>
+                  <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--ink-2)', margin: 0 }}>{f.d}</p>
+                </div>
+              </SpotlightCard>
             </Reveal>
           ))}
         </div>
