@@ -43,6 +43,7 @@ export default function Wizard() {
   const [form, setForm] = useState<PreRapportForm>(emptyPreRapportForm);
   const [errors, setErrors] = useState<PreRapportErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const set = <K extends keyof PreRapportForm>(key: K, value: PreRapportForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -70,9 +71,11 @@ export default function Wizard() {
       return;
     }
     setSubmitting(true);
+    setSubmitError(null);
     try {
-      await submitPreRapport(form);
-      setView('success');
+      const result = await submitPreRapport(form);
+      if (result.ok) setView('success');
+      else setSubmitError(result.error ?? 'Une erreur est survenue. Réessayez.');
     } finally {
       setSubmitting(false);
     }
@@ -238,6 +241,12 @@ export default function Wizard() {
                 {renderStep()}
               </motion.div>
             </AnimatePresence>
+
+            {submitError && (
+              <p role="alert" style={{ color: 'var(--risk)', fontSize: 13.5, lineHeight: 1.5, margin: '18px 0 0' }}>
+                {submitError}
+              </p>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 34 }}>
               {step > 0 ? (

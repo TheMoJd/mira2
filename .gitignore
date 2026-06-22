@@ -2,6 +2,11 @@ node_modules/
 dist/
 *.local
 .DS_Store
+
+# Secrets / variables d'environnement — ne JAMAIS committer (clés API).
+.env
+.env.*
+!.env.example
 node_modules/.tmp/
 mira2react.tar.gz
 .gstack/
@@ -10,3 +15,5 @@ mira2react.tar.gz
 # pitch investisseurs). Ne JAMAIS committer — restent en local uniquement.
 docs/
 examples of reports/
+# Local Netlify folder
+.netlify

@@ -2,6 +2,11 @@
   command = "npm run build"
   publish = "dist"
 
+# Netlify Functions (Tranche 2+) — bundle esbuild, dossier dédié.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 # SPA fallback — toutes les routes renvoient vers index.html
 # (utile dès que tu ajouteras du routing côté client)
 [[redirects]]
