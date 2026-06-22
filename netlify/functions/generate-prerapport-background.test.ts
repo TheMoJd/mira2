@@ -28,7 +28,22 @@ vi.mock('@supabase/supabase-js', () => ({
       select: () => ({ eq: () => ({ single: async () => ({ data: h.lead, error: null }) }) }),
       update: (payload: Record<string, unknown>) => {
         h.updates.push(payload);
-        return { eq: async () => ({ data: null, error: null }) };
+        // Le CAS d'idempotence chaîne .update().eq().eq().select() ; les autres
+        // updates font .update().eq() puis await. Builder thenable qui gère les deux.
+        const result = {
+          data: payload.status === 'generating' ? [{ id: 'lead-1' }] : null,
+          error: null,
+        };
+        const builder: {
+          eq: () => typeof builder;
+          select: () => Promise<typeof result>;
+          then: (resolve: (v: typeof result) => unknown) => unknown;
+        } = {
+          eq: () => builder,
+          select: async () => result,
+          then: (resolve) => resolve(result),
+        };
+        return builder;
       },
       insert: async (payload: Record<string, unknown>) => {
         h.inserts.push(payload);

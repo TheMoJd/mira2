@@ -116,6 +116,41 @@ function htmlToText(html: string): string {
     .slice(0, SITE_RESUME_MAX_CHARS);
 }
 
+const MAX_REDIRECTS = 3;
+
+/**
+ * Suit les redirections **manuellement** en re-validant l'hôte à CHAQUE saut.
+ * `redirect: 'follow'` est dangereux ici : une URL publique peut rediriger vers
+ * une IP privée ou les métadonnées cloud (169.254.169.254) → SSRF. On valide
+ * donc protocole + hôte avant chaque requête. (Résiduel non couvert : le
+ * DNS-rebinding, c.-à-d. un hostname public qui résout vers une IP privée.)
+ */
+async function fetchFollowingSafeRedirects(start: URL): Promise<Response | undefined> {
+  let current = start;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (current.protocol !== 'http:' && current.protocol !== 'https:') return undefined;
+    if (isBlockedHost(current.hostname)) return undefined;
+
+    const res = await fetchWithTimeout(current.toString(), {
+      headers: { accept: 'text/html', 'user-agent': 'MIRA-prerapport/1.0' },
+      redirect: 'manual',
+    });
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      if (!location) return undefined;
+      try {
+        current = new URL(location, current); // résout les redirections relatives
+      } catch {
+        return undefined;
+      }
+      continue; // re-valide l'hôte cible au tour suivant
+    }
+    return res;
+  }
+  return undefined; // trop de redirections
+}
+
 /** Récupère un résumé texte du site déclaré. Best-effort + garde anti-SSRF. */
 export async function fetchSiteResume(siteUrl: string): Promise<string | undefined> {
   let url: URL;
@@ -124,15 +159,10 @@ export async function fetchSiteResume(siteUrl: string): Promise<string | undefin
   } catch {
     return undefined;
   }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
-  if (isBlockedHost(url.hostname)) return undefined;
 
   try {
-    const res = await fetchWithTimeout(url.toString(), {
-      headers: { accept: 'text/html', 'user-agent': 'MIRA-prerapport/1.0' },
-      redirect: 'follow',
-    });
-    if (!res.ok) return undefined;
+    const res = await fetchFollowingSafeRedirects(url);
+    if (!res || !res.ok) return undefined;
     const contentType = res.headers.get('content-type') ?? '';
     if (!contentType.includes('text/html')) return undefined;
 

@@ -80,7 +80,19 @@ export const handler: Handler = async (event) => {
     const { data: lead, error } = await supabase.from('leads').select('*').eq('id', leadId).single();
     if (error || !lead) throw new Error(`Lead introuvable : ${leadId}`);
 
-    await supabase.from('leads').update({ status: 'generating' }).eq('id', leadId);
+    // Idempotence : on ne passe en `generating` QUE si le lead est encore `received`
+    // (compare-and-set atomique). Un second déclenchement concurrent matchera 0 ligne
+    // et abandonnera → pas de doublon `reports` ni de double email.
+    const { data: claimed } = await supabase
+      .from('leads')
+      .update({ status: 'generating' })
+      .eq('id', leadId)
+      .eq('status', 'received')
+      .select('id');
+    if (!claimed || claimed.length === 0) {
+      console.log(`[generate] lead ${leadId} déjà pris en charge — abandon (idempotence).`);
+      return { statusCode: 200 };
+    }
 
     // --- (2) Enrichissement best-effort (n'échoue jamais la génération) ---
     const siretInfo = lead.siret ? await enrichSiret(lead.siret) : {};
