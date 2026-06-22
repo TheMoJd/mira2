@@ -142,6 +142,48 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ============================================================
+   Pré-rapport — champs de formulaire (wizard)
+   Pseudo-états (:focus/:hover) en classes : l'inline ne peut pas les porter,
+   même convention que .nav-link / .spotlight.
+   ============================================================ */
+.pr-field {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 13px 15px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.pr-field::placeholder { color: var(--ink-3); }
+.pr-field:hover:not(:focus) { border-color: var(--violet-300); }
+.pr-field:focus { border-color: var(--violet); box-shadow: 0 0 0 3px var(--violet-100); }
+textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
+.pr-field--error { border-color: var(--risk); }
+.pr-field--error:focus { box-shadow: 0 0 0 3px rgba(239, 108, 77, .15); }
+
+.pr-dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-soft);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-sm);
+  padding: 16px 18px;
+  transition: border-color .2s, background .2s;
+}
+.pr-dropzone:hover { border-color: var(--violet-300); background: var(--lavender); }
+
+@media (max-width: 640px) {
+  .pr-audiences { grid-template-columns: 1fr !important; }
+}
+
+/* ============================================================
    FX — texture, marquee, spotlight
    ============================================================ */
 

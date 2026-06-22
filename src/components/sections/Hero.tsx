@@ -64,7 +64,7 @@ export default function Hero() {
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.6 }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Button primary>{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
+            <Button primary href="/pre-rapport">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
             <Button href="#lectures">Explorer un rapport</Button>
           </motion.div>
         </div>

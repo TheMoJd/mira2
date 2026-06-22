@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { ReactNode, MouseEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Magnetic from './Magnetic';
 import { scrollToAnchor } from '../../lib/scroll';
 
@@ -12,6 +13,7 @@ interface ButtonProps {
 }
 
 export default function Button({ children, primary, dark, small, href = '#cta' }: ButtonProps) {
+  const navigate = useNavigate();
   const base: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999,
     padding: small ? '9px 16px' : '13px 22px',
@@ -27,9 +29,19 @@ export default function Button({ children, primary, dark, small, href = '#cta' }
       : { ...base, background: 'transparent', color: 'var(--ink)', borderColor: 'var(--line)' };
 
   const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    if (!href.startsWith('#')) return;
-    e.preventDefault();
-    scrollToAnchor(href);
+    // Ancre interne → scroll lissé dans la page courante.
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      scrollToAnchor(href);
+      return;
+    }
+    // Route interne → navigation SPA (sans rechargement complet).
+    if (href.startsWith('/')) {
+      e.preventDefault();
+      navigate(href);
+      return;
+    }
+    // Lien externe (http…) → comportement natif.
   };
 
   return (

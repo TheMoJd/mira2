@@ -38,6 +38,14 @@ export function scrollToAnchor(hash: string): void {
   }
 }
 
+/** Remet la page en haut, instantanément. Utilisé lors d'un changement de route
+ *  (où un défilement animé n'aurait pas de sens). Passe par Lenis s'il est actif
+ *  pour rester synchronisé avec sa position interne. */
+export function scrollToTop(): void {
+  if (lenis) lenis.scrollTo(0, { immediate: true });
+  else if (typeof window !== 'undefined') window.scrollTo(0, 0);
+}
+
 /** Verrouillage du scroll (menu mobile) quand Lenis est actif ;
  *  le lock body.overflow reste le fallback quand il ne l'est pas. */
 export function stopScroll(): void {
