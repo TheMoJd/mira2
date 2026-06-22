@@ -1,146 +1,140 @@
 /**
- * SCHÉMA DE SORTIE STRUCTURÉE — génération du pré-rapport (Tranche 4)
- * ===================================================================
+ * CONTRAT DE SORTIE DU PRÉ-RAPPORT (Tranche 4) — source unique
+ * ============================================================
  *
- * Contrat de sortie imposé au modèle via le `response_format` d'OpenAI
- * (`{ type: 'json_schema', strict: true }`). Le modèle est contraint de
- * produire exactement les 10 sections §0→§9 et la caractérisation par famille
- * en §3 — pas de texte hors structure.
+ * Un seul schéma `zod` (`PreRapportSchema`) est la source de vérité du contrat de
+ * sortie du LLM. On en **dérive** tout le reste, donc rien ne peut diverger :
  *
- * - `RESPONSE_FORMAT` : objet à passer tel quel à l'API OpenAI.
- * - `PreRapportOutput` & co. : types TS de la réponse parsée (function + template PDF).
+ *  - `RESPONSE_FORMAT` : le `response_format` strict d'OpenAI, généré par
+ *    `zodResponseFormat` (force les 10 sections §0→§9, `additionalProperties:false`
+ *    partout, toutes les propriétés `required`).
+ *  - les types TS (`PreRapportOutput` & co.) via `z.infer`.
+ *  - `parseReport(raw)` : **valide** le JSON renvoyé par le modèle avant de le
+ *    persister/rendre — fini le `JSON.parse(raw) as PreRapportOutput` aveugle.
  *
- * Contraintes du mode strict OpenAI respectées ici : racine = objet, TOUTES les
- * propriétés dans `required`, `additionalProperties: false` partout, champs
- * optionnels exprimés en union `["type", "null"]` (pas de clé absente).
+ * Le mode strict OpenAI exprime un champ nullable en `anyOf: [<T>, {type:"null"}]`
+ * (généré automatiquement par `.nullable()`).
  */
 
+import { z } from 'zod';
+import { zodResponseFormat } from 'openai/helpers/zod';
 import type { ExpositionLevel, ImpactNature, ConfidenceLevel } from './rapportStructure';
 import { reportSections } from './rapportStructure';
 
 /** Ids de sections autorisés (dérivés de la structure → toujours synchrones). */
-const SECTION_IDS = reportSections.map((s) => s.id);
+const SECTION_IDS = reportSections.map((s) => s.id) as [string, ...string[]];
 
-// --- Types de la réponse parsée -------------------------------------------
+// Le cast en tuple ci-dessus masque le cas `[]` : un `z.enum([])` n'accepte
+// alors plus aucun id et tout rapport échouerait silencieusement à la validation.
+// Garde au chargement pour transformer ce cas en erreur bruyante immédiate.
+if (SECTION_IDS.length === 0) {
+  throw new Error('reportSchema : reportSections est vide — impossible de dériver le contrat.');
+}
 
-export interface ReportBloc {
+/** Id de la section cœur §3 (seule autorisée à porter des caractérisations de familles). */
+const FAMILLES_SECTION_ID = 'familles-metiers';
+
+// Vocabulaire contrôlé §3. Les arrays sont la forme runtime (pour `z.enum`) ; les
+// gardes `Exact<>` ci-dessous échouent au typecheck si elles divergent un jour des
+// unions canoniques de `rapportStructure.ts`.
+const EXPOSITION = ['faible', 'modérée', 'élevée', 'à confirmer'] as const;
+const NATURES = ['automatisation', 'augmentation', 'création'] as const;
+const CONFIANCE = ['élevée', 'moyenne', 'faible'] as const;
+
+/** Égalité stricte de deux unions (true seulement si A et B se recouvrent dans les deux sens). */
+type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
+// Garde-fous : la source unique du contrat ne peut pas dériver du vocabulaire métier.
+const _expoExact: Exact<(typeof EXPOSITION)[number], ExpositionLevel> = true;
+const _natExact: Exact<(typeof NATURES)[number], ImpactNature> = true;
+const _confExact: Exact<(typeof CONFIANCE)[number], ConfidenceLevel> = true;
+void _expoExact;
+void _natExact;
+void _confExact;
+
+// --- Schéma zod : LA source unique ----------------------------------------
+
+const ReportBlocSchema = z.object({
   /** Intertitre de bloc, ou null pour un simple paragraphe. */
-  intertitre: string | null;
-  paragraphes: string[];
-}
+  intertitre: z.string().nullable(),
+  paragraphes: z.array(z.string()),
+});
 
-export interface ReportFamille {
-  famille: string;
-  exposition: ExpositionLevel;
-  natures: ImpactNature[];
+const ReportFamilleSchema = z.object({
+  famille: z.string(),
+  exposition: z.enum(EXPOSITION),
+  natures: z.array(z.enum(NATURES)),
   /** Part de tâches concernée si une source la donne (ex. « jusqu'à 82 % »), sinon null. */
-  part_taches: string | null;
-  confiance: ConfidenceLevel;
+  part_taches: z.string().nullable(),
+  confiance: z.enum(CONFIANCE),
   /** false → mention « non directement transposable à une PME française ». */
-  transposable_france: boolean;
-  explication: string;
-}
+  transposable_france: z.boolean(),
+  explication: z.string(),
+});
 
-export interface ReportSectionOutput {
-  id: string;
-  titre: string;
-  contenu: ReportBloc[];
+const ReportSectionSchema = z.object({
+  id: z.enum(SECTION_IDS),
+  titre: z.string(),
+  contenu: z.array(ReportBlocSchema),
   /** Identifiants (`id`) des statistiques de la stat-bank citées dans la section. */
-  sources_citees: string[];
+  sources_citees: z.array(z.string()),
   /** Caractérisations par famille — uniquement pour §3, sinon null. */
-  familles: ReportFamille[] | null;
+  familles: z.array(ReportFamilleSchema).nullable(),
+});
+
+/** Contrat de sortie complet : exactement la structure imposée au modèle. */
+export const PreRapportSchema = z.object({
+  sections: z.array(ReportSectionSchema),
+});
+
+// --- Types dérivés (z.infer → impossible de diverger du schéma) ------------
+
+export type ReportBloc = z.infer<typeof ReportBlocSchema>;
+export type ReportFamille = z.infer<typeof ReportFamilleSchema>;
+export type ReportSectionOutput = z.infer<typeof ReportSectionSchema>;
+export type PreRapportOutput = z.infer<typeof PreRapportSchema>;
+
+// --- `response_format` OpenAI dérivé (mode strict) -------------------------
+
+export const RESPONSE_FORMAT = zodResponseFormat(PreRapportSchema, 'prerapport_mira');
+
+// --- Validation runtime de la réponse du modèle ----------------------------
+
+/**
+ * Parse **et valide** la réponse texte du modèle contre le contrat. Lève une
+ * erreur explicite si le JSON est illisible ou non conforme — au lieu de laisser
+ * une structure invalide se propager jusqu'au rendu PDF (où elle casserait sans
+ * message exploitable).
+ */
+export function parseReport(raw: string): PreRapportOutput {
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new Error('Réponse du modèle illisible (JSON invalide).');
+  }
+  const result = PreRapportSchema.safeParse(json);
+  if (!result.success) {
+    throw new Error(`Réponse du modèle non conforme au schéma : ${result.error.message}`);
+  }
+  assertSectionInvariants(result.data);
+  return result.data;
 }
 
-export interface PreRapportOutput {
-  sections: ReportSectionOutput[];
+/**
+ * Invariant que le mode strict OpenAI ne peut pas exprimer : seule la section §3
+ * (`familles-metiers`) porte des caractérisations de familles, et elle en porte au
+ * moins une. Sans ce verrou, un rapport « conforme au schéma » mais avec §3 à
+ * `familles: null` passerait, et le rendu PDF dropperait silencieusement le cœur
+ * du rapport. On le valide donc côté contrat, pas au rendu.
+ */
+function assertSectionInvariants(report: PreRapportOutput): void {
+  for (const section of report.sections) {
+    const isCore = section.id === FAMILLES_SECTION_ID;
+    if (isCore && (!section.familles || section.familles.length === 0)) {
+      throw new Error('Réponse du modèle non conforme : la section §3 doit porter au moins une caractérisation de famille.');
+    }
+    if (!isCore && section.familles !== null) {
+      throw new Error(`Réponse du modèle non conforme : la section « ${section.id} » ne doit pas porter de caractérisations de familles (réservé à §3).`);
+    }
+  }
 }
-
-// --- Schéma JSON pour OpenAI (response_format) ----------------------------
-
-export const RESPONSE_FORMAT = {
-  type: 'json_schema',
-  json_schema: {
-    name: 'prerapport_mira',
-    strict: true,
-    schema: {
-      type: 'object',
-      additionalProperties: false,
-      required: ['sections'],
-      properties: {
-        sections: {
-          type: 'array',
-          description: 'Les 10 sections du rapport, dans l’ordre §0 → §9.',
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['id', 'titre', 'contenu', 'sources_citees', 'familles'],
-            properties: {
-              id: {
-                type: 'string',
-                description: 'Identifiant de la section.',
-                enum: SECTION_IDS,
-              },
-              titre: { type: 'string' },
-              contenu: {
-                type: 'array',
-                description: 'Blocs de contenu (intertitre optionnel + paragraphes).',
-                items: {
-                  type: 'object',
-                  additionalProperties: false,
-                  required: ['intertitre', 'paragraphes'],
-                  properties: {
-                    intertitre: { type: ['string', 'null'] },
-                    paragraphes: { type: 'array', items: { type: 'string' } },
-                  },
-                },
-              },
-              sources_citees: {
-                type: 'array',
-                description: 'Ids des statistiques citées (doit correspondre aux stats fournies pour cette section).',
-                items: { type: 'string' },
-              },
-              familles: {
-                type: ['array', 'null'],
-                description: 'Caractérisations par famille de métiers — uniquement pour la section §3 (id "familles-metiers"), sinon null.',
-                items: {
-                  type: 'object',
-                  additionalProperties: false,
-                  required: [
-                    'famille',
-                    'exposition',
-                    'natures',
-                    'part_taches',
-                    'confiance',
-                    'transposable_france',
-                    'explication',
-                  ],
-                  properties: {
-                    famille: { type: 'string' },
-                    exposition: {
-                      type: 'string',
-                      enum: ['faible', 'modérée', 'élevée', 'à confirmer'],
-                    },
-                    natures: {
-                      type: 'array',
-                      items: {
-                        type: 'string',
-                        enum: ['automatisation', 'augmentation', 'création'],
-                      },
-                    },
-                    part_taches: { type: ['string', 'null'] },
-                    confiance: {
-                      type: 'string',
-                      enum: ['élevée', 'moyenne', 'faible'],
-                    },
-                    transposable_france: { type: 'boolean' },
-                    explication: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-} as const;

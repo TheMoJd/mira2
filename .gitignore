@@ -11,9 +11,17 @@ node_modules/.tmp/
 mira2react.tar.gz
 .gstack/
 
-# Documents business confidentiels (récupérés de Notion : cap table, valorisation,
-# pitch investisseurs). Ne JAMAIS committer — restent en local uniquement.
-docs/
+# docs/ : on VERSIONNE la documentation technique (.md), mais PAS les binaires business
+# confidentiels (pitch investisseurs, cap table, kits, notes). Ne JAMAIS committer ces
+# binaires — ils restent en local uniquement.
+docs/*.pdf
+docs/*.pptx
+docs/*.ppt
+docs/*.pages
+docs/*.docx
+docs/*.doc
+docs/*.key
+docs/article
 examples of reports/
 # Local Netlify folder
 .netlify

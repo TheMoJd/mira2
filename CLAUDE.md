@@ -54,8 +54,11 @@ TypeScript strict** lancé par `npm run build`. Toujours faire passer le build a
 
 ## Garde-fous
 
-- **`docs/` est confidentiel et ignoré par git** (cap table, valorisation, pitch investisseurs).
-  Ne jamais le committer ni en exposer le contenu.
+- **`docs/` : la doc technique `.md` est versionnée ; les binaires business sont confidentiels.**
+  Les fichiers `.md` (documentation du code : pipeline, architecture, how-to… — point d'entrée
+  [`docs/README.md`](docs/README.md)) sont committés. En revanche les binaires (`.pptx`, `.pages`,
+  `.pdf`, `.docx` — cap table, valorisation, pitch investisseurs, kits) restent **ignorés par git** :
+  ne jamais les committer ni en exposer le contenu.
 - **Ne pas inventer de statistiques ni de sources.** Les chiffres affichés portent un champ `source`
   dans `mira.ts` ; certains valent `"Source à confirmer"` en attendant des références réelles — les
   remplacer uniquement par des sources vérifiées.

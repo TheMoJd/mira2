@@ -61,6 +61,11 @@ conventions détaillées.
 Push sur `main` → build automatique sur Netlify (`npm run build`, publication de `dist/`).
 `netlify.toml` configure le fallback SPA, les en-têtes de sécurité et le cache des assets.
 
-## Note
+## Documentation
 
-Le dossier `docs/` (documents business confidentiels) est **ignoré par git** et ne doit jamais être committé.
+La doc technique vit dans [`docs/`](docs/) (point d'entrée : [docs/README.md](docs/README.md)) —
+notamment le **pipeline du pré-rapport freemium** (référence, architecture, how-to, tutoriel).
+
+Dans `docs/`, les fichiers `.md` sont **versionnés** ; les binaires business (pitch
+investisseurs, kits, notes : `.pptx`, `.pages`, `.pdf`, `.docx`) restent **confidentiels et
+ignorés par git** — ne jamais les committer.
