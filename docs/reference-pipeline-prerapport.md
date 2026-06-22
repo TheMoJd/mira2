@@ -94,9 +94,6 @@ Validation serveur (jamais de confiance au client) :
 | Plaquette | `≤ 4 Mo` (`MAX_PLAQUETTE_BYTES`), extensions `.pdf .ppt .pptx .doc .docx` → sinon `413` / `415`. |
 | Rate-limit | max **3 soumissions par email / heure** → sinon `429`. |
 
-> **Écart connu** : le hint UI ([`prerapport.ts`](../src/data/prerapport.ts)) annonce « 10 Mo
-> maximum » alors que le serveur plafonne à **4 Mo**. Comportement réel = 4 Mo.
-
 Codes d'erreur : `405` méthode, `415` type, `400` multipart, `422` validation, `413` taille,
 `429` rate-limit, `502` échec upload/insert, `500` config serveur manquante.
 
@@ -125,7 +122,7 @@ jusqu'à **15 min**.
 
 | Fichier | Export | Rôle |
 |---------|--------|------|
-| [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Retourne `{}` en cas d'échec. |
+| [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche, categorieEntreprise, anneeCreation, localisation, actif }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Tous les champs sont best-effort (souvent partiels). Retourne `{}` en cas d'échec. |
 | | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
 | [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
 | [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). |

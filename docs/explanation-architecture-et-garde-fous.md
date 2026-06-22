@@ -193,7 +193,7 @@ et s'emploie surtout en §2 (contexte) et §7 (repère sectoriel).
 - **Couverture §3 inégale** : le socle ne couvre pas directement les 28 familles → caractérisation « à confirmer » assumée pour les familles non couvertes.
 - **RGPD en placeholders** : `rgpd.ts` et le §9 portent des mentions provisoires en attente de la version juridique (Victor / Jean-Marie). Ne pas les présenter comme une affirmation de conformité.
 - **Parsing plaquette reporté** : la présence de la plaquette est notée, mais son contenu n'est pas encore parsé (libs lourdes hors V1). Seul le site est lu.
-- **Deux bugs de configuration** (voir [reference](reference-pipeline-prerapport.md#variables-denvironnement)) : `RESEND_FROM` vs `RESEND_FROM_EMAIL`, et le plafond plaquette UI (10 Mo) vs serveur (4 Mo).
+- **Un bug de configuration restant** (voir [reference](reference-pipeline-prerapport.md#variables-denvironnement)) : `RESEND_FROM` (lu par le code) vs `RESEND_FROM_EMAIL` (nommé dans `.env.example`). *(L'ancien écart « plafond plaquette UI 10 Mo vs serveur 4 Mo » est corrigé : l'UI annonce désormais 4 Mo.)*
 
 ---
 

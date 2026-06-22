@@ -75,6 +75,12 @@ export interface GenerationContext {
   nafCode?: string;
   nafLibelle?: string;
   effectifTranche?: string;
+  /** Catégorie INSEE (PME / ETI / GE) si connue. */
+  categorieEntreprise?: string;
+  /** Année de création de l'entreprise si connue. */
+  anneeCreation?: string;
+  /** Localisation du siège (ex. « Lyon (69) ») si connue. */
+  localisation?: string;
   /** Q2 — produits/services + valeur. */
   produitsServices: string;
   /** Q3 — clients + interactions. */
@@ -134,7 +140,10 @@ export function buildUserMessage(ctx: GenerationContext): string {
     ctx.nomEntreprise ? `Nom : ${ctx.nomEntreprise}` : null,
     `Secteur & activité (déclaré) : ${ctx.secteurDeclare}`,
     ctx.nafLibelle ? `Secteur normalisé (NAF) : ${ctx.nafLibelle}${ctx.nafCode ? ` [${ctx.nafCode}]` : ''}` : null,
+    ctx.categorieEntreprise ? `Catégorie d'entreprise : ${ctx.categorieEntreprise}` : null,
     ctx.effectifTranche ? `Tranche d'effectif : ${ctx.effectifTranche}` : null,
+    ctx.localisation ? `Localisation du siège : ${ctx.localisation}` : null,
+    ctx.anneeCreation ? `Création : ${ctx.anneeCreation}` : null,
     `Produits / services & valeur : ${ctx.produitsServices}`,
     `Clients & interactions : ${ctx.clients}`,
     `Date du rapport : ${ctx.dateRapport}`,

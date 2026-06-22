@@ -101,7 +101,7 @@ npm run build     # tsc app + tsc functions + vite build — doit passer avant t
 | Erreur Chromium / `Could not find browser` | Pas de Chrome local | Renseigner `CHROME_EXECUTABLE_PATH` vers chrome.exe / Edge. |
 | Email jamais reçu, logs `skipped` | Resend non configuré, **ou** `RESEND_FROM_EMAIL` utilisé au lieu de `RESEND_FROM` | Utiliser `RESEND_FROM`. |
 | `429 Trop de demandes` | Rate-limit 3/email/h atteint | Changer d'email de test, ou attendre 1 h. |
-| `413` / `415` sur la plaquette | > 4 Mo, ou extension non `.pdf/.ppt(x)/.doc(x)` | Réduire le fichier (plafond réel = 4 Mo, pas 10). |
+| `413` / `415` sur la plaquette | > 4 Mo, ou extension non `.pdf/.ppt(x)/.doc(x)` | Réduire le fichier (plafond = 4 Mo). |
 | Statut `failed` immédiat | Lead introuvable, ou parse JSON OpenAI vide | Vérifier `OPENAI_API_KEY` et le modèle dans `OPENAI_MODEL`. |
 
 ## Itérer sur le PDF sans soumettre

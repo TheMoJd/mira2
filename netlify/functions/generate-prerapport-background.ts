@@ -87,6 +87,15 @@ export const handler: Handler = async (event) => {
     const siretInfo = lead.siret ? await enrichSiret(lead.siret) : {};
     const sourceResume = lead.site_url ? await fetchSiteResume(lead.site_url) : undefined;
 
+    // Contrôle qualité : un SIRET pointant un établissement cessé est un signal
+    // de lead douteux + un enrichissement (NAF/effectif/catégorie) potentiellement
+    // périmé. On ne bloque pas (best-effort), on alerte l'ops.
+    if (siretInfo.actif === false) {
+      console.warn(
+        `[generate] lead ${leadId} : SIRET ${lead.siret} = établissement cessé (etat_administratif ≠ A) — enrichissement potentiellement périmé.`,
+      );
+    }
+
     // Assemblage du contexte = fonction pure (testée isolément dans lib/context).
     const ctx = buildGenerationContext(lead, { siret: siretInfo, sourceResume }, new Date());
 
@@ -126,6 +135,8 @@ export const handler: Handler = async (event) => {
       nafLibelle: ctx.nafLibelle,
       nafCode: ctx.nafCode,
       effectifTranche: ctx.effectifTranche,
+      categorieEntreprise: ctx.categorieEntreprise,
+      localisation: ctx.localisation,
       famillesLabels: ctx.famillesDeclarees.map((f) => f.label),
       dateRapport: ctx.dateRapport,
     };

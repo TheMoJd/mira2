@@ -60,7 +60,7 @@ export const preRapport = {
     },
     plaquette: {
       label: 'Plaquette ou support de présentation',
-      hint: 'Optionnel. PDF, PowerPoint ou Word — 10 Mo maximum.',
+      hint: 'Optionnel. PDF, PowerPoint ou Word — 4 Mo maximum.',
     },
     email: {
       label: 'Votre email professionnel',

@@ -28,6 +28,10 @@ export interface ReportRenderContext {
   nafLibelle?: string;
   nafCode?: string;
   effectifTranche?: string;
+  /** Catégorie INSEE (PME / ETI / GE) si connue. */
+  categorieEntreprise?: string;
+  /** Localisation du siège (ex. « Lyon (69) ») si connue. */
+  localisation?: string;
   /** Libellés lisibles des familles déclarées (Q4). */
   famillesLabels: string[];
   /** Date du rapport, déjà formatée (ex. « 22 juin 2026 »). */
@@ -171,7 +175,9 @@ function renderCover(ctx: ReportRenderContext): string {
     ['Entreprise', ctx.nomEntreprise],
     ['Secteur déclaré', ctx.secteurDeclare],
     ['Secteur normalisé (NAF)', ctx.nafLibelle ? `${ctx.nafLibelle}${ctx.nafCode ? ` [${ctx.nafCode}]` : ''}` : undefined],
+    ['Catégorie', ctx.categorieEntreprise],
     ['Effectif', ctx.effectifTranche],
+    ['Localisation', ctx.localisation],
     ['Familles de métiers analysées', ctx.famillesLabels.join(', ') || undefined],
     ['Date du rapport', ctx.dateRapport],
   ];

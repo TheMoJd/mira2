@@ -35,11 +35,26 @@ const EFFECTIF_LABELS: Record<string, string> = {
   '53': '10 000 salariés et plus',
 };
 
+/** Libellés des catégories d'entreprise INSEE (`categorie_entreprise`). */
+const CATEGORIE_LABELS: Record<string, string> = {
+  PME: 'PME',
+  ETI: 'ETI (entreprise de taille intermédiaire)',
+  GE: 'Grande entreprise',
+};
+
 export interface SiretEnrichment {
   nomEntreprise?: string;
   nafCode?: string;
   nafLibelle?: string;
   effectifTranche?: string;
+  /** Catégorie INSEE : « PME » / « ETI … » / « Grande entreprise ». */
+  categorieEntreprise?: string;
+  /** Année de création (ex. « 1955 »). */
+  anneeCreation?: string;
+  /** Localisation du siège (ex. « PARIS (75) »). */
+  localisation?: string;
+  /** Établissement actif (`etat_administratif === 'A'`). Sert au contrôle qualité. */
+  actif?: boolean;
 }
 
 /** `fetch` avec timeout (AbortController). */
@@ -65,12 +80,20 @@ export async function enrichSiret(siret: string): Promise<SiretEnrichment> {
     const r = data.results?.[0];
     if (!r) return {};
 
+    const siege = r.siege as Record<string, unknown> | undefined;
     const nafCode = (r.activite_principale as string | undefined) ?? undefined;
     const nafLibelle =
       (r.libelle_activite_principale as string | undefined) ??
-      ((r.siege as Record<string, unknown> | undefined)?.libelle_activite_principale as string | undefined) ??
+      (siege?.libelle_activite_principale as string | undefined) ??
       undefined;
     const effectifCode = r.tranche_effectif_salarie as string | undefined;
+
+    // Champs de qualification / contexte (best-effort, souvent partiels).
+    const categorieRaw = r.categorie_entreprise as string | undefined;
+    const dateCreation = r.date_creation as string | undefined; // 'YYYY-MM-DD'
+    const commune = siege?.libelle_commune as string | undefined;
+    const dept = siege?.departement as string | undefined;
+    const etat = r.etat_administratif as string | undefined; // 'A' (actif) | 'C' (cessé)
 
     return {
       nomEntreprise:
@@ -78,6 +101,10 @@ export async function enrichSiret(siret: string): Promise<SiretEnrichment> {
       nafCode,
       nafLibelle,
       effectifTranche: effectifCode ? EFFECTIF_LABELS[effectifCode] ?? undefined : undefined,
+      categorieEntreprise: categorieRaw ? CATEGORIE_LABELS[categorieRaw] ?? categorieRaw : undefined,
+      anneeCreation: dateCreation ? dateCreation.slice(0, 4) : undefined,
+      localisation: commune ? `${commune}${dept ? ` (${dept})` : ''}` : undefined,
+      actif: etat ? etat === 'A' : undefined,
     };
   } catch (err) {
     console.warn('[enrich] SIRET indisponible', err);
