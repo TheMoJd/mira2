@@ -18,6 +18,9 @@ import type { Database } from '../../src/types/supabase';
 const MAX_PLAQUETTE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_PLAQUETTE = /\.(pdf|pptx?|docx?)$/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Anti-abus : plafond de soumissions par email sur une fenêtre glissante. */
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 heure
 
 const json = (statusCode: number, payload: unknown) => ({
   statusCode,
@@ -58,6 +61,13 @@ export const handler: Handler = async (event) => {
     }
   }
 
+  // --- Anti-abus : honeypot (champ-piège jamais rempli par un humain) ---
+  // Rempli ⇒ bot. On renvoie un 202 « ok » factice (sans rien insérer) pour ne pas
+  // signaler au bot que le piège a été détecté.
+  if ((fields.company_website_hp ?? '').trim() !== '') {
+    return json(202, { ok: true });
+  }
+
   // --- Validation serveur (on ne fait jamais confiance au client) ---
   const secteurActivite = (fields.secteurActivite ?? '').trim();
   const produitsServices = (fields.produitsServices ?? '').trim();
@@ -87,6 +97,17 @@ export const handler: Handler = async (event) => {
   const supabase = createClient<Database>(supabaseUrl, serviceKey, {
     auth: { persistSession: false },
   });
+
+  // --- Anti-abus : rate-limit par email (fenêtre glissante) ---
+  const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+  const { count, error: countError } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('email', email)
+    .gte('created_at', since);
+  if (!countError && (count ?? 0) >= RATE_LIMIT_MAX) {
+    return fail(429, 'Trop de demandes pour cette adresse. Réessayez dans une heure.');
+  }
 
   // --- Upload plaquette (optionnel) ---
   let plaquettePath: string | null = null;

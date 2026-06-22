@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import type { KeyboardEvent, ClipboardEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FieldLabel, FieldMessage } from './fieldParts';
 
@@ -30,13 +30,20 @@ export default function TagList({
   const [draft, setDraft] = useState('');
   const full = values.length >= max;
 
-  const add = () => {
-    const v = draft.trim().replace(/,$/, '').trim();
-    if (!v) return;
-    const exists = values.some((t) => t.toLowerCase() === v.toLowerCase());
-    if (!exists && !full) onChange([...values, v]);
+  /** Ajoute une OU plusieurs familles (collage multi-lignes ou séparé par , / ;).
+   *  Dédoublonnage insensible à la casse, plafonné à `max`. */
+  const addMany = (text: string) => {
+    const parts = text.split(/[\n,;]+/).map((p) => p.trim()).filter(Boolean);
+    const next = [...values];
+    for (const p of parts) {
+      if (next.length >= max) break;
+      if (!next.some((t) => t.toLowerCase() === p.toLowerCase())) next.push(p);
+    }
+    if (next.length !== values.length) onChange(next);
     setDraft('');
   };
+
+  const add = () => addMany(draft);
 
   const remove = (i: number) => onChange(values.filter((_, idx) => idx !== i));
 
@@ -46,6 +53,16 @@ export default function TagList({
       add();
     } else if (e.key === 'Backspace' && !draft && values.length) {
       remove(values.length - 1);
+    }
+  };
+
+  /** Collage : si le texte contient des séparateurs (retours ligne, virgules,
+   *  points-virgules), on découpe en plusieurs tags d'un coup. */
+  const onPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData('text');
+    if (/[\n,;]/.test(text)) {
+      e.preventDefault();
+      addMany(text);
     }
   };
 
@@ -99,6 +116,7 @@ export default function TagList({
         disabled={full}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={onKeyDown}
+        onPaste={onPaste}
         onBlur={add}
         aria-invalid={!!error}
         className={`pr-field${error ? ' pr-field--error' : ''}`}

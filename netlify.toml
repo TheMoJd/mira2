@@ -6,6 +6,9 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+  # Le binaire Chromium (@sparticuz/chromium) et puppeteer-core ne doivent pas être
+  # inlinés par esbuild : ils embarquent un binaire/des assets résolus au runtime.
+  external_node_modules = ["@sparticuz/chromium", "puppeteer-core"]
 
 # SPA fallback — toutes les routes renvoient vers index.html
 # (utile dès que tu ajouteras du routing côté client)

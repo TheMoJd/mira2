@@ -44,6 +44,8 @@ export default function Wizard() {
   const [errors, setErrors] = useState<PreRapportErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Honeypot anti-bot : champ caché, jamais rempli par un humain.
+  const [honeypot, setHoneypot] = useState('');
 
   const set = <K extends keyof PreRapportForm>(key: K, value: PreRapportForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -73,7 +75,7 @@ export default function Wizard() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const result = await submitPreRapport(form);
+      const result = await submitPreRapport(form, honeypot);
       if (result.ok) setView('success');
       else setSubmitError(result.error ?? 'Une erreur est survenue. Réessayez.');
     } finally {
@@ -228,6 +230,17 @@ export default function Wizard() {
 
         {view === 'form' && (
           <form onSubmit={handlePrimary} noValidate>
+            {/* Honeypot anti-bot : hors flux, invisible et ignoré des humains. */}
+            <input
+              type="text"
+              name="company_website_hp"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+            />
             <AnimatePresence mode="wait" custom={dir}>
               <motion.div
                 key={step}

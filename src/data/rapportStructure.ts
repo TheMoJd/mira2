@@ -154,12 +154,14 @@ export const reportSections: ReportSection[] = [
       'Cœur du rapport : pour chaque famille déclarée (ISCO/ESCO), intensité d’exposition + nature de l’impact (automatisation / augmentation / création) + part de tâches concernées.',
     contentSource: 'mixte',
     allowsStats: true,
-    allowedSources: ['S01', 'S06', 'S10', 'S12', 'S13', 'S14'],
+    // Socle métier + couche France RH (Parlons RH FR1/FR2) : citer les métiers
+    // transformés en France (informatique, relation client…) enrichit le §3.
+    allowedSources: ['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'FR1', 'FR2'],
     statThemes: ['exposition', 'emploi', 'competences'],
     audience: ['rh', 'dirigeant'],
     offre: 'gratuit',
     llmBrief:
-      'Pour chaque famille de métiers : produire une FamilleCharacterisation (exposition faible/modérée/élevée, natures, part de tâches). N’utiliser QUE les sources autorisées. Si aucune ne couvre directement la famille → expositionLevel « à confirmer », confiance « faible », transposableFrance=false, et le signaler. Jamais de score propriétaire ni de chiffre par métier hors stat-bank. Toujours distinguer exposition ≠ suppression.',
+      'Pour chaque famille de métiers : produire une FamilleCharacterisation (exposition faible/modérée/élevée, natures, part de tâches). N’utiliser QUE les sources autorisées. Si aucune ne couvre directement la famille → expositionLevel « à confirmer », confiance « faible », transposableFrance=false, et le signaler. Jamais de score propriétaire ni de chiffre par métier hors stat-bank. Toujours distinguer exposition ≠ suppression. Pour la couche France (Parlons RH), privilégier les données sur les métiers transformés (informatique, relation client…) afin d’ancrer la lecture au contexte français.',
   },
   {
     num: 4,

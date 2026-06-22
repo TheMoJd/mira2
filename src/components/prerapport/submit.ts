@@ -16,7 +16,7 @@ const ENDPOINT = '/.netlify/functions/submit-prerapport';
  * plaquette) et déclenchera la génération asynchrone (Tranche 4). Le front ne
  * touche jamais Supabase en direct : tout transite par la function.
  */
-export async function submitPreRapport(form: PreRapportForm): Promise<SubmitResult> {
+export async function submitPreRapport(form: PreRapportForm, honeypot = ''): Promise<SubmitResult> {
   const fd = new FormData();
   fd.set('secteurActivite', form.secteurActivite);
   fd.set('produitsServices', form.produitsServices);
@@ -26,6 +26,8 @@ export async function submitPreRapport(form: PreRapportForm): Promise<SubmitResu
   fd.set('siret', form.siret.replace(/\s/g, ''));
   fd.set('email', form.email);
   fd.set('consentRgpd', String(form.consentRgpd));
+  // Champ-piège anti-bot (honeypot) : un humain ne le remplit jamais.
+  fd.set('company_website_hp', honeypot);
   if (form.plaquette) fd.set('plaquette', form.plaquette);
   // NB : ne pas fixer le header Content-Type — le navigateur ajoute le boundary.
 
