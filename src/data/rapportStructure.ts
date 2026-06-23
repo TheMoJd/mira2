@@ -138,7 +138,7 @@ export const reportSections: ReportSection[] = [
       'Où en est l’IA : capacités réelles, vague agentique, rythme de diffusion. Cadre la suite sans survendre.',
     contentSource: 'mixte',
     allowsStats: true,
-    allowedSources: ['S02', 'S07', 'S08', 'FR1', 'FR2'],
+    allowedSources: ['S02', 'S07', 'S08', 'S15', 'FR1', 'FR2'],
     statThemes: ['adoption', 'exposition', 'gouvernance'],
     audience: ['dirigeant', 'rh'],
     offre: 'gratuit',
@@ -156,7 +156,11 @@ export const reportSections: ReportSection[] = [
     allowsStats: true,
     // Socle métier + couche France RH (Parlons RH FR1/FR2) : citer les métiers
     // transformés en France (informatique, relation client…) enrichit le §3.
-    allowedSources: ['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'FR1', 'FR2', 'FR5'],
+    // DARES (FR5) volontairement EXCLU ici : c'est de la dynamique d'emploi (tension,
+    // créations), pas une mesure d'exposition à l'IA — et le rapport est antérieur au
+    // boom GenAI (mars 2022). Il reste en §6/§7 (contexte). L'exposition terrain passe
+    // par McKinsey (S15, automatisation des activités physiques).
+    allowedSources: ['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'S15', 'FR1', 'FR2'],
     statThemes: ['exposition', 'emploi', 'competences'],
     audience: ['rh', 'dirigeant'],
     offre: 'gratuit',
@@ -188,7 +192,7 @@ export const reportSections: ReportSection[] = [
       'Collaboration humain-IA, montée des agents, effets de productivité. Replace l’IA comme transformation de l’organisation du travail.',
     contentSource: 'mixte',
     allowsStats: true,
-    allowedSources: ['S04', 'S07'],
+    allowedSources: ['S04', 'S07', 'S15'],
     statThemes: ['productivite', 'adoption'],
     audience: ['dirigeant', 'rh'],
     offre: 'gratuit',
@@ -256,7 +260,7 @@ export const reportSections: ReportSection[] = [
     allowedSources: ['*'],
     offre: 'gratuit',
     fixedText:
-      'Ce pré-rapport applique l’état de l’art à vos familles de métiers à partir d’un socle de 11 sources de référence (ILO, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie/DARES). Points de méthode : chaque affirmation porte sa source, son type (recherche/commercial) et son horizon ; on distingue exposition et suppression (l’augmentation domine) ; le mapping métiers→ISCO affiche un niveau de confiance corrigeable ; certaines données mondiales/US ne sont pas directement transposables à une PME française et sont signalées comme telles. Socle daté 2023-2026, versionné. Ce document est indicatif et ne constitue pas un diagnostic individuel. [Mentions RGPD & information à finaliser — placeholders Victor / Jean-Marie.]',
+      'Ce pré-rapport applique l’état de l’art à vos familles de métiers à partir d’un socle de sources de référence (ILO, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC, McKinsey), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie/DARES). Points de méthode : chaque affirmation porte sa source, son type (recherche/commercial) et son horizon ; on distingue exposition et suppression (l’augmentation domine) ; le mapping métiers→ISCO affiche un niveau de confiance corrigeable ; certaines données mondiales/US ne sont pas directement transposables à une PME française et sont signalées comme telles. Socle daté 2023-2026, versionné. Ce document est indicatif et ne constitue pas un diagnostic individuel. [Mentions RGPD & information à finaliser — placeholders Victor / Jean-Marie.]',
   },
 ];
 

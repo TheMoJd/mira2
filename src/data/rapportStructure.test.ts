@@ -36,8 +36,9 @@ describe('rapportStructure — blueprint §0→§9', () => {
     expect(statsForSection(perimetre)).toEqual([]);
   });
 
-  it('le cœur §3 (familles-metiers) cible les sources métier du socle + la couche France RH + DARES terrain', () => {
+  it('le cœur §3 (familles-metiers) cible les sources métier du socle (+ McKinsey terrain S15, + couche France RH) ; DARES exclu (dynamique d’emploi, pas exposition)', () => {
     const s3 = reportSections.find((s) => s.id === 'familles-metiers')!;
-    expect(s3.allowedSources).toEqual(['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'FR1', 'FR2', 'FR5']);
+    expect(s3.allowedSources).toEqual(['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'S15', 'FR1', 'FR2']);
+    expect(s3.allowedSources).not.toContain('FR5'); // DARES = contexte (§6/§7), pas exposition
   });
 });

@@ -211,13 +211,25 @@ const NEOBRAIN: StatSource = {
   year: 2024,
 };
 const DARES_2030: StatSource = {
-  // Officiel, France, occupation-level (nomenclature FAP → ISCO) : couvre les
-  // métiers de terrain / soin que le socle mondial (exposition GenAI) ignore.
+  // Officiel, France, occupation-level (nomenclature FAP → ISCO). ⚠️ Mars 2022,
+  // ANTÉRIEUR au boom IA générative (ChatGPT nov. 2022) : mesure la DYNAMIQUE
+  // d'emploi (tension, créations, départs), PAS l'exposition à l'IA. Réservé au
+  // contexte (§6 facteur humain, §7 repère sectoriel) — exclu de l'exposition §3.
   sourceId: 'FR5',
   inSocle: false,
   report: 'France Stratégie / DARES — Les métiers en 2030 (rapport 2022)',
   org: 'France Stratégie / DARES',
   year: 2022,
+};
+const MCKINSEY_2017: StatSource = {
+  // Potentiel d'automatisation TECHNIQUE (robotique + IA), pas exposition à l'IA
+  // générative. Pertinent pour le travail PHYSIQUE/manuel que le socle GenAI couvre
+  // mal. Ancien (2017) mais l'automatisation physique évolue lentement → reste valable.
+  sourceId: 'S15',
+  inSocle: true,
+  report: 'McKinsey Global Institute — Jobs lost, jobs gained (2017)',
+  org: 'McKinsey Global Institute',
+  year: 2017,
 };
 
 // ---------------------------------------------------------------------------
@@ -1327,6 +1339,49 @@ export const statbank: StatEntry[] = [
     provenance: 'primaire',
     projection: true,
     isco: ['52'],
+  },
+
+  // === S15 — McKinsey Global Institute, Jobs lost, jobs gained (2017) : automatisation TECHNIQUE ===
+  // Couvre l'exposition du travail PHYSIQUE/manuel (angle robotique, ≠ IA générative).
+  {
+    id: 'mckinsey-2017-physique-previsible-90',
+    value: 90,
+    unit: '%',
+    claim:
+      'Les métiers à forte composante d’activités physiques répétitives en environnement prévisible (production, conduite de machines, manutention) ont un potentiel d’automatisation technique élevé — supérieur à 90 % pour certains (soudeurs en usine) — quand les métiers d’interaction (relation client) restent sous 30 %. C’est un potentiel technique à horizon long (robotique), pas une suppression immédiate.',
+    verbatim:
+      'occupations that have a large proportion of physical activities in predictable environments such as factory welders have a technical automation potential above 90 percent, whereas for customer service representatives that potential is less than 30 percent',
+    theme: 'exposition',
+    scope: 'monde',
+    source: { ...MCKINSEY_2017, page: 'p.26' },
+    provenance: 'primaire',
+    isco: ['81', '82', '93'],
+  },
+  {
+    id: 'mckinsey-2017-occupations-30pct-60',
+    value: 60,
+    unit: '%',
+    claim:
+      'Peu de métiers sont entièrement automatisables, mais 60 % des métiers ont au moins 30 % de leurs activités techniquement automatisables : l’automatisation transforme surtout des tâches, elle ne supprime pas des métiers entiers.',
+    verbatim:
+      'While few occupations are fully automatable, 60 percent of all occupations have at least 30 percent technically automatable activities',
+    theme: 'emploi',
+    scope: 'monde',
+    source: { ...MCKINSEY_2017, page: 'Synthèse' },
+    provenance: 'primaire',
+  },
+  {
+    id: 'mckinsey-2017-activites-moitie-50',
+    value: 50,
+    unit: '%',
+    claim:
+      'Environ la moitié des activités de travail dans le monde ont le potentiel technique d’être automatisées avec les technologies déjà démontrées — mais la part réellement automatisée d’ici 2030 sera bien plus faible.',
+    verbatim:
+      'about half of all work activities globally have the technical potential to be automated by adapting currently demonstrated technologies',
+    theme: 'exposition',
+    scope: 'monde',
+    source: { ...MCKINSEY_2017, page: 'Synthèse' },
+    provenance: 'primaire',
   },
 ];
 
