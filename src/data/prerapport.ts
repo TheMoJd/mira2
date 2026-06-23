@@ -51,7 +51,7 @@ export const preRapport = {
     famillesMetiers: {
       label: 'Quelles sont les 3 à 6 grandes familles de métiers indispensables à votre activité aujourd’hui ?',
       placeholder: 'Ex. : Conduite / livraison',
-      hint: 'Saisissez une famille puis appuyez sur Entrée. 3 à 6 idéalement.',
+      hint: 'Sélectionnez les familles concernées (3 à 6 idéalement). Vous pouvez en ajouter une qui manque.',
     },
     siteUrl: {
       label: 'Site internet',

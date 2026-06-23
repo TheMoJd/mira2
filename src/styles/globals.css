@@ -179,6 +179,63 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 }
 .pr-dropzone:hover { border-color: var(--violet-300); background: var(--lavender); }
 
+/* Familles de métiers — chips de sélection guidée (FamilyPicker). */
+.fam-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* cible tactile confortable */
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--ink-1);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.fam-chip:hover:not(:disabled) { border-color: var(--violet-300); background: var(--lavender); }
+.fam-chip:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+.fam-chip--on {
+  background: var(--violet-100);
+  border-color: var(--violet-300);
+  color: var(--violet-700);
+  font-weight: 600;
+}
+.fam-chip:disabled { opacity: .42; cursor: not-allowed; }
+.fam-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -6px -8px -6px 8px; /* agrandit la zone de clic sans gonfler le chip */
+  border: none;
+  border-radius: 50%;
+  background: rgba(53, 19, 125, .12);
+  color: var(--violet-700);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.fam-chip__remove:hover { background: rgba(53, 19, 125, .22); }
+.fam-add {
+  flex-shrink: 0;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--violet-700);
+  background: var(--violet-100);
+  border: 1px solid var(--violet-300);
+  border-radius: var(--r-sm);
+  padding: 0 16px;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.fam-add:hover:not(:disabled) { background: var(--lavender); }
+.fam-add:disabled { opacity: .45; cursor: not-allowed; }
+
 @media (max-width: 640px) {
   .pr-audiences { grid-template-columns: 1fr !important; }
 }

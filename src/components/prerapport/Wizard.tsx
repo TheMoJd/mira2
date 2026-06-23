@@ -10,7 +10,7 @@ import { submitPreRapport } from './submit';
 import WizardButton from './WizardButton';
 import TextField from './fields/TextField';
 import TextArea from './fields/TextArea';
-import TagList from './fields/TagList';
+import FamilyPicker from './fields/FamilyPicker';
 import FileField from './fields/FileField';
 import Checkbox from './fields/Checkbox';
 
@@ -139,15 +139,13 @@ export default function Wizard() {
       case 2:
         return (
           <StepShell title={meta.title} subtitle={meta.subtitle}>
-            <TagList
+            <FamilyPicker
               label={f.famillesMetiers.label}
-              placeholder={f.famillesMetiers.placeholder}
               hint={f.famillesMetiers.hint}
               values={form.famillesMetiers}
               onChange={(v) => set('famillesMetiers', v)}
               error={errors.famillesMetiers}
               max={6}
-              autoFocus
             />
           </StepShell>
         );

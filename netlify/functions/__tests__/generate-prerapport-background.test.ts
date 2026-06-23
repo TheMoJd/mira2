@@ -55,13 +55,13 @@ vi.mock('@supabase/supabase-js', () => ({
 }));
 
 // PDF (Chromium) et email (Resend) mockés : on teste l'orchestration, pas les binaires.
-vi.mock('./lib/pdf', () => ({ htmlToPdf: vi.fn(async () => Buffer.from('%PDF-test')) }));
-vi.mock('./lib/email', () => ({
+vi.mock('../lib/pdf', () => ({ htmlToPdf: vi.fn(async () => Buffer.from('%PDF-test')) }));
+vi.mock('../lib/email', () => ({
   sendReportEmail: vi.fn(async () => 'skipped'),
   notifyFailure: vi.fn(async () => {}),
 }));
 
-import { handler } from './generate-prerapport-background';
+import { handler } from '../generate-prerapport-background';
 
 const REPORT = {
   sections: [
