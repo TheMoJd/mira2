@@ -236,8 +236,32 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 .fam-add:hover:not(:disabled) { background: var(--lavender); }
 .fam-add:disabled { opacity: .45; cursor: not-allowed; }
 
+/* Page de résultat (/rapport/:leadId) — spinner d'attente + bouton primaire. */
+.mira-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--lavender);
+  border-top-color: var(--violet);
+  animation: mira-spin 0.8s linear infinite;
+}
+@keyframes mira-spin { to { transform: rotate(360deg); } }
+.mira-btn-primary {
+  display: inline-block;
+  font-family: var(--sans);
+  color: #fff;
+  background: var(--violet);
+  border: 1px solid var(--violet);
+  transition: background .15s;
+}
+.mira-btn-primary:hover { background: var(--violet-700); }
+
 @media (max-width: 640px) {
   .pr-audiences { grid-template-columns: 1fr !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mira-spinner { animation-duration: 2s; }
 }
 
 /* ============================================================

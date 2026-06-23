@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Landing from './pages/Landing';
 import PreRapport from './pages/PreRapport';
 import Grain from './components/fx/Grain';
 import { scrollToTop } from './lib/scroll';
+
+// Chargé à la demande : la page de résultat embarque la stat-bank + le rendu du
+// rapport, inutiles sur la landing.
+const ReportView = lazy(() => import('./pages/ReportView'));
 
 /** Remet la vue en haut à chaque changement de route (sinon on hériterait du
  *  scroll de la page précédente). */
@@ -24,6 +28,14 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/pre-rapport" element={<PreRapport />} />
+        <Route
+          path="/rapport/:leadId"
+          element={
+            <Suspense fallback={null}>
+              <ReportView />
+            </Suspense>
+          }
+        />
         {/* Toute route inconnue retombe sur la landing (le fallback SPA Netlify
             sert déjà index.html, ce Navigate gère le cas côté client). */}
         <Route path="*" element={<Navigate to="/" replace />} />

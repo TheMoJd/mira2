@@ -1,0 +1,147 @@
+{
+  "sections": [
+    {
+      "id": "perimetre",
+      "titre": "Périmètre",
+      "contenu": [
+        {
+          "intertitre": null,
+          "paragraphes": [
+            "Entreprise analysée : DOCTOLIB, ETI de 1 000 à 1 999 salariés, siège à Levallois-Perret (92), créée en 2013.",
+            "Activité déclarée : éditeur de logiciels de santé (e-santé), plateforme de prise de rendez-vous médicaux en ligne, téléconsultation, logiciel SaaS de gestion d’agenda et logiciel médical pour praticiens, établissements de santé et patients.",
+            "Unité d’analyse retenue : familles de métiers déclarées selon la maille ISCO-08 — Tech, informatique & data (ISCO 25), Relation client & accueil (ISCO 42), Gestion, finance & administration (ISCO 24).",
+            "Date du rapport : 23 juin 2026. Ce pré-rapport applique un socle de sources externes publiques aux familles de métiers déclarées ; il ne constitue pas un audit interne de l’entreprise."
+          ]
+        }
+      ],
+      "sources_citees": [],
+      "familles": null
+    },
+    {
+      "id": "synthese-strategique",
+      "titre": "Synthèse stratégique",
+      "contenu": [
+        {
+          "intertitre": null,
+          "paragraphes": [
+            "Pour vos familles de métiers, l’IA doit d’abord être lue comme une transformation du travail plutôt que comme une substitution simple des emplois. Les effets les plus visibles portent sur l’automatisation de certaines tâches répétitives, l’assistance à la production de contenu, à l’analyse et au traitement des demandes, ainsi que l’émergence de nouveaux besoins de supervision, de fiabilisation et de gouvernance.",
+            "Les trois familles déclarées apparaissent exposées, mais pas de la même manière : l’informatique et la data sont au cœur de la transformation ; la relation client est surtout reconfigurée par l’assistance et l’outillage ; la gestion et l’administration concentrent une part importante de tâches standardisables, avec un enjeu fort de qualité, de conformité et de contrôle humain.",
+            "Pour les RH, l’enjeu prioritaire est l’employabilité : anticiper les compétences qui montent, organiser la formation, et préparer la réforme des entretiens professionnels en objectivant les évolutions de tâches par famille de métiers. Pour les dirigeants, le sujet est tout autant la performance durable que la maîtrise des risques : confidentialité, fiabilité des réponses, traçabilité et conformité réglementaire.",
+            "Le point d’attention n’est donc pas seulement “faut-il utiliser l’IA ?”, mais “sur quelles tâches, avec quel niveau de contrôle, et avec quels effets sur les compétences, l’organisation et la qualité de service ?”."
+          ]
+        }
+      ],
+      "sources_citees": [],
+      "familles": null
+    },
+    {
+      "id": "contexte",
+      "titre": "Le contexte en bref",
+      "contenu": [
+        {
+          "intertitre": "Des capacités qui progressent, sans équivalence humaine",
+          "paragraphes": [
+            "Les systèmes d’IA les plus avancés se situent encore entre les niveaux 2 et 3 sur 5 des échelles de capacités de l’OCDE, ce qui signifie qu’ils restent loin d’une équivalence humaine générale (OCDE, 2025). Les grands modèles de langage atteignent le seuil inférieur du niveau 3 pour le langage, mais restent au niveau 2 pour l’interaction sociale (OCDE, 2025).",
+            "Autrement dit, l’IA devient très utile sur des tâches de langage, de synthèse, de recherche, de rédaction ou d’assistance, mais elle ne remplace pas un jugement humain complet, notamment dès qu’il faut arbitrer, contextualiser finement ou interagir dans des situations sensibles."
+          ]
+        },
+        {
+          "intertitre": "Une diffusion rapide, portée par la baisse des coûts",
+          "paragraphes": [
+            "La diffusion s’accélère fortement : l’IA générative a atteint environ 53 % d’adoption en trois ans, plus vite que l’ordinateur personnel ou internet (Stanford HAI, 2026). En 2025, 88 % des organisations interrogées déclarent utiliser l’IA, et 70 % dans au moins une fonction métier (Stanford HAI, 2026).",
+            "Cette accélération est soutenue par la baisse des coûts : le coût moyen de l’inférence IA par jeton a été divisé par 90 en 18 mois, source d’origine Epoch AI, citée par CIANum (2025). Ces données mondiales ne sont pas directement transposables à une PME française, mais elles éclairent bien la dynamique de fond."
+          ]
+        },
+        {
+          "intertitre": "En France, les usages individuels devancent encore l’intégration collective",
+          "paragraphes": [
+            "Côté France, 83 % des professionnels RH déclarent déjà utiliser l’IA à titre individuel, mais seuls 37 % évoluent dans un service où au moins un outil intégrant l’IA a été déployé (Parlons RH, 2025). Ce décalage entre initiative individuelle et cadre collectif est un point de vigilance classique pour les entreprises.",
+            "La perception reste néanmoins largement positive : 82 % des professionnels RH voient l’IA comme une opportunité pour la fonction RH en 2025, et 81 % encore en 2026 (Parlons RH, 2025 ; Parlons RH, 2026). Dans le même temps, 80 % redoutent les conséquences de l’IA sur la confidentialité et la vie privée (Parlons RH, 2025).",
+            "La structuration progresse, mais reste incomplète : 65 % des entreprises ont déployé des formations à l’IA dans le département RH en 2026 (Parlons RH, 2026), alors que seules 34 % des organisations disposent d’une politique encadrant l’IA (Parlons RH, 2026). À l’échelle européenne, le cadre réglementaire devient concret : en cas de non-conformité à l’AI Act, les sanctions peuvent atteindre 30 millions d’euros ou 7 % du chiffre d’affaires annuel mondial (CIANum, 2025)."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "ocde-2025-capability-levels-2-3",
+        "ocde-2025-langage-niveau-3",
+        "stanford-2026-genai-adoption-53",
+        "stanford-2026-orgs-adoption-88",
+        "cianum-2025-cout-inference-90x",
+        "parlonsrh-2025-usage-individuel-83",
+        "parlonsrh-2025-service-rh-deploye-37",
+        "parlonsrh-2025-opportunite-82",
+        "parlonsrh-2026-opportunite-81",
+        "parlonsrh-2025-risque-confidentialite-80",
+        "parlonsrh-2026-formations-ia-drh-65",
+        "parlonsrh-2026-politique-encadrant-ia-34",
+        "cianum-2025-ai-act-sanctions"
+      ],
+      "familles": null
+    },
+    {
+      "id": "familles-metiers",
+      "titre": "Vos familles de métiers face à l’IA",
+      "contenu": [
+        {
+          "intertitre": "Lecture d’ensemble",
+          "paragraphes": [
+            "Les trois familles déclarées sont exposées à l’IA, mais avec des mécanismes différents. Le point commun est que la transformation porte d’abord sur les tâches : à l’échelle mondiale, 60 % des métiers ont au moins 30 % de leurs activités techniquement automatisables, sans être pour autant entièrement automatisables (McKinsey Global Institute, 2017).",
+            "La dynamique attendue est majoritairement une combinaison entre automatisation partielle et augmentation du travail humain. Aujourd’hui, 47 % des tâches sont réalisées par des humains seuls, 22 % par la technologie et 30 % en combinaison ; d’ici 2030, cette répartition pourrait devenir presque équilibrée entre humains seuls, technologie seule et combinaison humain-machine (World Economic Forum, 2025).",
+            "Pour une entreprise de logiciels de santé, cette lecture doit être articulée avec des exigences de fiabilité, de confidentialité et de conformité : l’exposition est réelle, mais le besoin de supervision humaine reste central."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "mckinsey-2017-occupations-30pct-60",
+        "wef-2025-tasks-humans-alone-47",
+        "wef-2025-tasks-2030-humans-33",
+        "parlonsrh-2025-marketing-transforme-96",
+        "ilo-2023-clerical-exposure-82",
+        "mit-2025-iceberg-hidden-5x",
+        "ilo-2023-augmentation-dominante-13",
+        "indeed-2025-skills-fully-replaceable-1",
+        "pwc-2025-headcount-82"
+      ],
+      "familles": [
+        {
+          "famille": "Tech, informatique & data (ISCO 25)",
+          "exposition": "élevée",
+          "natures": [
+            "automatisation",
+            "augmentation",
+            "création"
+          ],
+          "part_taches": null,
+          "confiance": "élevée",
+          "transposable_france": true,
+          "explication": "Cette famille est la plus directement concernée parmi vos métiers déclarés : 93 % des professionnels RH citent l’informatique parmi les métiers les plus transformés par l’IA en France (Parlons RH, 2025). L’impact attendu combine automatisation de certaines tâches de production ou de support, augmentation des activités d’analyse, de développement et de contrôle, ainsi que création de besoins nouveaux autour de l’intégration, de la gouvernance et de la fiabilisation. Les chiffres mondiaux indiquent en outre que l’IA reconfigure les emplois plus qu’elle ne les supprime massivement : 82 % des dirigeants déclarent qu’elle a augmenté leurs effectifs ou n’a entraîné aucun changement (PwC, 2025), donnée mondiale non directement transposable à une PME française."
+        },
+        {
+          "famille": "Relation client & accueil (ISCO 42)",
+          "exposition": "modérée",
+          "natures": [
+            "automatisation",
+            "augmentation"
+          ],
+          "part_taches": "Potentiel technique sous 30 % pour les métiers d’interaction selon McKinsey Global Institute (2017).",
+          "confiance": "moyenne",
+          "transposable_france": true,
+          "explication": "La relation client figure parmi les métiers les plus transformés selon les professionnels RH en France, citée à 79 % (Parlons RH, 2025). Pour autant, les métiers d’interaction restent moins automatisables que les activités répétitives et prévisibles : leur potentiel technique reste sous 30 % selon McKinsey Global Institute (2017). La transformation attendue porte donc surtout sur l’assistance aux conseillers, le traitement préparatoire des demandes et la rédaction, plus que sur un remplacement complet ; cette lecture est cohérente avec le constat de l’OIT selon lequel l’augmentation domine globalement sur le remplacement (OIT, 2023)."
+        },
+        {
+          "famille": "Gestion, finance & administration (ISCO 24)",
+          "exposition": "élevée",
+          "natures": [
+            "automatisation",
+            "augmentation",
+            "création"
+          ],
+          "part_taches": "82 % des tâches administratives sont exposées à un niveau supérieur à la moyenne, dont 24 % fortement, selon l’OIT (2023).",
+          "confiance": "moyenne",
+          "transposable_france": false,
+          "explication": "Cette famille appelle une vigilance particulière sur les tâches administratives et de gestion structurées. L’OIT indique que le travail administratif est le plus exposé à l’IA générative : 82 % de ses tâches le sont à un niveau supérieur à la moyenne, dont 24 % fortement (OIT, 2023). Une étude MIT ajoute que l’exposition réelle est cinq fois plus grande que l’adoption visible, notamment dans l’administratif, la finance et les services professionnels (MIT, 2025) ; cette donnée américaine n’est pas directement transposable à une PME française, mais elle renforce le signal d’une transformation forte des tâches. L’effet attendu reste toutefois majoritairement celui de l’assistance et de la reconfiguration des processus, et non d’une disparition pure et simple des métiers."
+        }
+      ]
+    }
+  ]
+}

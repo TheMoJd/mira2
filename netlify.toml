@@ -2,6 +2,13 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  # OPENAI_MODEL est un identifiant de modèle public (ex. « gpt-5.4 »), pas un secret.
+  # Il apparaît légitimement dans docs/samples/README.md (provenance des exemples), ce
+  # qui faisait échouer le secrets scanning Netlify. On l'exclut du scan ; les vrais
+  # secrets (OPENAI_API_KEY, SUPABASE_SERVICE_ROLE_KEY) restent scannés.
+  SECRETS_SCAN_OMIT_KEYS = "OPENAI_MODEL"
+
 # Netlify Functions (Tranche 2+) — bundle esbuild, dossier dédié.
 [functions]
   directory = "netlify/functions"

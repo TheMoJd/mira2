@@ -15,6 +15,7 @@
  */
 
 import type { StatEntry } from './statbank';
+import { statsForFamille } from './statbank';
 import { reportSections, statsForSection } from './rapportStructure';
 
 export const SYSTEM_PROMPT = `Tu es le moteur de rédaction du **pré-rapport MIRA**, un diagnostic gratuit qui éclaire les DRH et les dirigeants de PME/ETI françaises sur l'impact de l'intelligence artificielle sur leurs familles de métiers.
@@ -174,7 +175,32 @@ CONTENU_SITE_NON_VERIFIE>>>`
           ? `Statistiques autorisées dans cette section :\n${stats.map(renderStat).join('\n')}`
           : `Statistiques autorisées dans cette section : aucune disponible — reste qualitatif.`
         : `Cette section ne cite pas de statistique.`;
-      return [header, intent, brief, fixed, statsBlock].filter(Boolean).join('\n');
+
+      // §3 uniquement : rattachement ISCO « stat → famille déclarée ». Les sources
+      // DIRECTES (taggées sur l'ISCO de la famille) sont prioritaires DANS la
+      // caractérisation de CETTE famille — c'est ce qui ancre les verdicts de terrain
+      // (physique, manutention…) en §3 plutôt que de les laisser glisser vers §5.
+      // Ça reste non coercitif : ces stats sont déjà en grille ; les stats générales
+      // restent mobilisables en complément.
+      let familleBlock: string | null = null;
+      if (section.id === 'familles-metiers') {
+        const allowedIds = new Set(stats.map((s) => s.id));
+        const lines = ctx.famillesDeclarees.map((fam) => {
+          const codes = fam.isco ?? [];
+          const tag = codes.length ? ` (ISCO ${codes.join(', ')})` : '';
+          const direct = codes.length
+            ? statsForFamille(codes).filter((s) => allowedIds.has(s.id))
+            : [];
+          return direct.length
+            ? `  - ${fam.label}${tag} → source(s) DIRECTE(S) à citer EN PRIORITÉ dans l'explication de cette famille : ${direct.map((s) => `[${s.id}]`).join(' ')}`
+            : `  - ${fam.label}${tag} → aucune source directe : prudence ; si aucune stat générale ne s'applique vraiment, exposition « à confirmer » / confiance « faible ».`;
+        });
+        familleBlock =
+          'Rattachement par famille déclarée. Quand une famille dispose d’une source DIRECTE ci-dessous, tu l’utilises en priorité pour caractériser CETTE famille dans le tableau §3 (et tu la reportes dans `sources_citees`), sauf si elle est manifestement hors sujet ; les stats générales autorisées plus haut viennent en complément, pas en remplacement :\n' +
+          lines.join('\n');
+      }
+
+      return [header, intent, brief, fixed, statsBlock, familleBlock].filter(Boolean).join('\n');
     })
     .join('\n\n');
 

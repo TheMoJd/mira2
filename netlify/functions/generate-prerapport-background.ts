@@ -20,6 +20,7 @@ import type { Database } from '../../src/types/supabase';
 import { SYSTEM_PROMPT, buildUserMessage } from '../../src/data/reportPrompt';
 import { RESPONSE_FORMAT, parseReport } from '../../src/data/reportSchema';
 import type { PreRapportOutput } from '../../src/data/reportSchema';
+import { enforceSectionGrid } from '../../src/data/rapportStructure';
 import { statbank } from '../../src/data/statbank';
 import { renderReportHtml } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
@@ -121,7 +122,9 @@ export const handler: Handler = async (event) => {
 
     const raw = completion.choices[0]?.message?.content;
     if (!raw) throw new Error('Réponse OpenAI vide');
-    const report = parseReport(raw);
+    // Garde-fou grille : retire toute citation hors de la section autorisée (le LLM
+    // peut déraper ; la grille n'est sinon imposée que par le prompt).
+    const report = enforceSectionGrid(parseReport(raw));
 
     await supabase
       .from('leads')
