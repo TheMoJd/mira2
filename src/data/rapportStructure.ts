@@ -156,7 +156,7 @@ export const reportSections: ReportSection[] = [
     allowsStats: true,
     // Socle métier + couche France RH (Parlons RH FR1/FR2) : citer les métiers
     // transformés en France (informatique, relation client…) enrichit le §3.
-    allowedSources: ['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'FR1', 'FR2'],
+    allowedSources: ['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'FR1', 'FR2', 'FR5'],
     statThemes: ['exposition', 'emploi', 'competences'],
     audience: ['rh', 'dirigeant'],
     offre: 'gratuit',
@@ -204,7 +204,7 @@ export const reportSections: ReportSection[] = [
       'Profils les plus exposés, enjeux d’équité et d’accompagnement. Ancre la dimension humaine et la conduite du changement.',
     contentSource: 'mixte',
     allowsStats: true,
-    allowedSources: ['S01', 'S14'],
+    allowedSources: ['S01', 'S14', 'FR5'],
     statThemes: ['emploi', 'exposition', 'gouvernance'],
     audience: ['rh', 'dirigeant'],
     offre: 'gratuit',
@@ -220,7 +220,7 @@ export const reportSections: ReportSection[] = [
       'Position du secteur sur l’adoption de l’IA (benchmark issu des sources, jamais auto-évaluation de l’entreprise).',
     contentSource: 'mixte',
     allowsStats: true,
-    allowedSources: ['S02', 'S05', 'S06', 'FR1', 'FR2', 'FR3', 'FR4'],
+    allowedSources: ['S02', 'S05', 'S06', 'FR1', 'FR2', 'FR3', 'FR4', 'FR5'],
     statThemes: ['adoption', 'exposition'],
     audience: ['dirigeant', 'rh'],
     offre: 'gratuit',
@@ -256,7 +256,7 @@ export const reportSections: ReportSection[] = [
     allowedSources: ['*'],
     offre: 'gratuit',
     fixedText:
-      'Ce pré-rapport applique l’état de l’art à vos familles de métiers à partir d’un socle de 11 sources de référence (ILO, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria). Points de méthode : chaque affirmation porte sa source, son type (recherche/commercial) et son horizon ; on distingue exposition et suppression (l’augmentation domine) ; le mapping métiers→ISCO affiche un niveau de confiance corrigeable ; certaines données mondiales/US ne sont pas directement transposables à une PME française et sont signalées comme telles. Socle daté 2023-2026, versionné. Ce document est indicatif et ne constitue pas un diagnostic individuel. [Mentions RGPD & information à finaliser — placeholders Victor / Jean-Marie.]',
+      'Ce pré-rapport applique l’état de l’art à vos familles de métiers à partir d’un socle de 11 sources de référence (ILO, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie/DARES). Points de méthode : chaque affirmation porte sa source, son type (recherche/commercial) et son horizon ; on distingue exposition et suppression (l’augmentation domine) ; le mapping métiers→ISCO affiche un niveau de confiance corrigeable ; certaines données mondiales/US ne sont pas directement transposables à une PME française et sont signalées comme telles. Socle daté 2023-2026, versionné. Ce document est indicatif et ne constitue pas un diagnostic individuel. [Mentions RGPD & information à finaliser — placeholders Victor / Jean-Marie.]',
   },
 ];
 
@@ -277,4 +277,27 @@ export const statsForSection = (section: ReportSection): StatEntry[] => {
   if (section.allowedSources.includes('*')) return statbank;
   const allowed = new Set(section.allowedSources);
   return statbank.filter((s) => allowed.has(s.source.sourceId));
+};
+
+/** Forme minimale d'un rapport pour le filtrage des citations. */
+export interface CitingReport {
+  sections: { id: string; sources_citees: string[] }[];
+}
+
+/**
+ * Garde-fou de **défense en profondeur** sur la grille « section → sources ».
+ * Le respect de la grille n'est imposé qu'au LLM (par le prompt) ; un modèle peut
+ * occasionnellement citer une statistique hors de sa section autorisée. Ce filtre
+ * la retire côté code : pour chaque section, `sources_citees` est réduit aux stats
+ * réellement autorisées (`statsForSection`). Mute le rapport en place et le renvoie.
+ */
+export const enforceSectionGrid = <T extends CitingReport>(report: T): T => {
+  const allowedById = new Map(
+    reportSections.map((s) => [s.id, new Set(statsForSection(s).map((x) => x.id))]),
+  );
+  for (const sec of report.sections) {
+    const allowed = allowedById.get(sec.id) ?? new Set<string>();
+    sec.sources_citees = sec.sources_citees.filter((id) => allowed.has(id));
+  }
+  return report;
 };

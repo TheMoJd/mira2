@@ -36,8 +36,8 @@ describe('rapportStructure — blueprint §0→§9', () => {
     expect(statsForSection(perimetre)).toEqual([]);
   });
 
-  it('le cœur §3 (familles-metiers) cible les sources métier du socle + la couche France RH', () => {
+  it('le cœur §3 (familles-metiers) cible les sources métier du socle + la couche France RH + DARES terrain', () => {
     const s3 = reportSections.find((s) => s.id === 'familles-metiers')!;
-    expect(s3.allowedSources).toEqual(['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'FR1', 'FR2']);
+    expect(s3.allowedSources).toEqual(['S01', 'S06', 'S10', 'S12', 'S13', 'S14', 'FR1', 'FR2', 'FR5']);
   });
 });

@@ -86,6 +86,13 @@ export interface StatEntry {
   provenance: StatProvenance;
   /** true = projection / prospective (à formuler au conditionnel). */
   projection?: boolean;
+  /**
+   * Sous-grands-groupes ISCO-08 (codes à 2 chiffres) que la statistique éclaire
+   * **directement** (cf. `famillesMetiers.ts`). Absent = donnée macro/transversale
+   * (s'applique à toute famille, sans rattachement spécifique). Sert au
+   * rattachement « stat → famille de métiers » en §3 (`statsForFamille`).
+   */
+  isco?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -202,6 +209,15 @@ const NEOBRAIN: StatSource = {
   report: 'Neobrain × Sopra Steria — L’IA et les métiers',
   org: 'Neobrain × Sopra Steria',
   year: 2024,
+};
+const DARES_2030: StatSource = {
+  // Officiel, France, occupation-level (nomenclature FAP → ISCO) : couvre les
+  // métiers de terrain / soin que le socle mondial (exposition GenAI) ignore.
+  sourceId: 'FR5',
+  inSocle: false,
+  report: 'France Stratégie / DARES — Les métiers en 2030 (rapport 2022)',
+  org: 'France Stratégie / DARES',
+  year: 2022,
 };
 
 // ---------------------------------------------------------------------------
@@ -529,6 +545,7 @@ export const statbank: StatEntry[] = [
     scope: 'france',
     source: { ...PARLONS_RH, page: 'p.38' },
     provenance: 'primaire',
+    isco: ['24', '25', '42'], // gestion/marketing, tech/informatique, relation client
   },
   // -- PARLONS RH : chiffres tiers cités (à recréditer) --
   {
@@ -652,6 +669,7 @@ export const statbank: StatEntry[] = [
     scope: 'monde',
     source: { ...ILO, page: 'p.24' },
     provenance: 'primaire',
+    isco: ['41', '42', '43', '44'], // métiers administratifs & support (clerical)
   },
   {
     id: 'ilo-2023-augmentation-dominante-13',
@@ -936,6 +954,7 @@ export const statbank: StatEntry[] = [
     scope: 'usa',
     source: { ...MIT_ICEBERG, page: 'p.9' },
     provenance: 'primaire',
+    isco: ['24', '41', '43'], // administratif, finance, services professionnels
   },
   {
     id: 'mit-2025-tasks-ai-can-do-16',
@@ -1229,6 +1248,86 @@ export const statbank: StatEntry[] = [
     source: { ...OCDE_WORKERS, page: 'p.39', originalSource: 'OCDE, 2019' },
     provenance: 'secondaire',
   },
+
+  // === FR5 — France Stratégie / DARES, Les métiers en 2030 (2022) : métiers de terrain / soin ===
+  // Couvre des familles (ISCO 91, 53, 93, 71/74, 52) que le socle mondial (exposition
+  // à l'IA générative) laisse en « à confirmer ». Angle : dynamique d'emploi (tension,
+  // créations, départs) → pour ces métiers l'enjeu est le renouvellement/l'attractivité,
+  // pas la suppression par l'IA.
+  {
+    id: 'dares-2030-agents-entretien-490k',
+    value: 490000,
+    unit: '',
+    claim:
+      'Métier de terrain en forte tension de recrutement : 490 000 postes seraient à pourvoir chez les agents d’entretien entre 2019 et 2030, dont 460 000 dus aux départs en fin de carrière — l’enjeu est le renouvellement, pas la suppression.',
+    verbatim:
+      'entre 2019 et 2030, 490 000 postes seraient à pourvoir chez les agents d’entretien, dont 460 000 dus aux départs en fin de carrière',
+    theme: 'emploi',
+    scope: 'france',
+    source: { ...DARES_2030, page: 'Figure A' },
+    provenance: 'primaire',
+    projection: true,
+    isco: ['91'],
+  },
+  {
+    id: 'dares-2030-aide-domicile-creations-100k',
+    value: 100000,
+    unit: '',
+    claim:
+      'L’aide à domicile est l’un des métiers en plus forte création nette d’emplois d’ici 2030 (+100 000 postes) : la demande de soin et d’accompagnement croît, l’IA y joue un rôle d’appui plus que de substitution.',
+    verbatim:
+      'Viendraient ensuite les aides à domicile (+100 000) et les ouvriers qualifiés de la manutention (+80 000)',
+    theme: 'emploi',
+    scope: 'france',
+    source: { ...DARES_2030, page: 'Figure A' },
+    provenance: 'primaire',
+    projection: true,
+    isco: ['53'],
+  },
+  {
+    id: 'dares-2030-manutention-creations-80k',
+    value: 80000,
+    unit: '',
+    claim:
+      'Les ouvriers qualifiés de la manutention figurent parmi les métiers en forte création nette d’emplois d’ici 2030 (+80 000 postes).',
+    verbatim:
+      'Viendraient ensuite les aides à domicile (+100 000) et les ouvriers qualifiés de la manutention (+80 000)',
+    theme: 'emploi',
+    scope: 'france',
+    source: { ...DARES_2030, page: 'Figure A' },
+    provenance: 'primaire',
+    projection: true,
+    isco: ['93'],
+  },
+  {
+    id: 'dares-2030-batiment-second-oeuvre-deficit',
+    value: 177000,
+    unit: '',
+    claim:
+      'Métier du bâtiment en tension : 177 000 besoins de recrutement chez les ouvriers qualifiés du second œuvre d’ici 2030 (150 000 départs + 27 000 créations) pour seulement 107 000 jeunes débutants attendus.',
+    verbatim:
+      'chez les ouvriers qualifiés du second œuvre du bâtiment, le déséquilibre potentiel entre les 177 000 besoins de recrutement … et le nombre de jeunes débutants (107 000)',
+    theme: 'emploi',
+    scope: 'france',
+    source: { ...DARES_2030, page: 'Figure A' },
+    provenance: 'primaire',
+    projection: true,
+    isco: ['71', '74'],
+  },
+  {
+    id: 'dares-2030-commerce-creations-200-300k',
+    value: 250000,
+    unit: '',
+    claim:
+      'Le commerce fait partie des domaines créant le plus d’emplois nets d’ici 2030 (entre 200 000 et 300 000 créations), soutenant les métiers de la vente.',
+    verbatim: 'le commerce –, avec chacun entre 200 000 et 300 000 créations nettes d’emplois',
+    theme: 'emploi',
+    scope: 'france',
+    source: { ...DARES_2030, page: 'p.4' },
+    provenance: 'primaire',
+    projection: true,
+    isco: ['52'],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1267,3 +1366,19 @@ export const statsBySource = (sourceId: string): StatEntry[] =>
 export const statById: Record<string, StatEntry> = Object.fromEntries(
   statbank.map((s) => [s.id, s]),
 );
+
+/**
+ * Statistiques éclairant **directement** une famille de métiers, par intersection
+ * des codes ISCO à 2 chiffres (cf. `StatEntry.isco`). Les stats macro non taguées
+ * ne ressortent PAS ici : c'est volontaire (rattachement direct uniquement). Sert
+ * au rattachement « stat → famille » en §3 (`buildUserMessage`).
+ */
+export const statsForFamille = (isco: string[]): StatEntry[] =>
+  statbank.filter((s) => s.isco?.some((code) => isco.includes(code)));
+
+/** Nombre de stats à rattachement ISCO direct par code à 2 chiffres (carte de couverture). */
+export const iscoCoverage = (): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  for (const s of statbank) for (const code of s.isco ?? []) counts[code] = (counts[code] ?? 0) + 1;
+  return counts;
+};
