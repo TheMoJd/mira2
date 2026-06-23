@@ -2,6 +2,8 @@ import type { PreRapportForm } from '../../types/prerapport';
 
 export interface SubmitResult {
   ok: boolean;
+  /** Id du lead créé (présent si `ok`) — sert à rejoindre la page de résultat. */
+  leadId?: string;
   /** Message d'erreur à afficher si `ok` est faux. */
   error?: string;
 }
@@ -37,7 +39,8 @@ export async function submitPreRapport(form: PreRapportForm, honeypot = ''): Pro
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
       return { ok: false, error: data?.error ?? `Une erreur est survenue (${res.status}). Réessayez.` };
     }
-    return { ok: true };
+    const data = (await res.json().catch(() => null)) as { leadId?: string } | null;
+    return { ok: true, leadId: data?.leadId };
   } catch {
     return { ok: false, error: 'Connexion impossible. Vérifiez votre réseau et réessayez.' };
   }
