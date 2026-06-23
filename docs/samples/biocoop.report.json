@@ -1,0 +1,393 @@
+{
+  "sections": [
+    {
+      "id": "perimetre",
+      "titre": "Périmètre",
+      "contenu": [
+        {
+          "intertitre": "Entreprise et cadre du pré-rapport",
+          "paragraphes": [
+            "Entreprise analysée : BIOCOOP.",
+            "Activité déclarée : réseau coopératif de distribution de produits biologiques, avec centrale d’achat et magasins spécialisés en alimentation bio en France.",
+            "Catégorie : ETI ; tranche d’effectif : 1 000 à 1 999 salariés ; siège : Paris (75) ; création : 1987.",
+            "Date du rapport : 23 juin 2026."
+          ]
+        },
+        {
+          "intertitre": "Unité d’analyse retenue",
+          "paragraphes": [
+            "Le présent pré-rapport analyse l’impact potentiel de l’intelligence artificielle par famille de métiers, selon la logique ISCO-08, et non comme un audit interne de l’entreprise.",
+            "Familles de métiers déclarées : Vente & commerce (ISCO 52), Transport & logistique (ISCO 83), Comptabilité, paie & gestion des données (ISCO 43)."
+          ]
+        },
+        {
+          "intertitre": "Portée de lecture",
+          "paragraphes": [
+            "Le secteur de la distribution spécialisée bio sert ici de repère de contexte pour nuancer l’exposition des métiers, sans produire d’évaluation propre à l’organisation.",
+            "Le document repose sur un socle de sources publiques récentes et sur les seules informations déclaratives fournies pour cadrer le périmètre."
+          ]
+        }
+      ],
+      "sources_citees": [],
+      "familles": null
+    },
+    {
+      "id": "synthese-strategique",
+      "titre": "Synthèse stratégique",
+      "contenu": [
+        {
+          "intertitre": "Messages clés",
+          "paragraphes": [
+            "Pour BIOCOOP, le signal principal porte sur la transformation des tâches plus que sur la disparition des métiers. Les familles les plus administratives et informationnelles sont les plus directement exposées, tandis que les métiers de vente et de terrain restent davantage dans une logique d’assistance, de réorganisation et de montée en compétences.",
+            "Le premier enjeu pour les dirigeants est de convertir cette transformation en gains de qualité, de réactivité et de fiabilité, sans fragiliser la relation client, la conformité ni la coordination entre centrale, logistique et points de vente.",
+            "Le premier enjeu pour les RH est l’employabilité : repérer les tâches qui évoluent, sécuriser les compétences numériques et d’usage de l’IA, et préparer des entretiens professionnels plus outillés sur les trajectoires de compétences à l’horizon 2026.",
+            "À ce stade, le pré-rapport met surtout en évidence des priorités de vigilance et de questionnement. Il ne conclut ni à une suppression d’emplois, ni à une maturité particulière de l’entreprise : ces points relèvent d’un diagnostic approfondi fondé sur des données internes."
+          ]
+        }
+      ],
+      "sources_citees": [],
+      "familles": null
+    },
+    {
+      "id": "contexte",
+      "titre": "Le contexte en bref",
+      "contenu": [
+        {
+          "intertitre": "Des capacités en progrès, mais encore loin d’une équivalence humaine",
+          "paragraphes": [
+            "Les systèmes d’IA les plus avancés se situent entre les niveaux 2 et 3 sur 5 des échelles de capacités de l’OCDE : ils progressent, mais restent loin d’une équivalence humaine (OCDE, 2025). Les grands modèles de langage atteignent le seuil inférieur du niveau 3 pour le langage, mais restent au niveau 2 pour l’interaction sociale (OCDE, 2025).",
+            "Autrement dit, l’IA est déjà utile sur des tâches de rédaction, de synthèse, de classement ou d’assistance, mais elle ne remplace pas le jugement humain dans les situations de coordination, de relation ou d’arbitrage."
+          ]
+        },
+        {
+          "intertitre": "Une diffusion rapide, tirée par la baisse des coûts et l’adoption organisationnelle",
+          "paragraphes": [
+            "La diffusion s’accélère fortement : l’IA générative a atteint environ 53 % d’adoption en trois ans, plus vite que l’ordinateur personnel ou internet (Stanford HAI, 2026). En 2025, 88 % des organisations interrogées déclarent utiliser l’IA, et 70 % dans au moins une fonction métier (Stanford HAI, 2026).",
+            "Cette accélération est aussi économique : le coût moyen de l’inférence IA par jeton a été divisé par 90 en 18 mois, selon Epoch AI, cité par le CIANum (2025). Ces données mondiales ne sont pas directement transposables à une PME française, mais elles éclairent la rapidité du mouvement en cours."
+          ]
+        },
+        {
+          "intertitre": "En France, les usages individuels vont plus vite que l’intégration collective",
+          "paragraphes": [
+            "Côté France, 83 % des professionnels RH utilisent déjà l’IA à titre individuel, mais seuls 37 % évoluent dans un service où au moins un outil intégrant l’IA a été déployé (Parlons RH, 2025). Cela suggère un décalage entre expérimentation personnelle et cadrage collectif.",
+            "L’acculturation progresse : 80 % des professionnels RH utilisent un agent conversationnel dans leur pratique quotidienne (Parlons RH, 2026) et 47 % déclarent connaître « assez bien » l’IA, contre 39 % un an plus tôt (Parlons RH, 2026).",
+            "Dans le même temps, seules 34 % des organisations disposent d’une politique encadrant l’IA (Parlons RH, 2026), alors même que 80 % des professionnels RH redoutent des conséquences sur la confidentialité et la vie privée (Parlons RH, 2025)."
+          ]
+        },
+        {
+          "intertitre": "Un sujet d’opportunité, mais aussi de conduite du changement",
+          "paragraphes": [
+            "L’IA est d’abord perçue comme une opportunité : 81 % des professionnels RH voient l’IA comme une opportunité pour la fonction RH en 2026 (Parlons RH, 2026). Mais 61 % anticipent une transition difficile vers des RH assistés par l’IA (Parlons RH, 2025).",
+            "Le principal frein cité est l’absence de stratégie claire, mentionnée par 52 % des professionnels RH, devant le manque de compétences internes à 49 % (Parlons RH, 2025). Pour une ETI, cela renforce l’enjeu de gouvernance, de priorisation des cas d’usage et d’accompagnement des équipes."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "ocde-2025-capability-levels-2-3",
+        "ocde-2025-langage-niveau-3",
+        "stanford-2026-genai-adoption-53",
+        "stanford-2026-orgs-adoption-88",
+        "cianum-2025-cout-inference-90x",
+        "parlonsrh-2025-usage-individuel-83",
+        "parlonsrh-2025-service-rh-deploye-37",
+        "parlonsrh-2026-agent-conversationnel-80",
+        "parlonsrh-2026-connaissance-ia-47",
+        "parlonsrh-2026-politique-encadrant-ia-34",
+        "parlonsrh-2025-risque-confidentialite-80",
+        "parlonsrh-2026-opportunite-81",
+        "parlonsrh-2025-transition-difficile-61",
+        "parlonsrh-2025-frein-strategie-52",
+        "parlonsrh-2025-frein-competences-49"
+      ],
+      "familles": null
+    },
+    {
+      "id": "familles-metiers",
+      "titre": "Vos familles de métiers face à l’IA",
+      "contenu": [
+        {
+          "intertitre": "Lecture d’ensemble",
+          "paragraphes": [
+            "Les sources disponibles convergent vers une transformation large des tâches : 86 % des employeurs s’attendent à ce que l’IA et les technologies de traitement de l’information transforment leur activité d’ici 2030 (World Economic Forum, 2025), et 39 % des compétences actuelles pourraient être transformées ou devenir obsolètes entre 2025 et 2030 (World Economic Forum, 2025).",
+            "Il faut toutefois distinguer exposition et suppression : l’effet dominant de l’IA générative est l’augmentation, c’est-à-dire l’assistance au travail, pas le remplacement (OIT, 2023). Cette lecture est cohérente avec le fait que 82 % des dirigeants déclarent que l’IA a augmenté leurs effectifs ou n’a entraîné aucun changement (PwC, 2025).",
+            "Pour les familles peu documentées directement, le niveau de confiance est volontairement abaissé. Les données mondiales ou américaines mobilisées donnent une direction utile, mais ne sont pas directement transposables à une PME française."
+          ]
+        },
+        {
+          "intertitre": "Familles déclarées",
+          "paragraphes": [
+            "Vente & commerce : les métiers de vente apparaissent exposés de manière modérée, avec une dominante d’augmentation des tâches commerciales, de préparation de réponse, d’assistance à la relation et d’organisation du travail. En France, la relation client figure parmi les métiers jugés les plus transformés par l’IA, à 79 % selon les professionnels RH (Parlons RH, 2025). En parallèle, le commerce fait partie des domaines qui pourraient créer le plus d’emplois nets d’ici 2030, entre 200 000 et 300 000 créations, selon France Stratégie / DARES (2022) : l’enjeu porte donc davantage sur l’évolution du contenu du travail que sur sa disparition.",
+            "Transport & logistique : aucune source directe n’est fournie pour cette famille dans la banque utilisée. Des tendances générales indiquent une transformation croissante des activités par l’IA, mais elles ne permettent pas ici de qualifier de façon robuste l’exposition spécifique de cette famille dans le contexte français ; l’exposition est donc à confirmer.",
+            "Comptabilité, paie & gestion des données : cette famille est la plus directement exposée parmi celles déclarées. L’OIT indique que le travail administratif est le plus exposé à l’IA générative : 82 % de ses tâches le sont à un niveau supérieur à la moyenne, dont 24 % fortement (OIT, 2023). Le MIT ajoute que l’exposition réelle est souvent sous-estimée et touche surtout l’administratif, la finance et les services professionnels (MIT, 2025, donnée américaine non directement transposable à une PME française). Cela oriente vers une exposition élevée, avec combinaison d’automatisation de tâches répétitives et d’augmentation des tâches de contrôle, de fiabilisation et d’analyse."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "wef-2025-ai-transforms-business-86",
+        "wef-2025-skills-transformed-39",
+        "ilo-2023-augmentation-dominante-13",
+        "pwc-2025-headcount-82",
+        "parlonsrh-2025-marketing-transforme-96",
+        "dares-2030-commerce-creations-200-300k",
+        "ilo-2023-clerical-exposure-82",
+        "mit-2025-iceberg-hidden-5x"
+      ],
+      "familles": [
+        {
+          "famille": "Vente & commerce (ISCO 52)",
+          "exposition": "modérée",
+          "natures": [
+            "augmentation",
+            "automatisation",
+            "création"
+          ],
+          "part_taches": null,
+          "confiance": "moyenne",
+          "transposable_france": true,
+          "explication": "La relation client figure parmi les métiers les plus transformés par l’IA pour 79 % des professionnels RH en France (Parlons RH, 2025). En parallèle, le commerce fait partie des domaines qui pourraient créer le plus d’emplois nets d’ici 2030, entre 200 000 et 300 000 créations (France Stratégie / DARES, 2022) : la transformation porte donc sur les tâches et l’organisation plus que sur une disparition des métiers."
+        },
+        {
+          "famille": "Transport & logistique (ISCO 83)",
+          "exposition": "à confirmer",
+          "natures": [
+            "augmentation",
+            "automatisation"
+          ],
+          "part_taches": null,
+          "confiance": "faible",
+          "transposable_france": false,
+          "explication": "Aucune source directe de la banque ne couvre cette famille. Les tendances générales indiquent que 86 % des employeurs s’attendent à une transformation de leur activité par l’IA et les technologies de traitement de l’information d’ici 2030 (World Economic Forum, 2025), mais cela ne permet pas de qualifier de façon robuste l’exposition spécifique du transport et de la logistique dans une entreprise française de distribution."
+        },
+        {
+          "famille": "Comptabilité, paie & gestion des données (ISCO 43)",
+          "exposition": "élevée",
+          "natures": [
+            "automatisation",
+            "augmentation"
+          ],
+          "part_taches": "82 % des tâches exposées à un niveau supérieur à la moyenne, dont 24 % fortement",
+          "confiance": "élevée",
+          "transposable_france": false,
+          "explication": "Le travail administratif est la famille la plus exposée à l’IA générative : 82 % de ses tâches le sont à un niveau supérieur à la moyenne, dont 24 % fortement (OIT, 2023). Le MIT souligne en outre que l’exposition réelle est souvent sous-estimée et touche surtout l’administratif, la finance et les services professionnels (MIT, 2025) ; cette donnée américaine n’est pas directement transposable à une PME française, mais elle confirme le sens de l’exposition."
+        }
+      ]
+    },
+    {
+      "id": "competences",
+      "titre": "Compétences : ce qui monte, ce qui décline",
+      "contenu": [
+        {
+          "intertitre": "Un mouvement large de recomposition des compétences",
+          "paragraphes": [
+            "En moyenne, 39 % des compétences actuelles des travailleurs seront transformées ou deviendront obsolètes entre 2025 et 2030 (World Economic Forum, 2025). Le déficit de compétences est d’ailleurs le principal frein à la transformation des entreprises, cité par 63 % des employeurs (World Economic Forum, 2025).",
+            "Le mouvement est particulièrement structurant pour les métiers exposés : les compétences recherchées y évoluent 66 % plus vite, selon PwC (2025). Cette source est issue d’un acteur de conseil ; elle éclaire une tendance utile, mais doit être lue avec ce biais commercial en tête."
+          ]
+        },
+        {
+          "intertitre": "Compétences à renforcer dans les familles déclarées",
+          "paragraphes": [
+            "Pour les trois familles déclarées, les compétences qui montent sont d’abord celles qui permettent de travailler avec l’IA plutôt que de la subir : formulation de demandes utiles, vérification des résultats, contrôle qualité, priorisation, traçabilité des décisions et bon usage des données. Cette orientation est cohérente avec le fait qu’aujourd’hui 30 % des tâches sont déjà réalisées en combinaison entre humains et technologie, contre 47 % par des humains seuls (World Economic Forum, 2025).",
+            "Dans la vente et le commerce, les compétences d’analyse de la demande, de personnalisation de la relation et d’exploitation d’informations deviennent plus importantes que l’exécution de routines standardisées. Dans les fonctions de comptabilité, paie et gestion des données, montent surtout les capacités de contrôle, de fiabilisation, d’interprétation et de sécurisation des flux d’information.",
+            "Les compétences IA elles-mêmes prennent de la valeur sur le marché : les travailleurs dotés de compétences IA bénéficient d’une prime salariale moyenne de 56 %, selon PwC (2025). Là encore, cette source doit être lue avec prudence car elle provient d’un acteur de conseil, et elle n’est pas directement transposable à tous les métiers d’une ETI française."
+          ]
+        },
+        {
+          "intertitre": "Compétences en recul relatif",
+          "paragraphes": [
+            "Les compétences les plus exposées au recul relatif sont les tâches routinières de saisie, de mise en forme, de tri documentaire, de rédaction standardisée ou de recherche d’information simple. Indeed estime que 41 % des compétences professionnelles analysées sont exposées au plus haut niveau de transformation potentielle par l’IA générative (Indeed Hiring Lab, 2025). Cette source provient d’une plateforme d’emploi et doit donc être lue comme un indicateur de marché, avec son biais commercial propre.",
+            "Il faut toutefois éviter toute lecture excessive : selon Indeed, seulement 1 % des compétences relèvent aujourd’hui de la catégorie « totalement remplaçable » par l’IA générative (Indeed Hiring Lab, 2025). L’assistance domine donc nettement sur le remplacement."
+          ]
+        },
+        {
+          "intertitre": "Implication RH",
+          "paragraphes": [
+            "Pour les RH, l’enjeu n’est pas seulement de former à un outil, mais d’outiller les entretiens professionnels pour repérer les tâches qui se déplacent, les compétences à consolider et les écarts de maîtrise entre équipes. Le World Economic Forum indique que 85 % des employeurs prévoient de prioriser la montée en compétences et que 59 % des travailleurs auront besoin d’une formation d’ici 2030 (World Economic Forum, 2025, projection)."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "wef-2025-skills-transformed-39",
+        "wef-2025-skill-gaps-barrier",
+        "pwc-2025-skills-changing-faster-66",
+        "wef-2025-tasks-humans-alone-47",
+        "pwc-2025-wage-premium-56",
+        "indeed-2025-skills-exposed-41",
+        "indeed-2025-skills-fully-replaceable-1",
+        "wef-2025-upskilling-priority-85",
+        "wef-2025-need-training-59"
+      ],
+      "familles": null
+    },
+    {
+      "id": "reorganisation",
+      "titre": "Comment le travail se réorganise",
+      "contenu": [
+        {
+          "intertitre": "Vers une organisation plus hybride du travail",
+          "paragraphes": [
+            "La dynamique actuelle n’est pas seulement celle d’outils isolés, mais d’une collaboration plus continue entre humain et IA. Une revue de plus de 5 000 études montre que les groupes humain-IA surpassent les humains seuls dans 85 % des cas, selon Vaccaro et al., cités par le MIT (2025).",
+            "Dans une étude expérimentale, les équipes humain-IA ont produit 60 % de productivité en plus par travailleur, avec une qualité supérieure (MIT, 2025). Ces résultats, issus d’un cadre expérimental et en partie de contexte international, ne sont pas directement transposables tels quels à une ETI française, mais ils éclairent le potentiel d’une bonne organisation du travail assisté."
+          ]
+        },
+        {
+          "intertitre": "Des gains surtout sur les tâches intermédiaires et répétables",
+          "paragraphes": [
+            "Les grands modèles de langage réduisent de 40 % le temps des tâches d’écriture professionnelle intermédiaire et en augmentent la qualité de 18 %, selon Noy et Zhang, cités par le MIT (2025). Cela suggère des gains surtout sur les tâches de rédaction, synthèse, mise en forme, préparation de réponses ou documentation.",
+            "Pour BIOCOOP, ce type de réorganisation peut concerner en priorité les fonctions administratives, les échanges standardisés, la préparation de contenus et certains flux d’information entre siège, centrale et terrain."
+          ]
+        },
+        {
+          "intertitre": "Une barrière économique en baisse, mais une exigence de conformité plus forte",
+          "paragraphes": [
+            "La baisse rapide des coûts accélère cette réorganisation : le coût moyen de l’inférence IA par jeton a été divisé par 90 en 18 mois, selon Epoch AI, cité par le CIANum (2025). Cela rend plus accessibles des usages auparavant limités à de grandes organisations.",
+            "En parallèle, le cadre de conformité devient plus structurant : en cas de non-conformité à l’AI Act, les sanctions peuvent atteindre 30 millions d’euros ou 7 % du chiffre d’affaires annuel mondial (CIANum, 2025). L’organisation du travail ne peut donc pas être pensée sans règles d’usage, de validation humaine et de protection des données."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "s04-2025-groupes-humain-ia-85",
+        "s04-2025-productivite-equipe-60",
+        "s04-2025-ecriture-llm-40",
+        "cianum-2025-cout-inference-90x",
+        "cianum-2025-ai-act-sanctions"
+      ],
+      "familles": null
+    },
+    {
+      "id": "facteur-humain",
+      "titre": "Le facteur humain",
+      "contenu": [
+        {
+          "intertitre": "L’exposition concerne d’abord certaines formes de tâches",
+          "paragraphes": [
+            "Le premier point de vigilance concerne les emplois à dominante administrative : l’OIT indique que 82 % des tâches du travail administratif sont exposées à un niveau supérieur à la moyenne, dont 24 % fortement (OIT, 2023). Pour ces profils, l’enjeu central est l’accompagnement de la transformation des tâches, pas une lecture automatique en termes de suppression d’emploi.",
+            "L’OIT rappelle d’ailleurs que l’effet dominant de l’IA générative est l’augmentation, c’est-à-dire l’assistance au travail, et non le remplacement (OIT, 2023)."
+          ]
+        },
+        {
+          "intertitre": "Des écarts d’exposition selon les profils",
+          "paragraphes": [
+            "Les effets ne sont pas uniformes. Dans les pays à haut revenu, 7,8 % de l’emploi féminin est potentiellement automatisable par l’IA générative, contre 2,9 % de l’emploi masculin (OIT, 2023).",
+            "L’OCDE montre aussi une forte inégalité selon le niveau de diplôme : 22 % des travailleurs peu diplômés occupent un métier à haut risque d’automatisation, contre 2 % des diplômés du supérieur (OCDE, 2024). Pourtant, les diplômés du supérieur représentent 70 % des effectifs des métiers les plus exposés à l’IA, contre 9 % des moins exposés (OCDE, 2024) : il faut donc distinguer exposition à la transformation et risque d’automatisation élevé.",
+            "Enfin, les adultes peu qualifiés ont 23 points de probabilité de moins de se former que les autres, selon l’OCDE, citant une source de 2019 (OCDE, 2024). Pour les RH, cela fait de l’accès à la formation un enjeu d’équité concret."
+          ]
+        },
+        {
+          "intertitre": "Exposition ne veut pas dire recul de l’emploi",
+          "paragraphes": [
+            "Entre 2012 et 2022, une plus forte exposition à l’IA est allée de pair avec une croissance de l’emploi plus élevée, de +11,3 points, dans les pays de l’OCDE (OCDE, 2024). L’exposition ne doit donc pas être interprétée comme un indicateur direct de destruction d’emplois.",
+            "Côté métiers de vente, la projection française va dans le même sens : le commerce fait partie des domaines qui pourraient créer le plus d’emplois nets d’ici 2030, entre 200 000 et 300 000 créations (France Stratégie / DARES, 2022)."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "ilo-2023-clerical-exposure-82",
+        "ilo-2023-augmentation-dominante-13",
+        "ilo-2023-femmes-plus-exposees",
+        "s14-2024-risque-auto-diplome-22",
+        "s14-2024-exposition-diplomes-70",
+        "s14-2024-formation-peu-qualifies-23",
+        "s14-2024-exposition-emploi-positif",
+        "dares-2030-commerce-creations-200-300k"
+      ],
+      "familles": null
+    },
+    {
+      "id": "repere-sectoriel",
+      "titre": "Votre secteur en repère",
+      "contenu": [
+        {
+          "intertitre": "Un secteur tertiaire exposé, mais avec une adoption encore hétérogène",
+          "paragraphes": [
+            "La distribution spécialisée s’inscrit dans un ensemble tertiaire où, en France, près d’un tiers de l’activité professionnelle est exposé à l’IA générative, selon Sopra Steria Next, cité par Neobrain (2024). Cette donnée secondaire donne un repère utile pour situer le secteur, sans valoir mesure directe de BIOCOOP.",
+            "Toujours en France, 60 % des entreprises utilisent ou adoptent l’IA générative, selon Neobrain × Sopra Steria (2024). À l’échelle OCDE, seules 8 % des entreprises utilisaient l’IA en moyenne en 2023 (OCDE, 2024), ce qui rappelle que l’adoption reste très inégale selon les pays, les tailles d’entreprise et les fonctions."
+          ]
+        },
+        {
+          "intertitre": "La taille d’entreprise joue en faveur de l’adoption",
+          "paragraphes": [
+            "Les entreprises de plus de 250 salariés affichent souvent une part d’utilisateurs de l’IA presque deux fois supérieure à celle des plus petites entreprises (OCDE, 2024). Pour une ETI, cela suggère un environnement plus propice à l’expérimentation structurée que dans les petites structures, sans préjuger du niveau d’avancement réel de l’entreprise.",
+            "À l’échelle mondiale, 88 % des organisations interrogées déclarent utiliser l’IA, et 70 % dans au moins une fonction métier (Stanford HAI, 2026). Cette donnée mondiale n’est pas directement transposable à une PME française, mais elle indique une pression de diffusion croissante dans l’environnement concurrentiel."
+          ]
+        },
+        {
+          "intertitre": "Repères utiles pour les fonctions support et la transformation RH",
+          "paragraphes": [
+            "En France, 87 % des professionnels RH jugent que leur métier va être transformé par l’IA, 80 % utilisent déjà un agent conversationnel dans leur pratique quotidienne en 2026, et 65 % des entreprises ont déployé des formations à l’IA dans le département RH (Parlons RH, 2025 ; Parlons RH, 2026).",
+            "Dans le même temps, seules 34 % des organisations disposent d’une politique encadrant l’IA (Parlons RH, 2026). Pour un groupe de distribution à réseau, ce repère est important : la diffusion des usages peut aller plus vite que les règles communes de gouvernance, de confidentialité et de validation.",
+            "Le sujet est également fortement relié aux compétences : pour 63 % des RH, l’IA est le premier enjeu de compétences des deux prochaines années, et 90 % des DRH jugent stratégique le développement des compétences (CEGOS, 2025)."
+          ]
+        },
+        {
+          "intertitre": "Lecture stratégique du repère sectoriel",
+          "paragraphes": [
+            "Le secteur peut donc être lu comme modérément à fortement exposé sur ses activités informationnelles, commerciales et support, avec des effets attendus surtout sur l’organisation du travail, la relation client, la qualité des données et la montée en compétences. La banque ne fournit en revanche pas de mesure sectorielle fine propre à la distribution bio.",
+            "Enfin, une étude européenne sur 12 000 entreprises montre que l’adoption de l’IA a augmenté la productivité du travail de 4 %, la formation renforçant l’effet, selon Aldasoro et al., cités par Stanford HAI (2026). Ce repère européen est plus proche du contexte français que les données mondiales, même s’il ne vise pas spécifiquement la distribution spécialisée."
+          ]
+        }
+      ],
+      "sources_citees": [
+        "neobrain-2024-tertiaire-france-expose-33",
+        "neobrain-2024-entreprises-fr-genai-60",
+        "ocde-2024-adoption-moyenne-8",
+        "ocde-2024-grandes-entreprises-2x",
+        "stanford-2026-orgs-adoption-88",
+        "parlonsrh-2025-metier-transforme-87",
+        "parlonsrh-2026-agent-conversationnel-80",
+        "parlonsrh-2026-formations-ia-drh-65",
+        "parlonsrh-2026-politique-encadrant-ia-34",
+        "cegos-2025-ia-enjeu-competences-63",
+        "cegos-2025-developpement-levier-strategique-90",
+        "stanford-2026-productivite-europe-4"
+      ],
+      "familles": null
+    },
+    {
+      "id": "lecture-strategique",
+      "titre": "Lecture stratégique & questions à se poser",
+      "contenu": [
+        {
+          "intertitre": "Leviers à considérer",
+          "paragraphes": [
+            "Premier levier : partir des tâches, pas des intitulés de poste. Les fonctions administratives et de gestion des données sont les plus susceptibles de changer rapidement ; les métiers de vente relèvent davantage d’une logique d’appui et de réorganisation ; la logistique mérite une qualification plus fine avant toute décision.",
+            "Deuxième levier : sécuriser un socle commun d’usage. Cela recouvre les règles de confidentialité, les usages autorisés, les points de validation humaine et les situations où l’IA doit rester un outil d’assistance.",
+            "Troisième levier : articuler performance et employabilité. Pour les dirigeants, l’enjeu est la qualité de service, la fiabilité et la productivité ; pour les RH, il s’agit de rendre visibles les compétences qui montent, celles qui déclinent et les besoins de reconversion ou de montée en compétences à intégrer dans les entretiens professionnels.",
+            "Quatrième levier : traiter séparément les familles bien documentées et celles qui le sont moins. Les métiers administratifs peuvent être analysés rapidement ; la logistique demande un cadrage plus prudent et plus concret des cas d’usage."
+          ]
+        },
+        {
+          "intertitre": "Questions à se poser",
+          "paragraphes": [
+            "Quelles tâches de vente, d’administration et de gestion de données sont déjà partiellement assistables sans dégrader la relation client ni la qualité de service ?",
+            "Quels usages de l’IA exigent, chez vous, un contrôle humain systématique pour des raisons de conformité, de fiabilité ou d’image ?",
+            "Quelles compétences doivent être sécurisées en priorité dans les entretiens professionnels : usage des outils, contrôle des résultats, qualité des données, capacités d’analyse, relation et coordination ?",
+            "Quels métiers ou équipes risquent de rester à l’écart de la transformation faute d’acculturation, de temps ou d’accès à la formation ?",
+            "Sur quelles familles de métiers avez-vous besoin d’un diagnostic plus fin des écarts entre les compétences actuelles et celles qui deviennent critiques ?"
+          ]
+        },
+        {
+          "intertitre": "Suite possible",
+          "paragraphes": [
+            "Pour aller plus loin, le diagnostic MIRA approfondi part de vos données internes (maturité IA, inventaire des compétences, organisation), produit une analyse d’écart « où vous êtes vs où va votre secteur » et une feuille de route priorisée, en s’appuyant sur les kits d’entretien MIRA (DRH, manager, dirigeant)."
+          ]
+        }
+      ],
+      "sources_citees": [],
+      "familles": null
+    },
+    {
+      "id": "sources-methode",
+      "titre": "Sources & méthode",
+      "contenu": [
+        {
+          "intertitre": null,
+          "paragraphes": [
+            "Ce pré-rapport applique l’état de l’art à vos familles de métiers à partir d’un socle de 11 sources de référence (ILO, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie/DARES). Points de méthode : chaque affirmation porte sa source, son type (recherche/commercial) et son horizon ; on distingue exposition et suppression (l’augmentation domine) ; le mapping métiers→ISCO affiche un niveau de confiance corrigeable ; certaines données mondiales/US ne sont pas directement transposables à une PME française et sont signalées comme telles. Socle daté 2023-2026, versionné. Ce document est indicatif et ne constitue pas un diagnostic individuel. [Mentions RGPD & information à finaliser — placeholders Victor / Jean-Marie.]"
+          ]
+        }
+      ],
+      "sources_citees": [],
+      "familles": null
+    }
+  ]
+}
