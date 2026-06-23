@@ -23,8 +23,9 @@ describe('rattachement ISCO des statistiques', () => {
   });
 
   it('les familles de terrain ajoutées via DARES sont désormais couvertes', () => {
-    // 91 nettoyage, 53 aide à la personne, 93 manutention, 71/74 bâtiment, 52 vente
-    for (const code of ['91', '53', '93', '71', '52']) {
+    // 91 nettoyage, 53 aide à la personne, 93 manutention, 71 bâtiment, 52 vente,
+    // 72 maintenance (tension §6/§7), 83 conducteurs (tension §6/§7)
+    for (const code of ['91', '53', '93', '71', '52', '72', '83']) {
       expect(statsForFamille([code]).length, `ISCO ${code} sans stat directe`).toBeGreaterThan(0);
     }
   });
@@ -45,7 +46,9 @@ describe('rattachement ISCO des statistiques', () => {
     };
     const msg = buildUserMessage(ctx);
     expect(msg).toContain('Rattachement par famille déclarée');
-    expect(msg).toContain('sources DIRECTES');
+    // la consigne §3-terrain doit pousser la source directe en priorité dans la famille
+    expect(msg).toContain('DIRECTE');
+    expect(msg).toContain('EN PRIORITÉ');
   });
 });
 

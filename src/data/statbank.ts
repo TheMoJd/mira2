@@ -408,6 +408,22 @@ export const statbank: StatEntry[] = [
     provenance: 'primaire',
   },
   {
+    // Pendant 2030 du 47 % ci-dessus : la frontière humain-machine se rééquilibre.
+    // Appuie la règle « l'IA transforme des tâches » sans annoncer de destruction d'emploi.
+    id: 'wef-2025-tasks-2030-humans-33',
+    value: 33,
+    unit: '%',
+    claim:
+      'D’ici 2030, la part des tâches réalisées par des humains seuls reculerait de 47 % à 33 %, la technologie passant à 34 % et la combinaison humain-machine à 33 % : la répartition deviendrait quasi équilibrée entre les trois.',
+    verbatim:
+      'By 2030, employers expect these proportions to be nearly evenly split across these three categories/approaches (Figure 2.7). [People 33% / Technology 34% / Combination 33%]',
+    theme: 'productivite',
+    scope: 'monde',
+    source: { ...WEF, page: 'p.26' },
+    provenance: 'primaire',
+    projection: true,
+  },
+  {
     id: 'wef-2025-ai-jobs-created-displaced',
     value: 11,
     unit: 'M',
@@ -1339,6 +1355,40 @@ export const statbank: StatEntry[] = [
     provenance: 'primaire',
     projection: true,
     isco: ['52'],
+  },
+  {
+    // ISCO 83 (transport & logistique) : laissé « à confirmer » sur l'EXPOSITION IA
+    // par le socle GenAI → DARES éclaire la TENSION de renouvellement (§6/§7), pas l'exposition.
+    id: 'dares-2030-conducteurs-departs-34',
+    value: 34,
+    unit: '%',
+    claim:
+      'Les conducteurs de véhicules sont un métier en légère croissance mais sous forte tension de renouvellement : les départs en fin de carrière y sont parmi les plus élevés (34 %) et les jeunes débutants ne suffiraient pas à les remplacer — l’enjeu est l’attractivité, pas la suppression par l’IA.',
+    verbatim:
+      'Les conducteurs de véhicules sont un métier légèrement en croissance, dont le nombre de départs en fin de carrière est parmi les plus élevés (34 %). Les jeunes débutant en emploi ne suffiraient pas à remplacer tous ces départs.',
+    theme: 'emploi',
+    scope: 'france',
+    source: { ...DARES_2030, page: 'p.125' },
+    provenance: 'primaire',
+    projection: true,
+    isco: ['83'],
+  },
+  {
+    // ISCO 72 (industrie, maintenance & métiers qualifiés) : idem — DARES donne la
+    // tension de recrutement, pas l'exposition IA (rapport antérieur au boom GenAI).
+    id: 'dares-2030-maintenance-postes-33',
+    value: 33,
+    unit: '%',
+    claim:
+      'Les techniciens et agents de maîtrise de la maintenance sont en tension de recrutement : les postes à pourvoir d’ici 2030 représenteraient 33 % de l’emploi du métier de 2019 — l’enjeu est le renouvellement des compétences, pas la suppression par l’IA.',
+    verbatim:
+      'les besoins de recrutement sont importants mais ils représentent une plus faible proportion de l’emploi du métier : c’est le cas en particulier des vendeurs (19 %), des enseignants (31 %), des techniciens et agents de maîtrise de la maintenance (33 %)',
+    theme: 'emploi',
+    scope: 'france',
+    source: { ...DARES_2030, page: 'p.98' },
+    provenance: 'primaire',
+    projection: true,
+    isco: ['72'],
   },
 
   // === S15 — McKinsey Global Institute, Jobs lost, jobs gained (2017) : automatisation TECHNIQUE ===

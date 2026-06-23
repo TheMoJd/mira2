@@ -176,9 +176,12 @@ CONTENU_SITE_NON_VERIFIE>>>`
           : `Statistiques autorisées dans cette section : aucune disponible — reste qualitatif.`
         : `Cette section ne cite pas de statistique.`;
 
-      // §3 uniquement : rattachement ISCO « stat → famille déclarée ». Additif (un
-      // indice), pas restrictif : on signale les sources DIRECTES par famille, sans
-      // interdire les stats générales autorisées ci-dessus.
+      // §3 uniquement : rattachement ISCO « stat → famille déclarée ». Les sources
+      // DIRECTES (taggées sur l'ISCO de la famille) sont prioritaires DANS la
+      // caractérisation de CETTE famille — c'est ce qui ancre les verdicts de terrain
+      // (physique, manutention…) en §3 plutôt que de les laisser glisser vers §5.
+      // Ça reste non coercitif : ces stats sont déjà en grille ; les stats générales
+      // restent mobilisables en complément.
       let familleBlock: string | null = null;
       if (section.id === 'familles-metiers') {
         const allowedIds = new Set(stats.map((s) => s.id));
@@ -189,11 +192,11 @@ CONTENU_SITE_NON_VERIFIE>>>`
             ? statsForFamille(codes).filter((s) => allowedIds.has(s.id))
             : [];
           return direct.length
-            ? `  - ${fam.label}${tag} → sources DIRECTES : ${direct.map((s) => `[${s.id}]`).join(' ')}`
+            ? `  - ${fam.label}${tag} → source(s) DIRECTE(S) à citer EN PRIORITÉ dans l'explication de cette famille : ${direct.map((s) => `[${s.id}]`).join(' ')}`
             : `  - ${fam.label}${tag} → aucune source directe : prudence ; si aucune stat générale ne s'applique vraiment, exposition « à confirmer » / confiance « faible ».`;
         });
         familleBlock =
-          'Rattachement par famille déclarée (indice — ces stats ciblent directement la famille ; tu peux aussi mobiliser les stats générales autorisées ci-dessus) :\n' +
+          'Rattachement par famille déclarée. Quand une famille dispose d’une source DIRECTE ci-dessous, tu l’utilises en priorité pour caractériser CETTE famille dans le tableau §3 (et tu la reportes dans `sources_citees`), sauf si elle est manifestement hors sujet ; les stats générales autorisées plus haut viennent en complément, pas en remplacement :\n' +
           lines.join('\n');
       }
 
