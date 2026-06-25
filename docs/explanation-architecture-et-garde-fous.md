@@ -71,7 +71,10 @@ qu'inutile : il détruit la crédibilité. Le système le garantit par **défens
 2. **La grille `allowedSources`.** Chaque section ne peut citer que certaines sources
    (`rapportStructure.ts`). `buildUserMessage` ne fournit au modèle, **par section**, que les
    stats autorisées. Le modèle ne voit littéralement pas les chiffres qu'il n'a pas le droit
-   de citer à cet endroit.
+   de citer à cet endroit. En aval, `enforceSectionGrid` rejoue la grille **côté code** sur la
+   sortie du modèle : pour chaque section, il retire de `sources_citees` tout `id` non autorisé.
+   La prévention amont (le modèle ne voit pas le chiffre) et le filtre aval (on retire la citation
+   parasite) se complètent — c'est la même règle, imposée deux fois.
 
 3. **Le prompt.** `SYSTEM_PROMPT` ouvre sur 10 règles absolues, dont la règle n°1 : « Tu ne
    cites QUE des statistiques présentes dans la banque fournie. […] Si une donnée n'est pas
@@ -191,6 +194,7 @@ et s'emploie surtout en §2 (contexte) et §7 (repère sectoriel).
 ## Limites connues & dette assumée
 
 - **Couverture §3 inégale** : le socle ne couvre pas directement les 28 familles → caractérisation « à confirmer » assumée pour les familles non couvertes.
+- **`enforceSectionGrid` ne nettoie que la métadonnée, pas la prose** : le filtre agit sur `sources_citees` (la liste d'`id` cités), pas sur le texte `contenu` des sections. Une statistique hors-grille rédigée *en toutes lettres* dans un paragraphe survit donc au filtre. De plus, l'audit « 0 citation hors-grille » mesure ce même champ `sources_citees` qu'il vient de nettoyer : il valide la métadonnée, pas la prose. Acceptable aujourd'hui car la prévention amont (niveau 2 : le modèle ne reçoit pas les chiffres interdits par section) traite la cause à la racine ; le filtre aval n'est qu'une seconde barrière. À renforcer (scan de la prose) seulement si une fuite en toutes lettres est observée en pratique.
 - **RGPD en placeholders** : `rgpd.ts` et le §9 portent des mentions provisoires en attente de la version juridique (Victor / Jean-Marie). Ne pas les présenter comme une affirmation de conformité.
 - **Parsing plaquette reporté** : la présence de la plaquette est notée, mais son contenu n'est pas encore parsé (libs lourdes hors V1). Seul le site est lu.
 - **Un bug de configuration restant** (voir [reference](reference-pipeline-prerapport.md#variables-denvironnement)) : `RESEND_FROM` (lu par le code) vs `RESEND_FROM_EMAIL` (nommé dans `.env.example`). *(L'ancien écart « plafond plaquette UI 10 Mo vs serveur 4 Mo » est corrigé : l'UI annonce désormais 4 Mo.)*
