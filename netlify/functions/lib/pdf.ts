@@ -8,24 +8,24 @@
  * Le HTML est rendu autoportant par `renderReportHtml` ; on attend `networkidle0`
  * pour laisser Google Fonts se charger avant l'impression.
  */
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
-
 export interface PdfOptions {
   /** Texte court répété en pied de page (à côté du numéro de page). */
   footer?: string;
 }
 
-/** Résout l'exécutable Chromium : override local prioritaire, sinon binaire @sparticuz. */
-async function resolveExecutablePath(): Promise<string> {
-  const override = process.env.CHROME_EXECUTABLE_PATH;
-  if (override) return override;
-  return chromium.executablePath();
-}
-
 /** Convertit un HTML autoportant en PDF A4. Ferme toujours le navigateur. */
 export async function htmlToPdf(html: string, options: PdfOptions = {}): Promise<Buffer> {
-  const executablePath = await resolveExecutablePath();
+  // Imports DYNAMIQUES (et non statiques en haut de fichier) : `@sparticuz/chromium`
+  // (v149) est un ES Module. Bundlée en CommonJS par esbuild côté Netlify, un import
+  // statique devient un `require()` → `ERR_REQUIRE_ESM` au chargement du module, qui
+  // tue la background function en phase `init` (le lead reste alors figé à `received`).
+  // `import()` est supporté depuis un module CJS et résout l'ESM correctement ; en
+  // prime, Chromium n'est chargé qu'au moment d'imprimer le PDF, pas à chaque init.
+  const { default: chromium } = await import('@sparticuz/chromium');
+  const { default: puppeteer } = await import('puppeteer-core');
+
+  // Résout l'exécutable : override local (Windows) prioritaire, sinon binaire @sparticuz.
+  const executablePath = process.env.CHROME_EXECUTABLE_PATH ?? (await chromium.executablePath());
   const browser = await puppeteer.launch({
     args: chromium.args,
     executablePath,
