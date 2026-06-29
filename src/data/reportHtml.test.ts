@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderReportHtml } from './reportHtml';
 import type { ReportRenderContext } from './reportHtml';
 import type { PreRapportOutput } from './reportSchema';
+import { RGPD_PDF_FOOTER } from './rgpd';
 
 const ctx: ReportRenderContext = {
   nomEntreprise: 'Acme SAS',
@@ -77,6 +78,18 @@ describe('renderReportHtml', () => {
   it('échappe le HTML du contenu LLM (anti-injection)', () => {
     expect(html).toContain('&lt;Acme&gt;');
     expect(html).not.toContain('Rapport pour <Acme>');
+  });
+
+  it('inclut la page de transparence IA et la mention RGPD', () => {
+    expect(html).toContain('Transparence et mentions');
+    expect(html).toContain('généré avec l’aide de l’intelligence artificielle');
+    expect(html).toContain(RGPD_PDF_FOOTER.slice(0, 30));
+  });
+
+  it('ne contient plus les placeholders « à valider »', () => {
+    expect(html).not.toContain('en cours de validation');
+    expect(html).not.toContain('adresse à confirmer');
+    expect(html).not.toContain('Victor');
   });
 
   it('affiche la caractérisation famille et la mention non transposable', () => {
