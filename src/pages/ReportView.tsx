@@ -69,7 +69,9 @@ export default function ReportView() {
             Votre pré-rapport se prépare…
           </h1>
           <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink-2)', margin: 0 }} role="status" aria-live="polite">
-            La génération applique l’état de l’art à vos familles de métiers. Cette page se met à jour automatiquement.
+            La génération applique l’état de l’art à vos familles de métiers et prend généralement 1 à 2 minutes.{' '}
+            <strong style={{ color: 'var(--ink)' }}>Restez sur cette page et ne la fermez pas</strong> : elle se met à jour
+            automatiquement dès que votre rapport est prêt.
           </p>
         </Centered>
       );

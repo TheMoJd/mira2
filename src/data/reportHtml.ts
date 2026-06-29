@@ -70,6 +70,11 @@ function expositionColor(level: ReportFamille['exposition']): string {
   }
 }
 
+/** Libellé d'affichage d'une nature d'impact : « augmentation » devient « augmentation/hybridation ». */
+function natureLabel(nature: string): string {
+  return nature === 'augmentation' ? 'augmentation/hybridation' : nature;
+}
+
 // --- Échappement HTML ------------------------------------------------------
 
 const ESCAPES: Record<string, string> = {
@@ -129,9 +134,7 @@ function renderFamille(fam: ReportFamille): string {
   const natures = fam.natures
     .map(
       (n) =>
-        `<span style="display:inline-block;font-size:11px;color:${BRAND.violet700};background:${BRAND.violet100};border-radius:999px;padding:2px 9px;margin:0 6px 4px 0">${esc(
-          n,
-        )}</span>`,
+        `<span style="display:inline-block;font-size:11px;color:${BRAND.violet700};background:${BRAND.violet100};border-radius:999px;padding:2px 9px;margin:0 6px 4px 0">${esc(natureLabel(n))}</span>`,
     )
     .join('');
   const part = fam.part_taches

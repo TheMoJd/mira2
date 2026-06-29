@@ -7,6 +7,7 @@ import Methode from '../components/sections/Methode';
 import Lectures from '../components/sections/Lectures';
 import Matrix from '../components/sections/Matrix';
 import Diff from '../components/sections/Diff';
+import Testimonials from '../components/sections/Testimonials';
 import Pricing from '../components/sections/Pricing';
 import Conformite from '../components/sections/Conformite';
 import FinalCTA from '../components/sections/FinalCTA';
@@ -33,6 +34,7 @@ export default function Landing() {
         <Lectures />
         <Matrix />
         <Diff />
+        <Testimonials />
         <Pricing />
         <Conformite />
         <FinalCTA />

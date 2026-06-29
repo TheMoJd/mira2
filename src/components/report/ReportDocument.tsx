@@ -39,6 +39,10 @@ function expositionColor(level: ReportFamille['exposition']): string {
   }
 }
 
+/** Libellé d'affichage d'une nature d'impact : « augmentation » → « augmentation/hybridation ». */
+const natureLabel = (nature: string): string =>
+  nature === 'augmentation' ? 'augmentation/hybridation' : nature;
+
 const serif: CSSProperties = { fontFamily: 'var(--serif, Georgia, "Times New Roman", serif)' };
 
 function Cover({ context: c }: { context: ReportRenderContext }) {
@@ -107,7 +111,7 @@ function FamilleCard({ fam }: { fam: ReportFamille }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '8px 0 4px' }}>
         {fam.natures.map((n) => (
           <span key={n} style={{ fontSize: 11.5, color: 'var(--violet-700)', background: 'var(--violet-100)', borderRadius: 999, padding: '2px 10px' }}>
-            {n}
+            {natureLabel(n)}
           </span>
         ))}
       </div>

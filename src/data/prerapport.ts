@@ -6,7 +6,7 @@ export const preRapport = {
   intro: {
     eyebrow: 'Pré-rapport · gratuit',
     title: 'Cartographiez l’impact de l’IA sur les métiers de votre secteur.',
-    sub: 'En une dizaine de minutes, MIRA croise ce que vous nous décrivez avec les grands rapports de référence (World Economic Forum, OCDE, baromètres RH) pour produire votre pré-rapport sectoriel. Sans engagement, sans carte bancaire.',
+    sub: 'En une dizaine de minutes, MIRA croise ce que vous nous décrivez avec les grands rapports de référence (World Economic Forum, OCDE, baromètres RH) pour produire votre pré-rapport sectoriel. Sans engagement.',
     points: [
       { t: '≈ 10 minutes', d: 'Quelques questions ouvertes sur votre activité.' },
       { t: 'Tendances de votre secteur', d: 'Risques et opportunités IA sur vos grandes familles de métiers.' },
@@ -18,7 +18,7 @@ export const preRapport = {
       { who: 'Pour les dirigeants', msg: 'Sécurisez la pérennité de votre activité et la performance de votre entreprise face à l’IA.' },
     ],
     cta: 'Commencer',
-    legal: 'Aucune carte bancaire requise.',
+    legal: 'Gratuit, sans engagement.',
   },
 
   /** Métadonnées des 5 étapes du formulaire (ordre = progression). */
