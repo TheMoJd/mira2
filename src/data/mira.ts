@@ -39,7 +39,6 @@ const mira: MiraData = {
       n: "01",
       tag: "Freemium",
       title: "Pré-rapport contextuel automatisé",
-      role: "Lead generation + éducation du marché",
       body: "Un formulaire de profilage (secteur, taille, métiers, maturité IA) croisé avec les rapports de référence génère un pré-rapport sectoriel personnalisé : grandes vulnérabilités et opportunités IA de votre périmètre RH.",
       points: ["Cartographie macro des métiers de votre secteur", "1 rapport de référence intégré", "Synthèse des risques sectoriels"],
     },
@@ -98,7 +97,7 @@ const mira: MiraData = {
     {
       name: "MIRA Discover",
       price: "Gratuit",
-      sub: "Éduquer le marché, générer des leads qualifiés",
+      sub: "Éduquer le marché, générer des prospects qualifiés",
       cta: "Lancer mon pré-rapport",
       featured: false,
       features: ["Profilage entreprise en 10 minutes", "Synthèse des risques IA sectoriels", "Pré-rapport macro de vos métiers", "1 rapport de référence intégré"],

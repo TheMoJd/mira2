@@ -21,7 +21,6 @@ import { SLOGAN, VALUE_PROP } from '../../data/reportHtml';
 import { reportSections } from '../../data/rapportStructure';
 import { statbank } from '../../data/statbank';
 import type { StatEntry } from '../../data/statbank';
-import { RGPD_PDF_FOOTER } from '../../data/rgpd';
 
 interface ReportDocumentProps {
   report: PreRapportOutput;
@@ -260,25 +259,6 @@ function Sources({ report }: { report: PreRapportOutput }) {
   );
 }
 
-/** Page de fin : transparence IA + lien MIRA (placeholders légal Victor / domaine). */
-function Closing() {
-  return (
-    <section style={{ margin: '0 0 8px' }}>
-      <h2 style={sectionTitle}>Transparence et mentions</h2>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink)', margin: '0 0 12px' }}>
-        Ce pré-rapport a été généré avec l’aide de l’intelligence artificielle, à partir de sources publiques de
-        référence. Il constitue une lecture indicative et ne remplace pas un audit de vos données internes.
-      </p>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)', margin: '0 0 12px' }}>
-        Mentions légales et de transparence en cours de validation.
-      </p>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)', margin: 0 }}>
-        Pour en savoir plus sur MIRA, rendez-vous sur notre site officiel (adresse à confirmer).
-      </p>
-    </section>
-  );
-}
-
 export default function ReportDocument({ report, context }: ReportDocumentProps) {
   return (
     <article style={{ maxWidth: 760, margin: '0 auto', padding: 'clamp(20px,4vw,40px) clamp(16px,4vw,28px)', overflowWrap: 'anywhere' }}>
@@ -288,10 +268,6 @@ export default function ReportDocument({ report, context }: ReportDocumentProps)
         <Section key={s.id} section={s} />
       ))}
       <Sources report={report} />
-      <Closing />
-      <p style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid var(--line-soft)', fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>
-        {RGPD_PDF_FOOTER}
-      </p>
     </article>
   );
 }

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { renderReportHtml } from './reportHtml';
 import type { ReportRenderContext } from './reportHtml';
 import type { PreRapportOutput } from './reportSchema';
-import { RGPD_PDF_FOOTER } from './rgpd';
 
 const ctx: ReportRenderContext = {
   nomEntreprise: 'Acme SAS',
@@ -83,9 +82,5 @@ describe('renderReportHtml', () => {
   it('affiche la caractérisation famille et la mention non transposable', () => {
     expect(html).toContain('Exposition élevée');
     expect(html).toContain('non directement transposable');
-  });
-
-  it('inclut la mention RGPD de pied de page', () => {
-    expect(html).toContain(RGPD_PDF_FOOTER.slice(0, 30));
   });
 });

@@ -24,7 +24,6 @@ import type { PreRapportOutput, ReportSectionOutput, ReportBloc, ReportFamille }
 import { reportSections } from './rapportStructure';
 import { statbank } from './statbank';
 import type { StatEntry } from './statbank';
-import { RGPD_PDF_FOOTER } from './rgpd';
 
 /** Contexte de l'entreprise pour la page de garde et l'entête (issu du lead + enrichissement). */
 export interface ReportRenderContext {
@@ -291,21 +290,6 @@ function renderSources(report: PreRapportOutput): string {
   </section>`;
 }
 
-/**
- * Page de fin (refonte CEO B6) : transparence sur la génération par IA et lien MIRA.
- * Le texte légal exact et l'adresse du site sont des placeholders en attente de
- * validation (Victor pour le légal, décision de domaine pour le lien).
- */
-function renderClosing(): string {
-  return `<div style="page-break-before:always;padding-top:30px">
-    <h2 style="font-family:var(--serif);font-size:22px;font-weight:500;color:${BRAND.violet};margin:0 0 14px">Transparence et mentions</h2>
-    <p style="font-size:13px;line-height:1.7;color:${BRAND.ink};margin:0 0 12px">Ce pré-rapport a été généré avec l’aide de l’intelligence artificielle, à partir de sources publiques de référence. Il constitue une lecture indicative et ne remplace pas un audit de vos données internes.</p>
-    <p style="font-size:13px;line-height:1.7;color:${BRAND.ink2};margin:0 0 12px">Mentions légales et de transparence en cours de validation.</p>
-    <p style="font-size:13px;line-height:1.7;color:${BRAND.ink2};margin:0 0 18px">Pour en savoir plus sur MIRA, rendez-vous sur notre site officiel (adresse à confirmer).</p>
-    <div style="font-size:10.5px;line-height:1.5;color:${BRAND.ink3};border-top:1px solid ${BRAND.lineSoft};padding-top:12px">${esc(RGPD_PDF_FOOTER)}</div>
-  </div>`;
-}
-
 // --- Document complet ------------------------------------------------------
 
 /**
@@ -317,7 +301,6 @@ export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderCont
   const identity = renderIdentity(ctx);
   const sections = report.sections.map(renderSection).join('');
   const sources = renderSources(report);
-  const closing = renderClosing();
 
   return `<!doctype html>
 <html lang="fr">
@@ -355,7 +338,6 @@ export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderCont
     ${identity}
     ${sections}
     ${sources}
-    ${closing}
   </div>
 </body>
 </html>`;

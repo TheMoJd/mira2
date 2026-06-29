@@ -22,7 +22,8 @@ export interface Phase {
   n: string;
   tag: string;
   title: string;
-  role: string;
+  /** Libellé de positionnement (sous-titre). Optionnel : masqué si absent. */
+  role?: string;
   body: string;
   points: string[];
 }
