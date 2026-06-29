@@ -15,7 +15,7 @@ const temoignages = [
     quote:
       'Le pré-rapport a posé des mots clairs sur ce que nos managers pressentaient. On a enfin une lecture commune de ce qui s’automatise et de ce qui s’augmente, métier par métier.',
     who: 'Directrice des Ressources Humaines',
-    org: 'ETI industrielle · 600 salariés',
+    org: 'ETI industrielle · 400 salariés',
     initials: 'DRH',
   },
   {
@@ -28,7 +28,7 @@ const temoignages = [
   {
     quote:
       'Ce que j’ai apprécié : chaque chiffre est sourcé, et la posture reste honnête sur ce qui n’est pas encore documenté. On sent un outil de diagnostic, pas un argumentaire commercial.',
-    who: 'Responsable développement RH',
+    who: 'Responsable Transformation IA',
     org: 'Réseau de distribution · 320 salariés',
     initials: 'RH',
   },

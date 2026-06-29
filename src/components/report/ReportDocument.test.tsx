@@ -60,16 +60,16 @@ describe('ReportDocument', () => {
     expect(html).toContain('non directement transposable');
   });
 
-  it('rend la bibliographie pour les sources citées existantes', () => {
-    expect(html).toContain('Références citées');
-    expect(html).toContain(`[${citedStat.id}]`);
+  it('rend la section Sources (titre du document) pour les sources citées', () => {
+    expect(html).toContain('Sources mobilisées');
+    expect(html).toContain(citedStat.source.org);
   });
 
-  it('omet la bibliographie quand aucune source n’est citée', () => {
+  it('omet la section Sources quand aucune source n’est citée', () => {
     const noCites: PreRapportOutput = {
       sections: [{ id: 'perimetre', titre: 'Périmètre', contenu: [], sources_citees: [], familles: null }],
     };
     const out = renderToStaticMarkup(<ReportDocument report={noCites} context={context} />);
-    expect(out).not.toContain('Références citées');
+    expect(out).not.toContain('Sources mobilisées');
   });
 });

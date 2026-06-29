@@ -5,13 +5,19 @@
  * `/rapport/:leadId`. Pendant compatible web de `reportHtml.ts` (qui, lui, vise le
  * PDF print A4) : mobile-friendly, aux tokens de marque de `globals.css`.
  *
+ * Toute modif de contenu/structure doit rester en phase avec `reportHtml.ts`
+ * (page de garde, carte d'identité, tableau récap, sources allégées, page de fin).
+ * Le slogan et la proposition de valeur sont importés depuis `reportHtml.ts`
+ * (source unique). Style : pas de tiret cadratin ni de point-virgule (consigne CEO).
+ *
  * Imports type-only pour `PreRapportOutput`/`ReportRenderContext` → zod/openai ne
  * partent jamais dans le bundle client. Seules les données pures (`statbank`,
- * `reportSections`, RGPD) sont importées au runtime.
+ * `reportSections`, RGPD, copie de marque) sont importées au runtime.
  */
 import type { CSSProperties } from 'react';
 import type { PreRapportOutput, ReportSectionOutput, ReportBloc, ReportFamille } from '../../data/reportSchema';
 import type { ReportRenderContext } from '../../data/reportHtml';
+import { SLOGAN, VALUE_PROP } from '../../data/reportHtml';
 import { reportSections } from '../../data/rapportStructure';
 import { statbank } from '../../data/statbank';
 import type { StatEntry } from '../../data/statbank';
@@ -44,8 +50,45 @@ const natureLabel = (nature: string): string =>
   nature === 'augmentation' ? 'augmentation/hybridation' : nature;
 
 const serif: CSSProperties = { fontFamily: 'var(--serif, Georgia, "Times New Roman", serif)' };
+const sectionTitle: CSSProperties = {
+  ...serif,
+  fontSize: 'clamp(18px,3.5vw,20px)',
+  fontWeight: 500,
+  color: 'var(--violet)',
+  margin: '0 0 12px',
+  paddingBottom: 6,
+  borderBottom: '1px solid var(--line-soft)',
+};
 
-function Cover({ context: c }: { context: ReportRenderContext }) {
+/** Page de garde (branding) : logo, titre, slogan, proposition de valeur (intro fixe). */
+function Cover() {
+  return (
+    <header style={{ marginBottom: 40 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 22 }}>
+        <svg width="30" height="30" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+          <circle cx="13" cy="13" r="12" stroke="var(--ink)" strokeWidth="1.4" opacity=".25" />
+          <circle cx="13" cy="13" r="3.4" fill="var(--violet)" />
+          <path d="M13 2.5 L15 11 L13 13 Z" fill="var(--ink)" />
+          <path d="M13 23.5 L11 15 L13 13 Z" fill="var(--violet)" opacity=".5" />
+        </svg>
+        <span style={{ ...serif, fontSize: 26, fontWeight: 500, letterSpacing: '.02em', color: 'var(--ink)' }}>MIRA</span>
+      </div>
+      <div className="kicker" style={{ color: 'var(--violet)', fontSize: 12, marginBottom: 10 }}>
+        Votre pré-diagnostic
+      </div>
+      <h1 style={{ ...serif, fontSize: 'clamp(26px,5vw,38px)', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.14, margin: '0 0 14px' }}>
+        L’exposition de vos métiers à l’intelligence artificielle
+      </h1>
+      <p style={{ ...serif, fontSize: 'clamp(16px,3vw,18px)', fontStyle: 'italic', color: 'var(--violet-700)', lineHeight: 1.5, margin: '0 0 22px' }}>
+        {SLOGAN}
+      </p>
+      <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--ink-2)', margin: 0 }}>{VALUE_PROP}</p>
+    </header>
+  );
+}
+
+/** Carte d'identité de l'entreprise analysée (page 2 du PDF, bloc dédié en web). */
+function Identity({ context: c }: { context: ReportRenderContext }) {
   const rows: [string, string | undefined][] = [
     ['Entreprise', c.nomEntreprise],
     ['Secteur déclaré', c.secteurDeclare],
@@ -57,17 +100,8 @@ function Cover({ context: c }: { context: ReportRenderContext }) {
     ['Date du rapport', c.dateRapport],
   ];
   return (
-    <header style={{ marginBottom: 36 }}>
-      <div className="kicker" style={{ color: 'var(--violet)', fontSize: 12, marginBottom: 12 }}>
-        MIRA · Pré-rapport
-      </div>
-      <h1 style={{ ...serif, fontSize: 'clamp(26px,5vw,34px)', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.15, margin: '0 0 12px' }}>
-        L’impact de l’IA sur vos familles de métiers
-      </h1>
-      <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink-2)', maxWidth: 560, margin: '0 0 24px' }}>
-        Diagnostic gratuit appliquant l’état de l’art public aux métiers que vous avez déclarés. Chaque chiffre est sourcé ;
-        aucune donnée interne de votre entreprise n’est utilisée.
-      </p>
+    <section style={{ margin: '0 0 32px' }}>
+      <h2 style={sectionTitle}>Carte d’identité</h2>
       <dl style={{ background: 'var(--bg-soft)', border: '1px solid var(--line)', borderRadius: 'var(--r, 14px)', padding: '4px 18px', margin: 0 }}>
         {rows
           .filter(([, v]) => v)
@@ -78,7 +112,7 @@ function Cover({ context: c }: { context: ReportRenderContext }) {
             </div>
           ))}
       </dl>
-    </header>
+    </section>
   );
 }
 
@@ -94,6 +128,45 @@ function Bloc({ bloc }: { bloc: ReportBloc }) {
         </p>
       ))}
     </>
+  );
+}
+
+/** Tableau récapitulatif des familles (§3) : Famille / Exposition / Nature de l'impact. */
+function RecapTable({ familles }: { familles: ReportFamille[] }) {
+  const th: CSSProperties = {
+    padding: '7px 9px',
+    borderBottom: '2px solid var(--line)',
+    color: 'var(--ink-3)',
+    textTransform: 'uppercase',
+    fontSize: 10.5,
+    letterSpacing: '.04em',
+    textAlign: 'left',
+  };
+  const td: CSSProperties = { padding: '7px 9px', borderBottom: '1px solid var(--line-soft)', verticalAlign: 'top' };
+  return (
+    <div style={{ margin: '6px 0 16px' }}>
+      <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--violet-700)', margin: '0 0 8px' }}>En un coup d’œil</h3>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr>
+              <th style={th}>Famille de métiers</th>
+              <th style={th}>Exposition</th>
+              <th style={th}>Nature de l’impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            {familles.map((f, i) => (
+              <tr key={i}>
+                <td style={{ ...td, color: 'var(--ink)', fontWeight: 600 }}>{f.famille}</td>
+                <td style={{ ...td, color: expositionColor(f.exposition), fontWeight: 600, whiteSpace: 'nowrap' }}>{f.exposition}</td>
+                <td style={{ ...td, color: 'var(--ink-2)' }}>{f.natures.map(natureLabel).join(', ')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -128,20 +201,22 @@ function FamilleCard({ fam }: { fam: ReportFamille }) {
 
 function Section({ section }: { section: ReportSectionOutput }) {
   const num = SECTION_NUM_BY_ID.get(section.id);
+  const hasFamilles = section.familles && section.familles.length > 0;
   return (
     <section style={{ margin: '0 0 28px' }}>
-      <h2 style={{ ...serif, fontSize: 'clamp(18px,3.5vw,20px)', fontWeight: 500, color: 'var(--violet)', margin: '0 0 12px', paddingBottom: 6, borderBottom: '1px solid var(--line-soft)' }}>
+      <h2 style={sectionTitle}>
         {num !== undefined && (
           <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--sans, sans-serif)' }}>§{num} · </span>
         )}
         {section.titre}
       </h2>
+      {hasFamilles && <RecapTable familles={section.familles!} />}
       {section.contenu.map((b, i) => (
         <Bloc key={i} bloc={b} />
       ))}
-      {section.familles && section.familles.length > 0 && (
+      {hasFamilles && (
         <div style={{ marginTop: 14 }}>
-          {section.familles.map((f, i) => (
+          {section.familles!.map((f, i) => (
             <FamilleCard key={i} fam={f} />
           ))}
         </div>
@@ -150,45 +225,56 @@ function Section({ section }: { section: ReportSectionOutput }) {
   );
 }
 
-function Citation({ stat }: { stat: StatEntry }) {
-  const origin =
-    stat.provenance === 'secondaire' && stat.source.originalSource
-      ? ` — source d’origine : ${stat.source.originalSource}, citée par ${stat.source.org}`
-      : '';
-  const flags = [stat.projection ? 'projection' : null, `périmètre ${stat.scope}`].filter(Boolean).join(' · ');
+/**
+ * Section « Sources » allégée (refonte CEO B5) : titres des documents mobilisés
+ * (organisation + année), dédupliqués, sans l'appareil de références détaillé.
+ */
+function Sources({ report }: { report: PreRapportOutput }) {
+  const citedIds = new Set<string>();
+  for (const s of report.sections) for (const id of s.sources_citees) citedIds.add(id);
+  const seen = new Set<string>();
+  const titres: string[] = [];
+  [...citedIds]
+    .map((id) => STAT_BY_ID.get(id))
+    .filter((s): s is StatEntry => Boolean(s))
+    .sort((a, b) => a.source.org.localeCompare(b.source.org) || a.source.year - b.source.year)
+    .forEach((s) => {
+      const titre = `${s.source.org}, ${s.source.year}`;
+      if (!seen.has(titre)) {
+        seen.add(titre);
+        titres.push(titre);
+      }
+    });
+  if (titres.length === 0) return null;
   return (
-    <li style={{ margin: '0 0 10px', lineHeight: 1.5 }}>
-      <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{stat.claim}</span>
-      <span style={{ color: 'var(--ink-2)' }}>
-        {' '}
-        ({stat.source.org}, {stat.source.year}
-        {stat.source.page ? `, ${stat.source.page}` : ''}){origin}
-      </span>
-      <span style={{ display: 'block', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>
-        [{stat.id}] {flags}
-      </span>
-    </li>
+    <section style={{ margin: '0 0 28px' }}>
+      <h2 style={sectionTitle}>Sources mobilisées</h2>
+      <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 13 }}>
+        {titres.map((t) => (
+          <li key={t} style={{ margin: '0 0 5px', lineHeight: 1.5, color: 'var(--ink-2)' }}>
+            {t}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
-function Bibliography({ report }: { report: PreRapportOutput }) {
-  const citedIds = new Set<string>();
-  for (const s of report.sections) for (const id of s.sources_citees) citedIds.add(id);
-  const stats = [...citedIds]
-    .map((id) => STAT_BY_ID.get(id))
-    .filter((s): s is StatEntry => Boolean(s))
-    .sort((a, b) => a.source.org.localeCompare(b.source.org) || a.source.year - b.source.year);
-  if (stats.length === 0) return null;
+/** Page de fin : transparence IA + lien MIRA (placeholders légal Victor / domaine). */
+function Closing() {
   return (
-    <section style={{ margin: '0 0 28px' }}>
-      <h2 style={{ ...serif, fontSize: 'clamp(18px,3.5vw,20px)', fontWeight: 500, color: 'var(--violet)', margin: '0 0 12px', paddingBottom: 6, borderBottom: '1px solid var(--line-soft)' }}>
-        Références citées
-      </h2>
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {stats.map((s) => (
-          <Citation key={s.id} stat={s} />
-        ))}
-      </ul>
+    <section style={{ margin: '0 0 8px' }}>
+      <h2 style={sectionTitle}>Transparence et mentions</h2>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink)', margin: '0 0 12px' }}>
+        Ce pré-rapport a été généré avec l’aide de l’intelligence artificielle, à partir de sources publiques de
+        référence. Il constitue une lecture indicative et ne remplace pas un audit de vos données internes.
+      </p>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)', margin: '0 0 12px' }}>
+        Mentions légales et de transparence en cours de validation.
+      </p>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-2)', margin: 0 }}>
+        Pour en savoir plus sur MIRA, rendez-vous sur notre site officiel (adresse à confirmer).
+      </p>
     </section>
   );
 }
@@ -196,11 +282,13 @@ function Bibliography({ report }: { report: PreRapportOutput }) {
 export default function ReportDocument({ report, context }: ReportDocumentProps) {
   return (
     <article style={{ maxWidth: 760, margin: '0 auto', padding: 'clamp(20px,4vw,40px) clamp(16px,4vw,28px)', overflowWrap: 'anywhere' }}>
-      <Cover context={context} />
+      <Cover />
+      <Identity context={context} />
       {report.sections.map((s) => (
         <Section key={s.id} section={s} />
       ))}
-      <Bibliography report={report} />
+      <Sources report={report} />
+      <Closing />
       <p style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid var(--line-soft)', fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>
         {RGPD_PDF_FOOTER}
       </p>

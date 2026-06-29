@@ -16,16 +16,16 @@
 
 /** Mention d'information affichée en pied de chaque page du PDF (placeholder). */
 export const RGPD_PDF_FOOTER =
-  'Document indicatif — ne constitue pas un diagnostic individuel. Données traitées par MIRA pour ' +
-  "produire ce pré-rapport ; pas d'entraînement de modèle sur vos données. [Mention d'information " +
-  'RGPD à finaliser — Victor / Jean-Marie.]';
+  'Document indicatif, ne constitue pas un diagnostic individuel. Données traitées par MIRA pour ' +
+  "produire ce pré-rapport, sans entraînement de modèle sur vos données. [Mention d'information " +
+  'RGPD à finaliser, Victor et Jean-Marie.]';
 
 /** Bloc RGPD en bas de l'email de livraison (placeholder). */
 export const RGPD_EMAIL_NOTICE =
   'Vous recevez cet email car une demande de pré-rapport MIRA a été soumise avec cette adresse. ' +
-  "Vos données servent uniquement à produire et vous transmettre ce document ; elles ne sont pas " +
+  "Vos données servent uniquement à produire et vous transmettre ce document, elles ne sont pas " +
   "utilisées pour entraîner de modèle. Pour exercer vos droits (accès, rectification, suppression), " +
-  'répondez à cet email. [Mention d\'information RGPD à finaliser — Victor / Jean-Marie.]';
+  'répondez à cet email. [Mention d\'information RGPD à finaliser, Victor et Jean-Marie.]';
 
 /** Expéditeur lisible par défaut (le domaine réel vient de RESEND_FROM côté env). */
 export const EMAIL_SENDER_NAME = 'MIRA';

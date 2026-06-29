@@ -66,8 +66,8 @@ describe('renderReportHtml', () => {
     expect(html).toContain('Vos familles de métiers');
   });
 
-  it('résout les sources citées depuis la stat-bank (bibliographie)', () => {
-    expect(html).toContain('Références citées');
+  it('résout les sources citées depuis la stat-bank (section Sources allégée)', () => {
+    expect(html).toContain('Sources mobilisées');
     expect(html).toContain('World Economic Forum');
   });
 
