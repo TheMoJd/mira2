@@ -76,8 +76,9 @@ export default function Wizard() {
     setSubmitError(null);
     try {
       const result = await submitPreRapport(form, honeypot);
-      if (result.ok && result.leadId) navigate(`/rapport/${result.leadId}`);
-      else if (result.ok) setView('success'); // repli si l'id n'est pas remonté
+      // Livraison par email : on ne redirige plus vers le rapport en ligne, on
+      // confirme simplement que le pré-rapport arrivera par email (cf. Success).
+      if (result.ok) setView('success');
       else setSubmitError(result.error ?? 'Une erreur est survenue. Réessayez.');
     } finally {
       setSubmitting(false);

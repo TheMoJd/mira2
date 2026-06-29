@@ -5,8 +5,8 @@ import PreRapport from './pages/PreRapport';
 import Grain from './components/fx/Grain';
 import { scrollToTop } from './lib/scroll';
 
-// Chargé à la demande : la page de résultat embarque la stat-bank + le rendu du
-// rapport, inutiles sur la landing.
+// Chargé à la demande : page d'atterrissage des anciens liens /rapport/:leadId
+// (le rapport est désormais livré par email, plus affiché en ligne).
 const ReportView = lazy(() => import('./pages/ReportView'));
 
 /** Remet la vue en haut à chaque changement de route (sinon on hériterait du
