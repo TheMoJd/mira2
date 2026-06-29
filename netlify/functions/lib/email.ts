@@ -49,11 +49,17 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
     <p style="font-size:11px;color:#8a83a6">${RGPD_EMAIL_NOTICE}</p>
   </div>`;
 
+  // Optionnel : route les réponses des prospects vers une boîte qu'on relève vraiment
+  // (ex. moetez@polaria.ai) plutôt que vers l'adresse d'envoi `@mira-audit.fr`, qui
+  // n'a pas de boîte derrière. Absent → les réponses repartent vers le `from`.
+  const replyTo = process.env.RESEND_REPLY_TO;
+
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
       from,
       to: [to],
+      ...(replyTo ? { replyTo } : {}),
       subject: 'Votre pré-rapport MIRA',
       html,
       attachments: [{ filename: PDF_FILENAME, content: pdf.toString('base64') }],
