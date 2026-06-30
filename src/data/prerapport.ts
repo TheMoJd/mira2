@@ -74,7 +74,6 @@ export const preRapport = {
   success: {
     title: 'Votre pré-rapport arrive par email',
     body: 'Nous générons votre pré-rapport sectoriel et vous l’envoyons en PDF par email d’ici 1 à 2 minutes. Pensez à vérifier vos courriers indésirables.',
-    note: 'Une question d’ici là ? Écrivez-nous à contact@mira.ai',
     cta: 'Retour à l’accueil',
   },
 } as const;

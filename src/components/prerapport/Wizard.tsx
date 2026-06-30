@@ -339,10 +339,9 @@ function Success({ email, onHome }: { email: string; onHome: () => void }) {
       </motion.div>
       <h2 className="display" style={{ fontSize: 'clamp(26px,3.4vw,36px)', margin: '0 0 14px', color: 'var(--ink)' }}>{success.title}</h2>
       <p style={{ fontSize: 16, lineHeight: 1.6, color: 'var(--ink-2)', maxWidth: 460, margin: '0 auto 8px' }}>{success.body}</p>
-      <p style={{ fontSize: 15, color: 'var(--ink-1)', marginBottom: 8 }}>
+      <p style={{ fontSize: 15, color: 'var(--ink-1)', marginBottom: 28 }}>
         Envoi à <strong>{email}</strong>
       </p>
-      <p style={{ fontSize: 13.5, color: 'var(--ink-3)', marginBottom: 28 }}>{success.note}</p>
       <WizardButton onClick={onHome}>{success.cta}</WizardButton>
     </motion.div>
   );
