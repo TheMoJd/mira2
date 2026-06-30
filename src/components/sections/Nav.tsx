@@ -85,7 +85,6 @@ export default function Nav() {
         </nav>
 
         <div className="nav-actions">
-          <a href="#" className="nav-login" style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink-1)' }}>Connexion</a>
           <Button primary small href="/pre-rapport">{mira.brand.cta}</Button>
         </div>
 
@@ -129,14 +128,7 @@ export default function Nav() {
                   {l.label}
                 </a>
               ))}
-              <a
-                href="#"
-                onClick={() => setOpen(false)}
-                style={{ fontSize: 16, color: 'var(--ink-1)', fontWeight: 600, padding: '16px 4px 18px' }}
-              >
-                Connexion
-              </a>
-              <span onClick={() => setOpen(false)} style={{ display: 'block' }}>
+              <span onClick={() => setOpen(false)} style={{ display: 'block', marginTop: 8 }}>
                 <Button primary href="/pre-rapport">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
               </span>
             </div>
