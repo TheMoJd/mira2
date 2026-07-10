@@ -15,6 +15,7 @@ Suivant ce que vous cherchez (cadre [Diataxis](https://diataxis.fr/)) :
 |--------------|-------|----------|
 | Générer un premier pré-rapport pas à pas | [tutorial-premier-prerapport.md](tutorial-premier-prerapport.md) | Tutoriel |
 | Faire tourner le pipeline en local (env, Supabase, PDF) | [howto-developpement-local.md](howto-developpement-local.md) | How-to |
+| Renvoyer un rapport, diagnostiquer un lead (scripts ops) | [howto-developpement-local.md § Scripts d'exploitation](howto-developpement-local.md#scripts-dexploitation) | How-to |
 | Connaître les functions, le modèle de données, les variables d'env | [reference-pipeline-prerapport.md](reference-pipeline-prerapport.md) | Référence |
 | Comprendre l'architecture et les garde-fous (pourquoi) | [explanation-architecture-et-garde-fous.md](explanation-architecture-et-garde-fous.md) | Explication |
 

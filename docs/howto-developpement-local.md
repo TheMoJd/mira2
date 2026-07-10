@@ -47,13 +47,10 @@ normal et ne bloque pas la génération) :
 
 ```bash
 RESEND_API_KEY=re_...
-RESEND_FROM=rapport@votre-domaine-verifie     # ⚠ le code lit RESEND_FROM, pas RESEND_FROM_EMAIL
-OPS_EMAIL=ops@votre-domaine                    # destinataire des alertes d'échec
+RESEND_FROM=rapport@votre-domaine-verifie     # ou « MIRA <rapport@votre-domaine-verifie> »
+RESEND_REPLY_TO=vous@votre-boite-relevee      # optionnel : où partent les réponses des prospects
+OPS_EMAIL=ops@votre-domaine                   # optionnel : destinataire des alertes d'échec
 ```
-
-> ⚠ **Piège connu.** `.env.example` nomme la variable `RESEND_FROM_EMAIL`, mais le code lit
-> `RESEND_FROM`. Utilisez `RESEND_FROM` tant que ce n'est pas aligné, sinon l'email reste
-> silencieusement `skipped`.
 
 ## Étape 2 — Lancer le serveur de dev
 
@@ -71,7 +68,7 @@ Vérification : ouvrez `http://localhost:8888/pre-rapport` — le wizard s'affic
 Déroulez le wizard et validez la dernière étape. Au submit, vous devez observer :
 
 1. Une réponse `202` côté réseau (onglet Network du navigateur).
-2. L'écran de succès « Votre pré-rapport est en route ».
+2. L'écran de succès « Votre pré-rapport arrive par email ».
 
 ## Étape 4 — Vérifier la chaîne
 
@@ -99,14 +96,48 @@ npm run build     # tsc app + tsc functions + vite build — doit passer avant t
 | `Configuration serveur manquante` (500) au submit | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` absents | Renseigner `.env`, relancer `netlify dev`. |
 | Le statut reste à `generating` | Exception dans la génération | Lire les logs `[generate] échec …`. Souvent : clé OpenAI invalide, ou Chromium introuvable. |
 | Erreur Chromium / `Could not find browser` | Pas de Chrome local | Renseigner `CHROME_EXECUTABLE_PATH` vers chrome.exe / Edge. |
-| Email jamais reçu, logs `skipped` | Resend non configuré, **ou** `RESEND_FROM_EMAIL` utilisé au lieu de `RESEND_FROM` | Utiliser `RESEND_FROM`. |
+| Email jamais reçu, logs `skipped` | `RESEND_API_KEY` ou `RESEND_FROM` absent au runtime | Renseigner les deux. En prod, vérifier ce que le runtime voit via `/.netlify/functions/envcheck` (présence des variables, jamais les valeurs). |
 | `429 Trop de demandes` | Rate-limit 3/email/h atteint | Changer d'email de test, ou attendre 1 h. |
 | `413` / `415` sur la plaquette | > 4 Mo, ou extension non `.pdf/.ppt(x)/.doc(x)` | Réduire le fichier (plafond = 4 Mo). |
 | Statut `failed` immédiat | Lead introuvable, ou parse JSON OpenAI vide | Vérifier `OPENAI_API_KEY` et le modèle dans `OPENAI_MODEL`. |
 
 ## Itérer sur le PDF sans soumettre
 
-Pour travailler le gabarit ([`reportHtml.ts`](../src/data/reportHtml.ts)) sans dérouler tout
-le wizard, écrivez un petit script scratchpad qui passe un `report_json` d'exemple à
-`renderReportHtml` puis `htmlToPdf`, et ouvrez le PDF produit. (`htmlToPdf` utilise déjà
-`CHROME_EXECUTABLE_PATH` en local.)
+Le plus direct : le script d'exemples, qui déroule le vrai prompt + schéma + rendu HTML sur
+3 entreprises réelles et écrit les artefacts (`.html`, `.json`, `.md`) dans
+[`docs/samples/`](samples/) :
+
+```bash
+npx tsx scripts/generate-samples.ts    # nécessite OPENAI_API_KEY dans .env
+```
+
+Ouvrez le `.html` produit dans un navigateur : c'est exactement ce que Chromium imprime en
+PDF. Pour itérer sur le gabarit ([`reportHtml.ts`](../src/data/reportHtml.ts)) sans payer un
+appel OpenAI à chaque fois, repassez un `report_json` déjà généré (table `leads` ou
+`docs/samples/*.json`) à `renderReportHtml` puis `htmlToPdf` dans un script scratchpad.
+
+## Scripts d'exploitation
+
+Trois scripts ponctuels (voir la [référence](reference-pipeline-prerapport.md#scripts-dexploitation-scripts)
+pour leur surface exacte). Ils lisent `.env` et utilisent la clé `service_role` : usage interne.
+
+**Renvoyer un rapport déjà généré** (email perdu, spam, nouvelle adresse) :
+
+```bash
+npx tsx scripts/investigate-leads.ts          # 1. retrouver le leadId (20 derniers leads)
+npx tsx scripts/resend-report.ts <leadId>     # 2. re-télécharger le PDF et le renvoyer
+```
+
+Vérification : le script affiche `Email envoyé, id Resend : …`. S'il échoue sur
+`Download PDF échoué`, le rapport n'a jamais été généré → regarder le `status` du lead
+(un lead `failed` se rejoue en re-déclenchant la génération, pas avec ce script).
+
+**Diagnostiquer « l'email n'est pas parti »** :
+
+```bash
+npx tsx scripts/investigate-leads.ts
+```
+
+Lecture : un lead `sent` avec `report:oui` mais sans email reçu → problème Resend
+(vérifier `envcheck` en prod, puis les spams) ; un lead bloqué `generating`/`failed` →
+problème de génération (logs Netlify).

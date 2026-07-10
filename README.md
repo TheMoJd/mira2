@@ -1,12 +1,15 @@
-# MIRA — Landing page
+# MIRA — Landing & pré-rapport freemium
 
 > **MIRA** — *Mapping des Impacts et des Risques IA.*
 > L'IA redessine la carte des compétences. MIRA donne la boussole.
 
 Landing page marketing de MIRA, le dispositif d'intelligence RH augmentée qui mesure et pilote
-l'impact de l'IA sur les ressources humaines, métier par métier.
+l'impact de l'IA sur les ressources humaines, métier par métier — plus le **pré-rapport
+freemium** : un wizard (`/pre-rapport`) qui capture un lead, génère un rapport PDF sourcé
+(OpenAI + Chromium) et l'envoie par email.
 
-Application **React + TypeScript + Vite**, mono-page, responsive, animée avec Framer Motion.
+Application **React + TypeScript + Vite** (SPA multi-routes), responsive, animée avec
+Framer Motion, adossée à des **Netlify Functions** (génération) et **Supabase** (données).
 
 ---
 
@@ -37,19 +40,27 @@ Node 18+ recommandé.
 ```
 src/
 ├── main.tsx              # point d'entrée React
-├── App.tsx               # assemblage des sections de la page
+├── App.tsx               # routing : / (landing), /pre-rapport (wizard), /rapport/:leadId (page héritée)
+├── pages/                # Landing, PreRapport, ReportView
 ├── styles/globals.css    # design tokens (couleurs, typo, rayons…) + styles globaux
 ├── data/
 │   ├── mira.ts           # ★ TOUT le contenu de la landing (textes, chiffres, offres)
-│   └── types.ts          # types du contenu
-├── hooks/
-│   ├── useCountTo.ts      # compteur animé
-│   └── useInViewOnce.ts   # déclenche une animation au scroll (une fois)
+│   ├── prerapport.ts     # ★ tous les textes du wizard
+│   ├── statbank.ts       # banque de statistiques sourcées (seuls chiffres citables du rapport)
+│   ├── rapportStructure.ts / reportPrompt.ts / reportSchema.ts / reportHtml.ts / rgpd.ts
+│   │                     # structure §0→§9, prompt, schéma de sortie, gabarit PDF, mentions RGPD
+│   └── types.ts          # types du contenu landing
+├── hooks/                # useCountTo, useInViewOnce, useActiveSection, useMotionPrefs
 └── components/
-    ├── ui/               # primitives réutilisables (Button, Head, Logo, Reveal, StatCounter)
+    ├── ui/               # primitives réutilisables (Button, Head, Logo, Reveal, StatCounter…)
     ├── charts/           # visualisations SVG (DashboardMock, RadialGauge, ExposureBars, ScatterMatrix)
-    └── sections/         # sections de la page (Nav, Hero, Stats, Methode, Lectures, Matrix, Diff,
-                          #   Pricing, Conformite, FinalCTA, Footer…)
+    ├── fx/               # effets visuels (Aurora, Grain, HeroField, ScrollProgress…)
+    ├── prerapport/       # wizard du pré-rapport (étapes, champs, validation, submit)
+    └── sections/         # sections de la landing (Nav, Hero, Stats, Methode, Testimonials, Matrix,
+                          #   Diff, Pricing, Conformite, FinalCTA, Footer…)
+
+netlify/functions/        # submit-prerapport, generate-prerapport-background, envcheck + lib/
+scripts/                  # scripts ops : generate-samples, resend-report, investigate-leads
 ```
 
 **Le contenu vit dans [`src/data/mira.ts`](src/data/mira.ts).** Pour modifier un texte, un chiffre ou une

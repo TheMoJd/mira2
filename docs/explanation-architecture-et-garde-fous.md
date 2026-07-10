@@ -83,8 +83,9 @@ qu'inutile : il détruit la crédibilité. Le système le garantit par **défens
    données mondiales/US non transposables à une PME française, et l'honnêteté sur les familles
    non couvertes (« à confirmer » plutôt qu'une généralité inventée).
 
-4. **Le rendu.** `reportHtml.ts` n'affiche que le texte de `report_json` ; la bibliographie §9
-   est **reconstruite depuis `statbank`** par les `id` cités (`sources_citees`). Un `id`
+4. **Le rendu.** `reportHtml.ts` n'affiche que le texte de `report_json` ; la section
+   « Sources mobilisées » est **reconstruite depuis `statbank`** par les `id` cités
+   (`sources_citees`), puis dédupliquée en titres (organisation + année). Un `id`
    inexistant n'apparaît tout simplement pas. Aucune fabrication possible à l'étape de rendu.
 
 La sortie structurée (`response_format` json_schema `strict`) verrouille la **forme** : le
@@ -172,6 +173,35 @@ pour un gain marginal sur une V1.
   lourd à maintenir.
 - **PDF en pièce jointe** (pas de lien signé). Le PDF se forwarde DRH → DG sans expiration ni
   ré-authentification — ce forward **est** le canal d'acquisition (décision produit D3).
+- **Livraison email-only.** L'affichage web du rapport (`/rapport/:leadId` + function
+  `get-report`) a été retiré : un seul canal de livraison = un seul rendu à maintenir, pas
+  d'endpoint public à protéger, et le PDF joint reste l'objet qui circule. La route
+  `/rapport/:leadId` est conservée comme page-message pour les anciens liens partagés.
+- **Réponses routées** (`RESEND_REPLY_TO`). L'adresse d'envoi vit sur un domaine sans boîte
+  derrière ; sans reply-to, la réponse d'un prospect partirait dans le vide. La variable route
+  les réponses vers une boîte réellement relevée — c'est le canal de conversion du §8
+  (« répondez simplement à cet email »).
+
+### La voix du rapport (refonte CEO, Tranche B)
+
+Trois choix éditoriaux, tous au service de la même contrainte « crédible et défendable » :
+
+- **Page de garde + carte d'identité + tableau « En un coup d'œil »** en §3. Un DRH feuillette
+  avant de lire : la structure donne le diagnostic dès les premières pages, les fiches par
+  famille détaillent ensuite.
+- **Sources allégées.** L'appareil de références détaillé (claim + verbatim + flags par stat)
+  prenait plusieurs pages et faisait « annexe académique ». La section « Sources mobilisées »
+  ne liste plus que les documents (organisation + année, dédupliqués). La traçabilité fine
+  n'est pas perdue : elle reste dans le texte (chaque chiffre cite sa source) et en base
+  (`reports.sources`).
+- **Prose naturelle : ni tiret cadratin ni point-virgule.** Consigne CEO : ces signes « font
+  écrit par une IA » et abîment la crédibilité. La règle est imposée deux fois — règle n°8 du
+  `SYSTEM_PROMPT` pour le texte généré, et relecture des textes codés en dur (`reportHtml.ts`,
+  textes figés de `rapportStructure.ts`).
+- **Page de fin « Transparence et mentions ».** Le rapport dit explicitement qu'il a été
+  généré avec l'aide de l'IA à partir de sources publiques. C'est un choix d'honnêteté
+  (cohérent avec le positionnement anti-« ChatGPT déguisé » : on assume l'outil, on montre la
+  méthode) et une anticipation des obligations de transparence (IA Act).
 
 ---
 
@@ -195,9 +225,11 @@ et s'emploie surtout en §2 (contexte) et §7 (repère sectoriel).
 
 - **Couverture §3 inégale** : le socle ne couvre pas directement les 28 familles → caractérisation « à confirmer » assumée pour les familles non couvertes.
 - **`enforceSectionGrid` ne nettoie que la métadonnée, pas la prose** : le filtre agit sur `sources_citees` (la liste d'`id` cités), pas sur le texte `contenu` des sections. Une statistique hors-grille rédigée *en toutes lettres* dans un paragraphe survit donc au filtre. De plus, l'audit « 0 citation hors-grille » mesure ce même champ `sources_citees` qu'il vient de nettoyer : il valide la métadonnée, pas la prose. Acceptable aujourd'hui car la prévention amont (niveau 2 : le modèle ne reçoit pas les chiffres interdits par section) traite la cause à la racine ; le filtre aval n'est qu'une seconde barrière. À renforcer (scan de la prose) seulement si une fuite en toutes lettres est observée en pratique.
-- **RGPD en placeholders** : `rgpd.ts` et le §9 portent des mentions provisoires en attente de la version juridique (Victor / Jean-Marie). Ne pas les présenter comme une affirmation de conformité.
+- **Mentions RGPD factuelles, pas encore juridiques** : `rgpd.ts` et la page de fin portent des mentions de transparence factuelles (sans placeholder), mais la mention d'information détaillée + DPA validées côté juridique restent à intégrer. Ne pas présenter l'existant comme une affirmation de conformité.
 - **Parsing plaquette reporté** : la présence de la plaquette est notée, mais son contenu n'est pas encore parsé (libs lourdes hors V1). Seul le site est lu.
-- **Un bug de configuration restant** (voir [reference](reference-pipeline-prerapport.md#variables-denvironnement)) : `RESEND_FROM` (lu par le code) vs `RESEND_FROM_EMAIL` (nommé dans `.env.example`). *(L'ancien écart « plafond plaquette UI 10 Mo vs serveur 4 Mo » est corrigé : l'UI annonce désormais 4 Mo.)*
+- **`ReportDocument.tsx` orphelin** : l'affichage web React du rapport n'est plus monté depuis le passage en livraison email-only ; seul son test le référence encore. À supprimer (avec son test) ou à ressusciter si un affichage en ligne revient — mais ne pas le maintenir « au cas où » en parallèle de `reportHtml.ts`.
+- **`envcheck` temporaire** : la function de diagnostic expose la présence des variables d'env (jamais les valeurs). Inoffensive mais inutile hors diagnostic — à supprimer une fois l'incident Resend clos.
+- *(Écarts corrigés depuis : `RESEND_FROM` vs `RESEND_FROM_EMAIL` dans `.env.example` — aligné ; plafond plaquette UI 10 Mo vs serveur 4 Mo — l'UI annonce 4 Mo.)*
 
 ---
 

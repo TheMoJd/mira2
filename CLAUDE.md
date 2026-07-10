@@ -6,25 +6,31 @@ Instructions pour les agents travaillant sur ce repo. Lire en complément du REA
 
 Landing page marketing de **MIRA** (*Mapping des Impacts et des Risques IA*), un dispositif
 d'intelligence RH augmentée qui mesure et pilote l'impact de l'IA sur les métiers (cible : DRH /
-organisations). Ce repo ne contient **que la landing** aujourd'hui ; **le produit complet
-(pré-rapport, entretiens augmentés, dashboard) sera construit ici à terme** — anticiper que du
-routing, un backend, une base de données et de l'auth viendront s'ajouter.
+organisations). Le repo contient la **landing** et le **pré-rapport freemium** (wizard
+`/pre-rapport` → Netlify Functions → OpenAI → PDF → email, données dans Supabase — voir
+[`docs/README.md`](docs/README.md)) ; **la suite du produit (entretiens augmentés, dashboard)
+sera construite ici à terme** — anticiper que de l'auth et d'autres routes viendront s'ajouter.
 
 ## Commandes
 
 ```bash
-npm run dev      # serveur de dev Vite
-npm run build    # tsc -b (typecheck strict) + vite build → dist/
+npm run dev      # serveur de dev Vite (landing seule) ; `netlify dev` pour front + functions
+npm run build    # tsc -b (typecheck strict, app + functions) + vite build → dist/
 npm run preview  # sert le build de prod
+npm test         # Vitest (validation wizard, anti-SSRF, invariants du contenu du rapport)
 ```
 
-Il n'y a **pas** de linter ni de tests pour l'instant : le garde-fou qualité est le **typecheck
-TypeScript strict** lancé par `npm run build`. Toujours faire passer le build avant de livrer.
+Pas de linter : les garde-fous qualité sont le **typecheck TypeScript strict** lancé par
+`npm run build` et la suite **Vitest**. Toujours faire passer les deux avant de livrer.
 
 ## Architecture
 
-- **`src/App.tsx`** assemble une liste de sections (`<Nav/>`, `<Hero/>`, `<Stats/>`, … `<Footer/>`).
-  Ajouter/retirer une section = éditer cet assemblage.
+- **`src/App.tsx`** porte le routing (`/` landing, `/pre-rapport` wizard, `/rapport/:leadId`
+  page héritée). **`src/pages/Landing.tsx`** assemble la liste de sections (`<Nav/>`, `<Hero/>`,
+  `<Stats/>`, … `<Footer/>`). Ajouter/retirer une section = éditer cet assemblage.
+- **Le pipeline du pré-rapport** (wizard, functions, prompt, PDF) est documenté dans
+  [`docs/`](docs/README.md) — la référence y détaille chaque module de `src/data` et
+  `netlify/functions`.
 - **`src/data/mira.ts` est la source de vérité du contenu.** Tous les textes, chiffres et offres y
   vivent, typés par `src/data/types.ts`. **Pour changer une copie, éditer les données — pas le JSX.**
   Exception assumée : quelques `const` purement présentationnels restent locaux à leur composant

@@ -37,8 +37,9 @@ Supabase (Postgres + Storage)
 
 | Élément | Fichier | Rôle |
 |---------|---------|------|
-| Routing | [`src/App.tsx`](../src/App.tsx) | `/` = landing, `/pre-rapport` = wizard, `*` → redirige vers `/`. |
+| Routing | [`src/App.tsx`](../src/App.tsx) | `/` = landing, `/pre-rapport` = wizard, `/rapport/:leadId` = page d'atterrissage des anciens liens, `*` → redirige vers `/`. |
 | Page wizard | [`src/pages/PreRapport.tsx`](../src/pages/PreRapport.tsx) | Header épuré + `<Wizard/>`. |
+| Page rapport (héritée) | [`src/pages/ReportView.tsx`](../src/pages/ReportView.tsx) | N'affiche **plus** le rapport : depuis le passage en livraison email-only, elle montre « Votre pré-rapport arrive par email ». La route est conservée pour que les anciens liens partagés ne tombent pas sur une 404. |
 | Wizard | [`src/components/prerapport/Wizard.tsx`](../src/components/prerapport/Wizard.tsx) | Formulaire en 3 vues (`intro` → `form` → `success`), 5 étapes. |
 | Validation | [`src/components/prerapport/validation.ts`](../src/components/prerapport/validation.ts) | `validateStep(step, form)` — `STEP_COUNT = 5`. |
 | Soumission | [`src/components/prerapport/submit.ts`](../src/components/prerapport/submit.ts) | `submitPreRapport(form, honeypot)` → POST multipart. |
@@ -57,6 +58,12 @@ Supabase (Postgres + Storage)
 
 Le champ `company_website_hp` est un **honeypot** anti-bot (hors flux, invisible) ; un humain
 ne le remplit jamais. Voir [explanation](explanation-architecture-et-garde-fous.md#anti-abus).
+
+Au succès de la soumission, le wizard affiche l'écran « Votre pré-rapport arrive par email »
+(pas de redirection : le rapport n'est plus consultable en ligne).
+`src/components/report/ReportDocument.tsx` (affichage web React du rapport) est un **héritage**
+de l'époque du rapport en ligne : plus monté par aucune page, il n'est référencé que par son
+test. Le rendu de référence du rapport est `reportHtml.ts` (PDF).
 
 ---
 
@@ -118,6 +125,17 @@ jusqu'à **15 min**.
   8. `status = sent`.
 - **Échec** : toute exception → `status = failed` + `notifyFailure`.
 
+### `envcheck` (diagnostic, temporaire)
+
+[`netlify/functions/envcheck.ts`](../netlify/functions/envcheck.ts)
+
+`GET /.netlify/functions/envcheck` renvoie, pour les variables d'env critiques (Resend,
+Supabase, OpenAI), **uniquement leur présence** (booléen) et la longueur de la valeur —
+jamais la valeur — plus le préfixe (3 caractères) de la clé Resend pour vérifier qu'elle
+commence par `re_`. Sert à diagnostiquer ce que le runtime des functions voit réellement
+(cas typique : variable posée dans Netlify mais absente au runtime). **À supprimer une fois
+le diagnostic terminé** (le fichier porte le même avertissement).
+
 ### Bibliothèques de functions
 
 | Fichier | Export | Rôle |
@@ -125,7 +143,7 @@ jusqu'à **15 min**.
 | [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche, categorieEntreprise, anneeCreation, localisation, actif }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Tous les champs sont best-effort (souvent partiels). Retourne `{}` en cas d'échec. |
 | | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
 | [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
-| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). |
+| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
 | | `notifyFailure({leadId, error})` | Email de repli ops (no-op loggé si `OPS_EMAIL`/Resend absents). |
 
 ---
@@ -141,9 +159,9 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 | [`rapportStructure.ts`](../src/data/rapportStructure.ts) | Les 10 sections §0→§9 + la **grille `allowedSources`** (section → sources autorisées). | `reportSections`, `statsForSection(section)`, types `ExpositionLevel`/`ImpactNature`/`ConfidenceLevel`. |
 | [`reportPrompt.ts`](../src/data/reportPrompt.ts) | Prompt de génération. | `SYSTEM_PROMPT` (10 règles absolues), `buildUserMessage(ctx)`, `GenerationContext`. |
 | [`reportSchema.ts`](../src/data/reportSchema.ts) | Contrat de sortie OpenAI. | `RESPONSE_FORMAT` (json_schema, `strict: true`), `PreRapportOutput`, `ReportSectionOutput`, `ReportFamille`. |
-| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). | `renderReportHtml(report, ctx)`, `ReportRenderContext`. |
+| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → sections §0→§9 avec tableau récapitulatif « En un coup d'œil » en §3 → « Sources mobilisées » (titres dédupliqués org + année) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
 | [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~28 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
-| [`rgpd.ts`](../src/data/rgpd.ts) | Mentions RGPD (placeholders Victor/Jean-Marie). | `RGPD_PDF_FOOTER`, `RGPD_EMAIL_NOTICE`, `EMAIL_SENDER_NAME`. |
+| [`rgpd.ts`](../src/data/rgpd.ts) | Mentions RGPD factuelles (pied de la page de fin du PDF + bas de l'email). Pas d'affirmation de conformité ; la mention d'information juridique complète reste à intégrer après validation métier/juridique. | `RGPD_PDF_FOOTER`, `RGPD_EMAIL_NOTICE`, `EMAIL_SENDER_NAME`. |
 
 ### Sources de la stat-bank
 
@@ -230,15 +248,31 @@ en production. Voir [`.env.example`](../.env.example).
 | `OPENAI_API_KEY` | ✅ | generate | Clé OpenAI. |
 | `OPENAI_MODEL` | optionnel | generate | Modèle. Défaut : `gpt-4.1`. |
 | `RESEND_API_KEY` | optionnel | email | Absent → email `skipped` (le PDF reste stocké). |
-| `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). |
+| `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). Format « Nom <adresse> » ou adresse seule. |
+| `RESEND_REPLY_TO` | optionnel | email | Boîte qui reçoit les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
 | `OPS_EMAIL` | optionnel | email | Destinataire des alertes d'échec (`notifyFailure`). |
 | `CHROME_EXECUTABLE_PATH` | dev local | pdf | Chemin vers Chrome/Edge local (le binaire `@sparticuz/chromium` est Linux). |
 | `URL` | fourni par Netlify | submit | Base URL pour déclencher la background function. |
 
-> **Écart connu** : le code lit `process.env.RESEND_FROM`, mais `.env.example` nomme la
-> variable `RESEND_FROM_EMAIL`. Avec le nom du `.env.example`, `senderOrNull()` renvoie `null`
-> et **aucun email n'est envoyé** (`skipped`). Aligner les deux avant d'activer Resend.
-> `OPS_EMAIL` est par ailleurs absent de `.env.example`.
+En cas de doute sur ce que le runtime voit réellement en production, la function
+[`envcheck`](#envcheck-diagnostic-temporaire) renvoie la présence (jamais la valeur) de
+chacune de ces variables.
+
+---
+
+## Scripts d'exploitation (`scripts/`)
+
+Scripts ponctuels lancés à la main avec `npx tsx` (ils lisent `.env` directement, sans
+dotenv). Ils utilisent la clé `service_role` : **usage interne uniquement**.
+
+| Script | Usage | Rôle |
+|--------|-------|------|
+| [`resend-report.ts`](../scripts/resend-report.ts) | `npx tsx scripts/resend-report.ts <leadId>` | Renvoie par email un rapport **déjà généré** : télécharge `reports/{leadId}/prerapport-mira.pdf`, l'envoie via Resend à l'email du lead (respecte `RESEND_REPLY_TO`). Ne régénère rien. |
+| [`investigate-leads.ts`](../scripts/investigate-leads.ts) | `npx tsx scripts/investigate-leads.ts` | Liste les 20 derniers leads (statut, présence du `report_json`) et les 20 dernières lignes `reports` — le premier réflexe quand « un email n'est pas parti ». |
+| [`generate-samples.ts`](../scripts/generate-samples.ts) | `npx tsx scripts/generate-samples.ts` | Génère des pré-rapports d'exemple sur de **vraies entreprises** (enrichissement INSEE réel + vrai appel OpenAI + rendu HTML), audite la grille de sources au passage, et écrit les artefacts versionnés dans [`docs/samples/`](samples/). |
+
+> Pour renvoyer un rapport ou diagnostiquer un lead pas à pas, voir le
+> [how-to](howto-developpement-local.md#scripts-dexploitation).
 
 ---
 
