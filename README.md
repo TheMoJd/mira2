@@ -47,8 +47,8 @@ src/
 │   ├── mira.ts           # ★ TOUT le contenu de la landing (textes, chiffres, offres)
 │   ├── prerapport.ts     # ★ tous les textes du wizard
 │   ├── statbank.ts       # banque de statistiques sourcées (seuls chiffres citables du rapport)
-│   ├── rapportStructure.ts / reportPrompt.ts / reportSchema.ts / reportHtml.ts / rgpd.ts
-│   │                     # structure §0→§9, prompt, schéma de sortie, gabarit PDF, mentions RGPD
+│   ├── rapportStructure.ts / reportPrompt.ts / reportSchema.ts / reportSanitize.ts / reportHtml.ts / rgpd.ts
+│   │                     # structure §0→§9, prompt, schéma de sortie, verrou de style, gabarit PDF, mentions RGPD
 │   └── types.ts          # types du contenu landing
 ├── hooks/                # useCountTo, useInViewOnce, useActiveSection, useMotionPrefs
 └── components/
@@ -60,6 +60,7 @@ src/
                           #   Diff, Pricing, Conformite, FinalCTA, Footer…)
 
 netlify/functions/        # submit-prerapport, generate-prerapport-background, envcheck + lib/
+supabase/migrations/      # schéma Postgres versionné (leads, reports, qualification des leads)
 scripts/                  # scripts ops : generate-samples, resend-report, investigate-leads
 ```
 

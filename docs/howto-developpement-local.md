@@ -12,7 +12,7 @@ base, génère un PDF et (si Resend est configuré) l'envoie par email.
 
 - **Node 18+** et les dépendances installées (`npm install`).
 - **Netlify CLI** : `npm i -g netlify-cli` (fournit `netlify dev`, qui sert le front Vite ET les functions, et injecte la variable `URL`).
-- Un **projet Supabase** (tables `leads`/`reports`, enum `lead_status`, buckets `uploads`/`reports` privés) — voir [reference](reference-pipeline-prerapport.md#modèle-de-données-supabase) pour le schéma.
+- Un **projet Supabase** (tables `leads`/`reports`, enum `lead_status`, buckets `uploads`/`reports` privés) — le schéma est versionné dans [`supabase/migrations/`](../supabase/migrations/) ; voir la [reference](reference-pipeline-prerapport.md#modèle-de-données-supabase) pour le détail des colonnes.
 - Une **clé OpenAI**.
 - **Chrome ou Edge** installé localement (pour la génération PDF — le binaire Chromium de prod est Linux uniquement).
 

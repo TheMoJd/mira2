@@ -51,7 +51,7 @@ Cliquez sur **Commencer**, puis déroulez les 5 étapes avec une entreprise fict
 2. **Offre** — produits/services et clients (deux phrases suffisent).
 3. **Métiers** — tapez 3 familles, par ex. `Conduite / livraison`, `Relation client`, `Comptabilité` (Entrée après chacune).
 4. **Compléments** — laissez vide, ou collez l'URL d'un site public pour voir l'enrichissement.
-5. **Réception** — votre email + cochez le consentement.
+5. **Réception** — votre prénom, votre nom et votre email + cochez le consentement (fonction et téléphone sont optionnels).
 
 Validez **Recevoir mon pré-rapport**. Vous arrivez sur l'écran « Votre pré-rapport arrive
 par email ». Côté coulisses, `submit-prerapport` vient de répondre `202` et a déclenché la
@@ -77,9 +77,9 @@ Une fois en `status = sent` :
 Ouvrez-le. Vous obtenez un document de marque MIRA : page de garde (logo, slogan,
 proposition de valeur), carte d'identité de l'entreprise, 10 sections (§0 périmètre → §9
 sources & méthode) avec en §3 un tableau « En un coup d'œil » puis une fiche par famille de
-métiers, la liste des sources mobilisées, et une page de fin « Transparence et mentions »
-(génération assistée par IA + mention RGPD). **Chaque chiffre du rapport vient de la
-stat-bank** — le LLM n'en a inventé aucun.
+métiers, la liste des sources mobilisées, une page de fin « Transparence et mentions »
+(génération assistée par IA + mention RGPD), et un filigrane « MIRA AUDIT » en travers de
+chaque page. **Chaque chiffre du rapport vient de la stat-bank** — le LLM n'en a inventé aucun.
 
 ## Ce que vous avez construit (et la suite)
 

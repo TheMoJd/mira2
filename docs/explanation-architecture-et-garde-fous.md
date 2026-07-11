@@ -157,6 +157,17 @@ RGPD) :
 Le rate-limit par **IP** a été écarté : l'IP est une donnée personnelle (surface RGPD en plus)
 pour un gain marginal sur une V1.
 
+Depuis le 10/07, deux gardes s'y ajoutent côté validation serveur :
+
+- **Bornes de longueur.** Les textes libres Q1–Q3 partent dans le prompt OpenAI : sans borne,
+  une soumission acceptée peut y injecter des mégaoctets (coût + surface d'injection). Plafond
+  à 3 000 caractères (`MAX_FREETEXT_LEN`), 120 pour les champs d'identité et chaque famille
+  (`MAX_IDENTITY_LEN`, aussi appliqué en `maxLength` côté wizard).
+- **`cleanIdentity` sur les champs d'identité** (prénom, nom, fonction) : caractères de
+  contrôle/format retirés (retours ligne, RTL override…), espaces repliés. Défense en
+  profondeur : ces PII partiront un jour vers CRM/emails où elles seraient des vecteurs
+  d'injection (en-têtes, templates).
+
 ---
 
 ## Choix de rendu PDF
@@ -177,6 +188,11 @@ pour un gain marginal sur une V1.
   `get-report`) a été retiré : un seul canal de livraison = un seul rendu à maintenir, pas
   d'endpoint public à protéger, et le PDF joint reste l'objet qui circule. La route
   `/rapport/:leadId` est conservée comme page-message pour les anciens liens partagés.
+- **Filigrane « MIRA AUDIT »** répété sur chaque page (demande CEO 10/07). En impression
+  Chromium, un élément `position:fixed` est re-peint sur chaque page du PDF — le seul moyen de
+  couvrir toutes les pages sans connaître les sauts de page à l'avance. Il est placé au-dessus
+  du contenu (`z-index`) car les cartes à fond opaque l'occulteraient sinon ; à 5 % d'opacité,
+  il ne gêne pas la lecture.
 - **Réponses routées** (`RESEND_REPLY_TO`). L'adresse d'envoi vit sur un domaine sans boîte
   derrière ; sans reply-to, la réponse d'un prospect partirait dans le vide. La variable route
   les réponses vers une boîte réellement relevée — c'est le canal de conversion du §8
@@ -195,9 +211,13 @@ Trois choix éditoriaux, tous au service de la même contrainte « crédible et 
   n'est pas perdue : elle reste dans le texte (chaque chiffre cite sa source) et en base
   (`reports.sources`).
 - **Prose naturelle : ni tiret cadratin ni point-virgule.** Consigne CEO : ces signes « font
-  écrit par une IA » et abîment la crédibilité. La règle est imposée deux fois — règle n°8 du
-  `SYSTEM_PROMPT` pour le texte généré, et relecture des textes codés en dur (`reportHtml.ts`,
-  textes figés de `rapportStructure.ts`).
+  écrit par une IA » et abîment la crédibilité. La règle est imposée trois fois — règle n°8 du
+  `SYSTEM_PROMPT` pour le texte généré, relecture des textes codés en dur (`reportHtml.ts`,
+  textes figés de `rapportStructure.ts`), et depuis le 10/07 un **verrou garanti côté code** :
+  `sanitizeReportProse` (`reportSanitize.ts`), appliqué par `parseReport` sur chaque chaîne du
+  rapport avant persistance et rendu. Le prompt peut être désobéi, le post-processing non. Les
+  transformations sont conservatrices : plages numériques (« 2025-2030 ») et signes moins
+  (« -5 % ») préservés — un rapport chiffré ne doit jamais voir ses nombres altérés.
 - **Page de fin « Transparence et mentions ».** Le rapport dit explicitement qu'il a été
   généré avec l'aide de l'IA à partir de sources publiques. C'est un choix d'honnêteté
   (cohérent avec le positionnement anti-« ChatGPT déguisé » : on assume l'outil, on montre la
