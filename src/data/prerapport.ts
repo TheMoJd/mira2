@@ -27,7 +27,7 @@ export const preRapport = {
     { id: 'activite', label: 'Activité', kicker: 'Étape 2 sur 5', title: 'Votre offre', subtitle: 'Ce que vous produisez et pour qui — c’est ce qui rend votre rapport pertinent.' },
     { id: 'metiers', label: 'Métiers', kicker: 'Étape 3 sur 5', title: 'Vos grandes familles de métiers', subtitle: 'Les métiers cœur de votre activité aujourd’hui. C’est sur eux que portera la lecture sectorielle.' },
     { id: 'sources', label: 'Compléments', kicker: 'Étape 4 sur 5', title: 'Compléments (optionnel)', subtitle: 'Quelques sources publiques nous aident à affiner. Tout est facultatif.' },
-    { id: 'contact', label: 'Réception', kicker: 'Étape 5 sur 5', title: 'Recevoir votre pré-rapport', subtitle: 'Nous vous envoyons le rapport complet par email dès qu’il est prêt.' },
+    { id: 'contact', label: 'Réception', kicker: 'Étape 5 sur 5', title: 'Recevoir votre pré-rapport', subtitle: 'Dites-nous à qui l’adresser. Nous vous envoyons le rapport complet par email dès qu’il est prêt.' },
   ],
 
   fields: {
@@ -61,6 +61,24 @@ export const preRapport = {
     plaquette: {
       label: 'Plaquette ou support de présentation',
       hint: 'Optionnel. PDF, PowerPoint ou Word — 4 Mo maximum.',
+    },
+    prenom: {
+      label: 'Prénom',
+      placeholder: 'Camille',
+    },
+    nom: {
+      label: 'Nom',
+      placeholder: 'Durand',
+    },
+    fonction: {
+      label: 'Votre fonction',
+      placeholder: 'Ex. : DRH, dirigeant·e, responsable formation…',
+      hint: 'Optionnel mais recommandé : nous adaptons le suivi à votre rôle.',
+    },
+    telephone: {
+      label: 'Téléphone',
+      placeholder: '06 12 34 56 78',
+      hint: 'Optionnel. Uniquement pour échanger sur votre pré-rapport si vous le souhaitez.',
     },
     email: {
       label: 'Votre email professionnel',

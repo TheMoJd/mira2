@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { preRapport } from '../../data/prerapport';
 import { emptyPreRapportForm } from '../../types/prerapport';
 import type { PreRapportForm, PreRapportErrors } from '../../types/prerapport';
-import { STEP_COUNT, validateStep } from './validation';
+import { STEP_COUNT, MAX_IDENTITY_LEN, validateStep } from './validation';
 import { submitPreRapport } from './submit';
 import WizardButton from './WizardButton';
 import TextField from './fields/TextField';
@@ -177,6 +177,49 @@ export default function Wizard() {
       case 4:
         return (
           <StepShell title={meta.title} subtitle={meta.subtitle}>
+            <div className="pr-identity" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22 }}>
+              <TextField
+                label={f.prenom.label}
+                placeholder={f.prenom.placeholder}
+                value={form.prenom}
+                onChange={(v) => set('prenom', v)}
+                error={errors.prenom}
+                autoComplete="given-name"
+                maxLength={MAX_IDENTITY_LEN}
+                autoFocus
+              />
+              <TextField
+                label={f.nom.label}
+                placeholder={f.nom.placeholder}
+                value={form.nom}
+                onChange={(v) => set('nom', v)}
+                error={errors.nom}
+                autoComplete="family-name"
+                maxLength={MAX_IDENTITY_LEN}
+              />
+            </div>
+            <TextField
+              label={f.fonction.label}
+              placeholder={f.fonction.placeholder}
+              hint={f.fonction.hint}
+              value={form.fonction}
+              onChange={(v) => set('fonction', v)}
+              autoComplete="organization-title"
+              maxLength={MAX_IDENTITY_LEN}
+              optional
+            />
+            <TextField
+              label={f.telephone.label}
+              placeholder={f.telephone.placeholder}
+              hint={f.telephone.hint}
+              value={form.telephone}
+              onChange={(v) => set('telephone', v)}
+              error={errors.telephone}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              optional
+            />
             <TextField
               label={f.email.label}
               placeholder={f.email.placeholder}
@@ -187,7 +230,6 @@ export default function Wizard() {
               type="email"
               inputMode="email"
               autoComplete="email"
-              autoFocus
             />
             <Checkbox
               checked={form.consentRgpd}

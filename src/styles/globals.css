@@ -258,6 +258,7 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 
 @media (max-width: 640px) {
   .pr-audiences { grid-template-columns: 1fr !important; }
+  .pr-identity { grid-template-columns: 1fr !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

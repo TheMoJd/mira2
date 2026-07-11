@@ -24,15 +24,19 @@ export type Database = {
           effectif_tranche: string | null
           email: string
           familles_metiers: string[]
+          fonction: string | null
           id: string
           naf_code: string | null
+          nom: string | null
           plaquette_path: string | null
+          prenom: string | null
           produits_services: string
           report_json: Json | null
           secteur_activite: string
           siret: string | null
           site_url: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          telephone: string | null
         }
         Insert: {
           clients: string
@@ -41,15 +45,19 @@ export type Database = {
           effectif_tranche?: string | null
           email: string
           familles_metiers: string[]
+          fonction?: string | null
           id?: string
           naf_code?: string | null
+          nom?: string | null
           plaquette_path?: string | null
+          prenom?: string | null
           produits_services: string
           report_json?: Json | null
           secteur_activite: string
           siret?: string | null
           site_url?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          telephone?: string | null
         }
         Update: {
           clients?: string
@@ -58,15 +66,19 @@ export type Database = {
           effectif_tranche?: string | null
           email?: string
           familles_metiers?: string[]
+          fonction?: string | null
           id?: string
           naf_code?: string | null
+          nom?: string | null
           plaquette_path?: string | null
+          prenom?: string | null
           produits_services?: string
           report_json?: Json | null
           secteur_activite?: string
           siret?: string | null
           site_url?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          telephone?: string | null
         }
         Relationships: []
       }
