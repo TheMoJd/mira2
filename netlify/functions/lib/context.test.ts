@@ -70,6 +70,21 @@ describe('buildGenerationContext — assemblage pur', () => {
     expect(ctx.famillesDeclarees[0].isco).toEqual(known.isco);
   });
 
+  it('mappe les anciens libellés à tiret cadratin stockés avant le 13/07 (rétrocompat prod)', () => {
+    // Ces chaînes exactes existent dans leads.familles_metiers en prod : le
+    // renommage « — » → « · » (règle CTO) ne doit pas casser leur mapping ISCO.
+    const ctx = buildGenerationContext(
+      lead({ familles_metiers: ['Santé — praticiens', 'Services aux personnes — hôtellerie, restauration'] }),
+      NO_ENRICH,
+      NOW,
+    );
+    expect(ctx.famillesDeclarees[0]).toEqual({ label: 'Santé · praticiens', isco: ['22'] });
+    expect(ctx.famillesDeclarees[1]).toEqual({
+      label: 'Services aux personnes · hôtellerie, restauration',
+      isco: ['51'],
+    });
+  });
+
   it('privilégie le NAF/effectif déjà présent sur le lead sur celui de l’enrichissement', () => {
     const ctx = buildGenerationContext(
       lead({ naf_code: '6201Z', effectif_tranche: '20 à 49 salariés' }),

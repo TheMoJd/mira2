@@ -10,6 +10,11 @@
  * l'appariement sémantique texte libre → ISCO et son niveau de confiance.
  *
  * Source : annexe du blueprint moteur (Caroline, 22/06/2026).
+ *
+ * ⚠️ Les `label` sont STOCKÉS tels quels dans `leads.familles_metiers` et
+ * re-mappés par chaîne (`lib/context.mapFamilles`, normalisation tolérante aux
+ * anciens séparateurs — / ·). Règle CTO 13/07 : aucun tiret cadratin dans les
+ * libellés visibles (séparateur « · »).
  */
 
 export interface FamilleMetier {
@@ -33,7 +38,7 @@ export const famillesMetiers: FamilleMetier[] = [
   // Expertise & professions intellectuelles
   { id: 'tech-info-data', label: 'Tech, informatique & data', isco: ['25'], domaine: 'Expertise & professions intellectuelles' },
   { id: 'ingenierie-sciences', label: 'Ingénierie & sciences', isco: ['21'], domaine: 'Expertise & professions intellectuelles' },
-  { id: 'sante-praticiens', label: 'Santé — praticiens', isco: ['22'], domaine: 'Expertise & professions intellectuelles' },
+  { id: 'sante-praticiens', label: 'Santé · praticiens', isco: ['22'], domaine: 'Expertise & professions intellectuelles' },
   { id: 'enseignement-formation', label: 'Enseignement & formation', isco: ['23'], domaine: 'Expertise & professions intellectuelles' },
   { id: 'gestion-finance-admin', label: 'Gestion, finance & administration', isco: ['24'], domaine: 'Expertise & professions intellectuelles' },
   { id: 'droit-social-culture', label: 'Droit, social & culture', isco: ['26'], domaine: 'Expertise & professions intellectuelles' },
@@ -52,7 +57,7 @@ export const famillesMetiers: FamilleMetier[] = [
 
   // Services, vente & soin
   { id: 'vente-commerce', label: 'Vente & commerce', isco: ['52'], domaine: 'Services, vente & soin' },
-  { id: 'services-personnes-hotellerie', label: 'Services aux personnes — hôtellerie, restauration', isco: ['51'], domaine: 'Services, vente & soin' },
+  { id: 'services-personnes-hotellerie', label: 'Services aux personnes · hôtellerie, restauration', isco: ['51'], domaine: 'Services, vente & soin' },
   { id: 'soins-aide-personne', label: 'Soins & aide à la personne', isco: ['53'], domaine: 'Services, vente & soin' },
   { id: 'securite-protection', label: 'Sécurité & protection', isco: ['54'], domaine: 'Services, vente & soin' },
 
