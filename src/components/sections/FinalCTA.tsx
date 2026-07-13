@@ -15,7 +15,7 @@ export default function FinalCTA() {
             </Reveal>
             <Reveal delay={0.05}>
               <h2 className="display" style={{ fontSize: 'clamp(32px,4.4vw,58px)', margin: '0 0 22px', color: '#fff', maxWidth: 760, marginInline: 'auto' }}>
-                Donnez à vos équipes RH la <span style={{ fontStyle: 'italic', background: 'linear-gradient(105deg, var(--violet) 0%, #9a6bff 55%, var(--cyan) 130%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>boussole</span> qui leur manque.
+                Donnez à vos équipes la <span style={{ fontStyle: 'italic', background: 'linear-gradient(105deg, var(--violet) 0%, #9a6bff 55%, var(--cyan) 130%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>boussole</span> qui leur manque.
               </h2>
             </Reveal>
             <Reveal delay={0.1}>
@@ -26,7 +26,7 @@ export default function FinalCTA() {
             <Reveal delay={0.15}>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button primary href="/pre-diagnostic">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
-                <Button dark href="#tarifs">Voir les tarifs</Button>
+                <Button dark href="#tarifs">Découvrir l'accompagnement</Button>
               </div>
             </Reveal>
           </div>
