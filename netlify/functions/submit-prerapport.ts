@@ -13,11 +13,22 @@ import { createClient } from '@supabase/supabase-js';
 import { parse as parseMultipart, getBoundary } from 'parse-multipart-data';
 import { randomUUID } from 'node:crypto';
 import type { Database } from '../../src/types/supabase';
+import { EMAIL_RE, PHONE_RE, MAX_IDENTITY_LEN, normalizePhone } from '../../src/components/prerapport/validation';
 
 /** Limite de taille plaquette : sous le plafond ~6 Mo des functions synchrones Netlify. */
 const MAX_PLAQUETTE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_PLAQUETTE = /\.(pdf|pptx?|docx?)$/i;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Garde anti-abus sur les textes libres qui partent dans le prompt OpenAI
+ *  (secteur, produits, clients, familles) : sans borne, une soumission acceptée
+ *  peut injecter des mégaoctets dans le LLM (coût + surface d'injection). */
+const MAX_FREETEXT_LEN = 3000;
+
+/** Assainit un champ d'identité libre : retire les caractères de contrôle/format
+ *  (retours ligne, RTL override…) et replie les espaces. Défense en profondeur :
+ *  ces PII partiront un jour vers CRM/emails où elles seraient des vecteurs
+ *  d'injection (en-têtes, templates). */
+const cleanIdentity = (raw: string): string =>
+  raw.replace(/[\p{Cc}\p{Cf}]/gu, '').replace(/\s+/g, ' ').trim();
 /** Anti-abus : plafond de soumissions par email sur une fenêtre glissante. */
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 heure
@@ -75,6 +86,10 @@ export const handler: Handler = async (event) => {
   const email = (fields.email ?? '').trim();
   const siteUrl = (fields.siteUrl ?? '').trim();
   const siret = (fields.siret ?? '').replace(/\s/g, '').trim();
+  const prenom = cleanIdentity(fields.prenom ?? '');
+  const nom = cleanIdentity(fields.nom ?? '');
+  const fonction = cleanIdentity(fields.fonction ?? '');
+  const telephone = normalizePhone(fields.telephone ?? '');
   const consentRgpd = fields.consentRgpd === 'true';
   let famillesMetiers: string[] = [];
   try {
@@ -87,9 +102,22 @@ export const handler: Handler = async (event) => {
   if (!secteurActivite || !produitsServices || !clients) {
     return fail(422, 'Merci de remplir les questions obligatoires.');
   }
+  if (
+    secteurActivite.length > MAX_FREETEXT_LEN ||
+    produitsServices.length > MAX_FREETEXT_LEN ||
+    clients.length > MAX_FREETEXT_LEN ||
+    famillesMetiers.some((fam) => fam.length > MAX_IDENTITY_LEN)
+  ) {
+    return fail(422, 'Réponse trop longue. Merci de résumer.');
+  }
   if (famillesMetiers.length < 1 || famillesMetiers.length > 6) {
     return fail(422, 'Indiquez 1 à 6 familles de métiers.');
   }
+  if (!prenom || !nom) return fail(422, 'Merci d’indiquer votre prénom et votre nom.');
+  if (prenom.length > MAX_IDENTITY_LEN || nom.length > MAX_IDENTITY_LEN || fonction.length > MAX_IDENTITY_LEN) {
+    return fail(422, 'Champ d’identité trop long.');
+  }
+  if (telephone && !PHONE_RE.test(telephone)) return fail(422, 'Numéro de téléphone invalide.');
   if (!EMAIL_RE.test(email)) return fail(422, 'Adresse email invalide.');
   if (!consentRgpd) return fail(422, 'Le consentement RGPD est nécessaire.');
   if (siret && !/^\d{14}$/.test(siret)) return fail(422, 'Le SIRET doit comporter 14 chiffres.');
@@ -138,6 +166,10 @@ export const handler: Handler = async (event) => {
       site_url: siteUrl || null,
       plaquette_path: plaquettePath,
       siret: siret || null,
+      prenom,
+      nom,
+      fonction: fonction || null,
+      telephone: telephone || null,
       email,
       consent_rgpd: consentRgpd,
       status: 'received',

@@ -1,4 +1,5 @@
 import type { PreRapportForm } from '../../types/prerapport';
+import { normalizePhone } from './validation';
 
 export interface SubmitResult {
   ok: boolean;
@@ -26,6 +27,10 @@ export async function submitPreRapport(form: PreRapportForm, honeypot = ''): Pro
   fd.set('famillesMetiers', JSON.stringify(form.famillesMetiers));
   fd.set('siteUrl', form.siteUrl);
   fd.set('siret', form.siret.replace(/\s/g, ''));
+  fd.set('prenom', form.prenom);
+  fd.set('nom', form.nom);
+  fd.set('fonction', form.fonction);
+  fd.set('telephone', normalizePhone(form.telephone));
   fd.set('email', form.email);
   fd.set('consentRgpd', String(form.consentRgpd));
   // Champ-piège anti-bot (honeypot) : un humain ne le remplit jamais.

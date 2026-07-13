@@ -5,8 +5,9 @@ const mira: MiraData = {
     name: "MIRA",
     full: "Mapping des Impacts et des Risques IA",
     tagline: "L'IA redessine la carte des compétences. MIRA donne la boussole.",
-    cta: "Démarrer mon pré-rapport gratuit",
+    cta: "Générer mon pré-rapport gratuit",
     ctaSub: "Profilage en 10 minutes · sans engagement",
+    ctaContact: "Nous contacter pour une analyse complète",
   },
 
   nav: [

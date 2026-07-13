@@ -18,9 +18,9 @@ export const RGPD_PDF_FOOTER =
 /** Bloc RGPD en bas de l'email de livraison. */
 export const RGPD_EMAIL_NOTICE =
   'Vous recevez cet email car une demande de pré-rapport MIRA a été soumise avec cette adresse. ' +
-  "Vos données servent uniquement à produire et vous transmettre ce document, elles ne sont pas " +
-  "utilisées pour entraîner de modèle. Pour exercer vos droits (accès, rectification, suppression), " +
-  'répondez à cet email.';
+  'Vos données servent à produire et vous transmettre ce document, et à vous recontacter à son ' +
+  "sujet si vous l'avez accepté. Elles ne sont pas utilisées pour entraîner de modèle. Pour exercer " +
+  'vos droits (accès, rectification, suppression), répondez à cet email.';
 
 /** Expéditeur lisible par défaut (le domaine réel vient de RESEND_FROM côté env). */
 export const EMAIL_SENDER_NAME = 'MIRA';

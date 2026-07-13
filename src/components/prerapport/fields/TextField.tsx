@@ -9,10 +9,11 @@ interface TextFieldProps {
   hint?: string;
   error?: string;
   optional?: boolean;
-  type?: 'text' | 'email' | 'url';
-  inputMode?: 'text' | 'email' | 'url' | 'numeric';
+  type?: 'text' | 'email' | 'url' | 'tel';
+  inputMode?: 'text' | 'email' | 'url' | 'numeric' | 'tel';
   autoComplete?: string;
   autoFocus?: boolean;
+  maxLength?: number;
 }
 
 export default function TextField({
@@ -27,6 +28,7 @@ export default function TextField({
   inputMode,
   autoComplete,
   autoFocus,
+  maxLength,
 }: TextFieldProps) {
   const id = useId();
   return (
@@ -38,6 +40,7 @@ export default function TextField({
         inputMode={inputMode}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        maxLength={maxLength}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}

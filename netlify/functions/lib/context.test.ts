@@ -17,14 +17,18 @@ function lead(overrides: Partial<LeadRow> = {}): LeadRow {
     effectif_tranche: null,
     email: 'a@b.fr',
     familles_metiers: [],
+    fonction: null,
     naf_code: null,
+    nom: 'Durand',
     plaquette_path: null,
+    prenom: 'Camille',
     produits_services: 'Serveurs, cloud',
     report_json: null,
     secteur_activite: 'Cloud et hébergement',
     siret: null,
     site_url: null,
     status: 'received',
+    telephone: null,
     ...overrides,
   };
 }

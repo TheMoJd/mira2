@@ -89,6 +89,15 @@ describe('parseReport — validation runtime de la réponse du modèle', () => {
     expect(parseReport(JSON.stringify(validReport))).toEqual(validReport);
   });
 
+  it('applique le verrou de style (sanitizeReportProse) sur la sortie du modèle', () => {
+    // Garantit que le câblage parseReport → sanitizeReportProse ne peut pas
+    // disparaître silencieusement (demande CEO 10/07 : zéro tiret long / « ; »).
+    const dirty = structuredClone(validReport);
+    dirty.sections[0].contenu[0].paragraphes = ['Un impact fort — mesuré ; net.'];
+    const out = parseReport(JSON.stringify(dirty));
+    expect(out.sections[0].contenu[0].paragraphes[0]).toBe('Un impact fort, mesuré, net.');
+  });
+
   it('lève une erreur explicite sur un JSON illisible', () => {
     expect(() => parseReport('{ pas du json')).toThrow(/JSON invalide/);
   });

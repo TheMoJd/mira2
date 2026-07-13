@@ -19,6 +19,14 @@ export interface PreRapportForm {
   siteUrl: string;
   /** Q5b — Plaquette / présentation (optionnel). Non sérialisé : upload à part. */
   plaquette: File | null;
+  /** Prénom — requis (qualification du lead, réunion du 10/07). */
+  prenom: string;
+  /** Nom — requis (qualification du lead). */
+  nom: string;
+  /** Fonction dans l'entreprise — optionnelle mais recommandée (ciblage RH/dirigeant). */
+  fonction: string;
+  /** Téléphone — optionnel (suivi commercial personnalisé). */
+  telephone: string;
   /** Email professionnel — requis (gate de génération + destinataire du PDF). */
   email: string;
   /** Consentement RGPD — requis. */
@@ -36,6 +44,10 @@ export const emptyPreRapportForm: PreRapportForm = {
   famillesMetiers: [],
   siteUrl: '',
   plaquette: null,
+  prenom: '',
+  nom: '',
+  fonction: '',
+  telephone: '',
   email: '',
   consentRgpd: false,
 };

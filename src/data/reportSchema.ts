@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import type { ExpositionLevel, ImpactNature, ConfidenceLevel } from './rapportStructure';
 import { reportSections } from './rapportStructure';
+import { sanitizeReportProse } from './reportSanitize';
 
 /** Ids de sections autorisés (dérivés de la structure → toujours synchrones). */
 const SECTION_IDS = reportSections.map((s) => s.id) as [string, ...string[]];
@@ -100,10 +101,12 @@ export const RESPONSE_FORMAT = zodResponseFormat(PreRapportSchema, 'prerapport_m
 // --- Validation runtime de la réponse du modèle ----------------------------
 
 /**
- * Parse **et valide** la réponse texte du modèle contre le contrat. Lève une
- * erreur explicite si le JSON est illisible ou non conforme — au lieu de laisser
- * une structure invalide se propager jusqu'au rendu PDF (où elle casserait sans
- * message exploitable).
+ * Parse, **valide** et normalise la réponse texte du modèle contre le contrat.
+ * Lève une erreur explicite si le JSON est illisible ou non conforme — au lieu
+ * de laisser une structure invalide se propager jusqu'au rendu PDF (où elle
+ * casserait sans message exploitable). La normalisation (`sanitizeReportProse`)
+ * retire les signaux de style interdits (tirets cadratins, points-virgules) que
+ * le prompt proscrit mais que le modèle peut laisser passer.
  */
 export function parseReport(raw: string): PreRapportOutput {
   let json: unknown;
@@ -117,7 +120,7 @@ export function parseReport(raw: string): PreRapportOutput {
     throw new Error(`Réponse du modèle non conforme au schéma : ${result.error.message}`);
   }
   assertSectionInvariants(result.data);
-  return result.data;
+  return sanitizeReportProse(result.data);
 }
 
 /**

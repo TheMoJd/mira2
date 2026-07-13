@@ -59,6 +59,8 @@ export interface BrandData {
   tagline: string;
   cta: string;
   ctaSub: string;
+  /** CTA secondaire du hero : rapport complet = prestation (cible : section tarifs). */
+  ctaContact: string;
 }
 
 export interface MiraData {

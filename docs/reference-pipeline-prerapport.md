@@ -41,7 +41,7 @@ Supabase (Postgres + Storage)
 | Page wizard | [`src/pages/PreRapport.tsx`](../src/pages/PreRapport.tsx) | Header épuré + `<Wizard/>`. |
 | Page rapport (héritée) | [`src/pages/ReportView.tsx`](../src/pages/ReportView.tsx) | N'affiche **plus** le rapport : depuis le passage en livraison email-only, elle montre « Votre pré-rapport arrive par email ». La route est conservée pour que les anciens liens partagés ne tombent pas sur une 404. |
 | Wizard | [`src/components/prerapport/Wizard.tsx`](../src/components/prerapport/Wizard.tsx) | Formulaire en 3 vues (`intro` → `form` → `success`), 5 étapes. |
-| Validation | [`src/components/prerapport/validation.ts`](../src/components/prerapport/validation.ts) | `validateStep(step, form)` — `STEP_COUNT = 5`. |
+| Validation | [`src/components/prerapport/validation.ts`](../src/components/prerapport/validation.ts) | `validateStep(step, form)` — `STEP_COUNT = 5`. Exporte les règles **partagées avec le serveur** (`EMAIL_RE`, `PHONE_RE`, `MAX_IDENTITY_LEN`, `normalizePhone`) : `submit-prerapport` importe les mêmes constantes pour éviter toute dérive client/serveur. |
 | Soumission | [`src/components/prerapport/submit.ts`](../src/components/prerapport/submit.ts) | `submitPreRapport(form, honeypot)` → POST multipart. |
 | Contrat de données | [`src/types/prerapport.ts`](../src/types/prerapport.ts) | `PreRapportForm`, `PreRapportErrors`, `emptyPreRapportForm`. |
 | Contenu (copie) | [`src/data/prerapport.ts`](../src/data/prerapport.ts) | Tous les textes du wizard (intro, étapes, champs, consentement, succès). |
@@ -54,7 +54,12 @@ Supabase (Postgres + Storage)
 | 1 — Offre | `produitsServices` (Q2), `clients` (Q3) | oui |
 | 2 — Métiers | `famillesMetiers` (Q4, liste de tags, 1 à 6) | oui (≥ 1) |
 | 3 — Compléments | `siteUrl` (URL), `plaquette` (fichier) | optionnels |
-| 4 — Réception | `email` (pro), `consentRgpd` (case) | oui |
+| 4 — Réception | `prenom`, `nom`, `fonction`, `telephone`, `email` (pro), `consentRgpd` (case) | prénom, nom, email et consentement oui ; fonction et téléphone optionnels |
+
+Les champs d'identité (prénom, nom, fonction, téléphone) qualifient le lead pour le suivi
+commercial (réunion du 10/07/2026). Le téléphone est normalisé (`normalizePhone` : espaces,
+points, tirets et parenthèses retirés, `0033…`/`+33 (0)…` repliés sur `+33…`) avant validation
+par `PHONE_RE` (format FR : `0X…` ou `+33X…`).
 
 Le champ `company_website_hp` est un **honeypot** anti-bot (hors flux, invisible) ; un humain
 ne le remplit jamais. Voir [explanation](explanation-architecture-et-garde-fous.md#anti-abus).
@@ -94,8 +99,11 @@ Validation serveur (jamais de confiance au client) :
 | Règle | Détail |
 |-------|--------|
 | Champs obligatoires | `secteurActivite`, `produitsServices`, `clients` non vides → sinon `422`. |
+| Longueurs | Textes libres Q1–Q3 ≤ 3 000 caractères (`MAX_FREETEXT_LEN`) ; chaque famille ≤ 120 → sinon `422`. Garde anti-abus : ces textes partent dans le prompt OpenAI. |
 | Familles | 1 à 6 entrées → sinon `422`. |
-| Email | regex `^[^\s@]+@[^\s@]+\.[^\s@]+$` → sinon `422`. |
+| Identité | `prenom` et `nom` non vides après `cleanIdentity` (caractères de contrôle/format retirés, espaces repliés) ; prénom, nom et fonction ≤ 120 caractères (`MAX_IDENTITY_LEN`) → sinon `422`. |
+| Téléphone | si fourni, doit matcher `PHONE_RE` après normalisation → sinon `422`. |
+| Email | regex `EMAIL_RE` (partagée avec le wizard) → sinon `422`. |
 | Consentement | `consentRgpd === 'true'` → sinon `422`. |
 | SIRET | si fourni, exactement 14 chiffres → sinon `422`. |
 | Plaquette | `≤ 4 Mo` (`MAX_PLAQUETTE_BYTES`), extensions `.pdf .ppt .pptx .doc .docx` → sinon `413` / `415`. |
@@ -158,8 +166,9 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 | [`statbank.ts`](../src/data/statbank.ts) | Banque de ~76 statistiques sourcées, **seule source de chiffres citables**. | `statbank`, `StatEntry`, `statsForSection`, `socleStats`, `franceLayerStats`, `statsBySource`, `statsByTheme`, `statById`. |
 | [`rapportStructure.ts`](../src/data/rapportStructure.ts) | Les 10 sections §0→§9 + la **grille `allowedSources`** (section → sources autorisées). | `reportSections`, `statsForSection(section)`, types `ExpositionLevel`/`ImpactNature`/`ConfidenceLevel`. |
 | [`reportPrompt.ts`](../src/data/reportPrompt.ts) | Prompt de génération. | `SYSTEM_PROMPT` (10 règles absolues), `buildUserMessage(ctx)`, `GenerationContext`. |
-| [`reportSchema.ts`](../src/data/reportSchema.ts) | Contrat de sortie OpenAI. | `RESPONSE_FORMAT` (json_schema, `strict: true`), `PreRapportOutput`, `ReportSectionOutput`, `ReportFamille`. |
-| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → sections §0→§9 avec tableau récapitulatif « En un coup d'œil » en §3 → « Sources mobilisées » (titres dédupliqués org + année) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
+| [`reportSchema.ts`](../src/data/reportSchema.ts) | Contrat de sortie OpenAI. `parseReport(raw)` parse, valide **et normalise** (via `sanitizeReportProse`) la réponse du modèle. | `RESPONSE_FORMAT` (json_schema, `strict: true`), `parseReport`, `PreRapportOutput`, `ReportSectionOutput`, `ReportFamille`. |
+| [`reportSanitize.ts`](../src/data/reportSanitize.ts) | Verrou de style sur la prose LLM : tirets cadratins/demi-cadratins et points-virgules → virgules (plages numériques « 2025-2030 » et signes moins « -5 % » préservés). Appliqué par `parseReport` avant persistance et rendu PDF. | `sanitizeProse`, `sanitizeReportProse`. |
+| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → sections §0→§9 avec tableau récapitulatif « En un coup d'œil » en §3 → « Sources mobilisées » (titres dédupliqués org + année) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). Un filigrane « MIRA AUDIT » (élément `position:fixed`, opacité 5 %) est répété sur chaque page du PDF. | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
 | [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~28 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
 | [`rgpd.ts`](../src/data/rgpd.ts) | Mentions RGPD factuelles (pied de la page de fin du PDF + bas de l'email). Pas d'affirmation de conformité ; la mention d'information juridique complète reste à intégrer après validation métier/juridique. | `RGPD_PDF_FOOTER`, `RGPD_EMAIL_NOTICE`, `EMAIL_SENDER_NAME`. |
 
@@ -198,6 +207,14 @@ anti-hors-périmètre.
 Types générés dans [`src/types/supabase.ts`](../src/types/supabase.ts) (régénérer après
 migration via le MCP Supabase `generate_typescript_types` ou `supabase gen types`).
 
+Le schéma est versionné dans [`supabase/migrations/`](../supabase/migrations/) :
+`0001_init_prerapport.sql` (tables, enum, buckets), `0002_add_report_json_to_leads.sql`
+(rattrapage de la colonne `report_json` appliquée en prod le 22/06/2026) et
+`0003_leads_qualification.sql` (colonnes de qualification, 10/07/2026). Ces fichiers visent
+la **reconstruction d'un environnement neuf** ; contre la prod, l'historique distant utilise
+des versions horodatées différentes — ne pas lancer `supabase db push` sans
+`supabase migration repair` (voir l'en-tête de `0003`).
+
 ### Table `leads`
 
 | Colonne | Type | Notes |
@@ -205,6 +222,10 @@ migration via le MCP Supabase `generate_typescript_types` ou `supabase gen types
 | `id` | uuid (pk) | |
 | `created_at` | timestamptz | |
 | `email` | text | |
+| `prenom` | text \| null | qualification lead — requis côté formulaire depuis le 10/07/2026 (null pour les leads antérieurs) |
+| `nom` | text \| null | idem `prenom` |
+| `fonction` | text \| null | optionnel — ciblage RH / dirigeant |
+| `telephone` | text \| null | optionnel — normalisé (`0X…` / `+33X…`) |
 | `siret` | text \| null | |
 | `secteur_activite` | text | Q1 |
 | `produits_services` | text | Q2 |
@@ -282,4 +303,7 @@ dotenv). Ils utilisent la clé `service_role` : **usage interne uniquement**.
 
 - [`netlify/functions/lib/enrichment.test.ts`](../netlify/functions/lib/enrichment.test.ts) — garde anti-SSRF (refus des hôtes internes, non-suivi des redirections vers IP privées / métadonnées cloud), nettoyage HTML, rejet SIRET invalide sans appel réseau.
 - [`src/data/reportPrompt.test.ts`](../src/data/reportPrompt.test.ts), [`src/data/reportSchema.test.ts`](../src/data/reportSchema.test.ts), [`src/data/rapportStructure.test.ts`](../src/data/rapportStructure.test.ts), [`src/data/statbank.test.ts`](../src/data/statbank.test.ts), [`src/data/reportHtml.test.ts`](../src/data/reportHtml.test.ts) — invariants de la couche contenu.
-- [`src/components/prerapport/validation.test.ts`](../src/components/prerapport/validation.test.ts) — validation du wizard.
+- [`src/components/prerapport/validation.test.ts`](../src/components/prerapport/validation.test.ts) — validation du wizard (dont identité et normalisation téléphone).
+- [`src/data/reportSanitize.test.ts`](../src/data/reportSanitize.test.ts) — verrou de style (tirets/points-virgules → virgules, plages et signes moins préservés).
+- [`netlify/functions/__tests__/submit-prerapport.test.ts`](../netlify/functions/__tests__/submit-prerapport.test.ts) — validation serveur de `submit-prerapport` (branches `422`, insert Supabase mocké : normalisation téléphone, `cleanIdentity`, `null` pour les optionnels vides).
+- [`src/components/prerapport/submit.test.ts`](../src/components/prerapport/submit.test.ts) — contrat de transport client/serveur : les clés `FormData` envoyées correspondent exactement à ce que lit le handler.

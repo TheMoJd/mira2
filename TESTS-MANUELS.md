@@ -12,7 +12,7 @@ Scénarios à dérouler à la main pour valider le flux bout-en-bout (wizard →
 
 **Vérifier en base** (Supabase → SQL Editor) :
 ```sql
-select id, status, email, naf_code, effectif_tranche,
+select id, status, email, prenom, nom, fonction, telephone, naf_code, effectif_tranche,
        (report_json is not null) as has_report,
        jsonb_array_length(report_json->'sections') as n_sections, created_at
 from leads order by created_at desc limit 5;
@@ -32,6 +32,7 @@ Le PDF généré se trouve dans le bucket privé `reports` (chemin `<leadId>/pre
 - Q3 clients/interactions : *Développeurs, PME, grands comptes, secteur public ; self-service via espace client web + support + commerciaux grands comptes.*
 - Q4 familles (une par une, **Entrée** entre chaque) : `Tech, informatique & data` · `Techniciens informatique & télécoms` · `Ingénierie & sciences` · `Relation client & accueil` · `Vente & commerce`
 - Q5 site : `https://www.ovhcloud.com` (plaquette : vide)
+- Étape 5 : Prénom `Camille` · Nom `Durand` · Fonction `DRH` (optionnel) · Téléphone `06 12 34 56 78` (optionnel)
 - Email : **ta propre adresse** · Consentement : coché
 
 **Étapes :** dérouler les 5 étapes du wizard, soumettre.
@@ -66,6 +67,8 @@ where l.id = '<leadId>' order by 1;
 | 2c | Étape 3 (métiers) : **0 famille** | Erreur « Ajoutez au moins une famille » |
 | 2d | Étape 5 : email = `pasunemail`, consentement **décoché** | Deux erreurs (email + consentement), pas de soumission |
 | 2e | Email valide mais consentement décoché | Erreur consentement uniquement |
+| 2f | Étape 5 : prénom ou nom **vide** | Erreur sous le(s) champ(s), blocage à l'étape 5 |
+| 2g | Téléphone = `123` (fonction/téléphone vides = OK) | Erreur « numéro invalide » ; vides → soumission acceptée |
 
 **Résultat attendu :** aucune nouvelle ligne dans `leads` (la requête de vérification ne montre aucun nouveau lead). Les messages d'erreur s'affichent en rouge sous les champs concernés.
 

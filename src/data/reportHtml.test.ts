@@ -60,6 +60,13 @@ describe('renderReportHtml', () => {
     expect(html).toContain('22 juin 2026');
   });
 
+  it('inclut le filigrane « MIRA AUDIT » répété par page (demande CEO 10/07)', () => {
+    // `position:fixed` = re-peint sur chaque page en impression Chromium ;
+    // le z-index le garde visible au-dessus des cartes à fond opaque.
+    expect(html).toContain('MIRA AUDIT');
+    expect(html).toContain('position:fixed');
+  });
+
   it('rend les titres de section avec leur numéro §N', () => {
     expect(html).toContain('Périmètre');
     expect(html).toContain('§3 · ');

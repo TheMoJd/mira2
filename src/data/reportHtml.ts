@@ -126,6 +126,9 @@ function renderBloc(bloc: ReportBloc): string {
       )}</h3>`
     : '';
   const paras = bloc.paragraphes
+    // La sanitisation de style (reportSanitize) peut vider une chaîne réduite à
+    // un tiret : ne pas rendre de <p> vide.
+    .filter((p) => p.trim() !== '')
     .map((p) => `<p style="margin:0 0 10px;line-height:1.6;color:${BRAND.ink}">${esc(p)}</p>`)
     .join('');
   return titre + paras;
@@ -291,6 +294,21 @@ function renderSources(report: PreRapportOutput): string {
   </section>`;
 }
 
+/**
+ * Filigrane « Mira Audit » répété sur chaque page (demande CEO 10/07).
+ * En impression Chromium, un élément `position:fixed` est re-peint sur chaque
+ * page du PDF : c'est le seul moyen de couvrir toutes les pages sans connaître
+ * les sauts de page à l'avance (vérifié sur PDF généré en local).
+ * `z-index:10` le place AU-DESSUS du contenu : les cartes (§3, carte d'identité)
+ * ont des fonds opaques qui l'occulteraient sinon ; à 5 % d'opacité il ne gêne
+ * pas la lecture.
+ */
+function renderWatermark(): string {
+  return `<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10">
+    <span style="font-family:var(--serif);font-size:92px;font-weight:500;letter-spacing:.08em;color:${BRAND.violet};opacity:.05;transform:rotate(-32deg);white-space:nowrap">MIRA AUDIT</span>
+  </div>`;
+}
+
 /** Page de fin : transparence sur la génération par IA et mention RGPD. */
 function renderClosing(): string {
   return `<div style="page-break-before:always;padding-top:30px">
@@ -312,6 +330,7 @@ export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderCont
   const sections = report.sections.map(renderSection).join('');
   const sources = renderSources(report);
   const closing = renderClosing();
+  const watermark = renderWatermark();
 
   return `<!doctype html>
 <html lang="fr">
@@ -344,7 +363,8 @@ export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderCont
 </style>
 </head>
 <body>
-  <div class="doc">
+  ${watermark}
+  <div class="doc" style="position:relative">
     ${cover}
     ${identity}
     ${sections}
