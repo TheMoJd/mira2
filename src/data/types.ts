@@ -57,8 +57,6 @@ export interface PricingPlan {
   features: string[];
 }
 
-export interface PricingTier { range: string; price: string; }
-
 export interface ComplianceItem { t: string; d: string; }
 
 export interface Job { name: string; exp: number; opp: number; }
@@ -84,8 +82,6 @@ export interface MiraData {
   readings: Reading[];
   diff: Differentiator[];
   pricing: PricingPlan[];
-  tiers: PricingTier[];
-  tiersNote: string;
   compliance: ComplianceItem[];
   jobs: Job[];
 }

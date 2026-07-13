@@ -101,29 +101,21 @@ const mira: MiraData = {
   pricing: [
     {
       name: "MIRA Discover",
-      price: "Gratuit",
-      sub: "Éduquer le marché, générer des prospects qualifiés",
-      cta: "Lancer mon pré-rapport",
+      price: "Offert",
+      sub: "Obtenez les tendances clés des impacts IA sur vos métiers",
+      cta: "Commencer le pré-diagnostic offert",
       featured: false,
-      features: ["Profilage entreprise en 10 minutes", "Synthèse des risques IA sectoriels", "Pré-rapport macro de vos métiers", "1 rapport de référence intégré"],
+      features: ["Profilage entreprise en 10 minutes", "Synthèse des risques IA sectoriels", "Pré-diagnostic macro de vos métiers", "1 rapport de référence intégré"],
     },
     {
       name: "MIRA Pro",
-      price: "Abonnement",
-      sub: "Le dispositif complet, intégré à vos entretiens",
+      price: "Sur devis",
+      sub: "L'accompagnement complet, intégré à vos entretiens",
       cta: "Parler à l'équipe",
       featured: true,
       features: ["Intégration aux entretiens annuels & professionnels", "Les 3 niveaux de rapport (direction, manager, individu)", "Référentiels IA sectoriels mis à jour en continu", "Tableau de bord DRH & suivi des plans d'action"],
     },
   ],
-
-  tiers: [
-    { range: "1 – 49 salariés", price: "24 €" },
-    { range: "50 – 249 salariés", price: "18 €" },
-    { range: "250 – 999 salariés", price: "12 €" },
-    { range: "1 000+ salariés", price: "Sur devis" },
-  ],
-  tiersNote: "Prix par salarié / an. Plus le périmètre couvert est large, plus le rapport gagne en robustesse statistique.",
 
   compliance: [
     { t: "Loi Avenir Professionnel", d: "Le module augmenté enrichit l'entretien obligatoire sans le remplacer. Le rapport sert de preuve de bilan à 6 ans." },
