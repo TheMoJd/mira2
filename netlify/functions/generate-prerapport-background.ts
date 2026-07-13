@@ -25,7 +25,7 @@ import { statbank } from '../../src/data/statbank';
 import { renderReportHtml, reportFooterText } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
 import { htmlToPdf } from './lib/pdf';
-import { sendReportEmail, notifyFailure } from './lib/email';
+import { sendReportEmail, sendLeadNotification, notifyFailure } from './lib/email';
 import { enrichSiret, fetchSiteResume } from './lib/enrichment';
 import { buildGenerationContext } from './lib/context';
 
@@ -171,6 +171,27 @@ export const handler: Handler = async (event) => {
         leadId,
         error: new Error('Rapport généré et stocké, mais envoi email échoué.'),
       });
+    }
+
+    // Notification interne (décision CTO 13/07) : uniquement après livraison
+    // effective au prospect. `sendLeadNotification` ne throw jamais (skip/log),
+    // le try/catch est une ceinture supplémentaire : un échec de notification
+    // ne doit JAMAIS faire échouer le pipeline du lead.
+    if (emailResult === 'sent') {
+      try {
+        const notifResult = await sendLeadNotification({
+          leadId,
+          prenom: lead.prenom,
+          nom: lead.nom,
+          fonction: lead.fonction,
+          entreprise: lead.entreprise,
+          email: lead.email,
+          secteur: lead.secteur_activite,
+        });
+        console.log(`[generate] notification interne lead ${leadId} : ${notifResult}`);
+      } catch (notifError) {
+        console.error(`[generate] notification interne lead ${leadId} échouée (non bloquant)`, notifError);
+      }
     }
 
     await supabase.from('leads').update({ status: 'sent' }).eq('id', leadId);

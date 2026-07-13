@@ -20,6 +20,7 @@ export const handler: Handler = async () => {
     RESEND_FROM: present('RESEND_FROM'),
     RESEND_REPLY_TO: present('RESEND_REPLY_TO'),
     OPS_EMAIL: present('OPS_EMAIL'),
+    NOTIF_EMAILS: present('NOTIF_EMAILS'),
     SUPABASE_URL: present('SUPABASE_URL'),
     OPENAI_API_KEY: present('OPENAI_API_KEY'),
     // Préfixe de la clé Resend pour confirmer qu'elle commence bien par "re_"

@@ -79,6 +79,84 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
   }
 }
 
+/**
+ * Parse la variable `NOTIF_EMAILS` (liste d'adresses séparées par des virgules,
+ * ex. « caroline@polaria.ai,moetez@polaria.ai »). Tolère espaces et entrées
+ * vides ; ignore ce qui ne ressemble pas à une adresse. Exportée pour test.
+ */
+export function parseNotifEmails(raw: string | undefined): string[] {
+  return (raw ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.includes('@'));
+}
+
+/** Données du lead reprises dans la notification interne (décision CTO 13/07). */
+export interface LeadNotificationArgs {
+  leadId: string;
+  prenom?: string | null;
+  nom?: string | null;
+  fonction?: string | null;
+  entreprise?: string | null;
+  /** Email du prospect : sert aussi de `reply_to` pour répondre en un clic. */
+  email: string;
+  secteur?: string | null;
+}
+
+/**
+ * Notification interne « Nouveau pré-diagnostic généré » (décision CTO 13/07),
+ * envoyée aux adresses de `NOTIF_EMAILS` après livraison réussie au prospect.
+ * **Jamais bloquante** : `NOTIF_EMAILS` absente/vide ou Resend non configuré →
+ * skip silencieux (log) ; échec d'envoi → 'error' loggé, sans throw. Le pipeline
+ * du lead ne doit JAMAIS échouer à cause de cette notification.
+ */
+export async function sendLeadNotification(args: LeadNotificationArgs): Promise<SendResult> {
+  const from = senderOrNull();
+  const recipients = parseNotifEmails(process.env.NOTIF_EMAILS);
+  if (recipients.length === 0) {
+    console.log('[email] NOTIF_EMAILS absente ou vide, notification interne ignorée.');
+    return 'skipped';
+  }
+  if (!from) {
+    console.log('[email] Resend non configuré, notification interne ignorée.');
+    return 'skipped';
+  }
+
+  const ligne = (label: string, value?: string | null) => `${label} : ${value?.trim() || 'non renseigné'}`;
+  const text = [
+    'Un nouveau pré-diagnostic vient d’être généré et envoyé au prospect.',
+    '',
+    ligne('Prénom', args.prenom),
+    ligne('Nom', args.nom),
+    ligne('Fonction', args.fonction),
+    ligne('Entreprise', args.entreprise),
+    ligne('Email', args.email),
+    ligne('Secteur', args.secteur),
+    ligne('Lead', args.leadId),
+    '',
+    'Répondre à cet email écrit directement au prospect.',
+  ].join('\n');
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.emails.send({
+      from,
+      to: recipients,
+      replyTo: args.email,
+      subject: 'Nouveau pré-diagnostic généré',
+      text,
+    });
+    if (error) {
+      console.error('[email] échec de la notification interne (non bloquant)', error);
+      return 'error';
+    }
+    return 'sent';
+  } catch (err) {
+    console.error('[email] exception sur la notification interne (non bloquant)', err);
+    return 'error';
+  }
+}
+
 /** Email de repli ops si la génération échoue. No-op (log) si Resend non configuré. */
 export async function notifyFailure({ leadId, error }: { leadId: string; error: unknown }): Promise<void> {
   const from = senderOrNull();
