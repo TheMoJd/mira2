@@ -43,7 +43,7 @@ const mira: MiraData = {
       role: "Situez votre exposition à l'IA.",
       body: "À partir de votre secteur, de votre taille et de vos familles de métiers, MIRA vous offre un pré-diagnostic structuré : intensité d'exposition à l'IA de chaque famille de métiers, nature de l'impact (automatisation, augmentation ou création) et compétences montantes et déclinantes. Chaque donnée du rapport est rattachée à une source identifiée : recherche internationale (OIT, OCDE, WEF) et données officielles françaises (INSEE, LaborIA). Aucune donnée interne n'est requise à ce stade.",
       points: ["Cartographie macro des métiers de votre secteur", "1 rapport de référence intégré", "Synthèse des risques sectoriels"],
-      cta: { label: "Commencer le pré-diagnostic offert", href: "/pre-rapport", primary: true },
+      cta: { label: "Commencer le pré-diagnostic offert", href: "/pre-diagnostic", primary: true },
     },
     {
       n: "02",

@@ -37,7 +37,7 @@ export default function Pricing() {
                 </div>
                 <div style={{ marginTop: 'auto' }}>
                   {/* Discover (offert) → wizard de pré-diagnostic ; Pro → CTA contact. */}
-                  <Button primary={p.featured} dark={p.featured} href={p.featured ? '#cta' : '/pre-rapport'}>{p.cta}</Button>
+                  <Button primary={p.featured} dark={p.featured} href={p.featured ? '#cta' : '/pre-diagnostic'}>{p.cta}</Button>
                 </div>
               </div>
               </SpotlightCard>

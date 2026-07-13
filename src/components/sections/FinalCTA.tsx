@@ -25,7 +25,7 @@ export default function FinalCTA() {
             </Reveal>
             <Reveal delay={0.15}>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Button primary href="/pre-rapport">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
+                <Button primary href="/pre-diagnostic">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
                 <Button dark href="#tarifs">Voir les tarifs</Button>
               </div>
             </Reveal>
