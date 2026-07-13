@@ -1,6 +1,6 @@
 /**
- * GABARIT HTML DU PRÉ-RAPPORT (Tranche 4b + refonte CEO Tranche B)
- * ================================================================
+ * GABARIT HTML DU PRÉ-DIAGNOSTIC (Tranche 4b + refonte CEO Tranche B + site v2 13/07)
+ * ===================================================================================
  *
  * `renderReportHtml(report, ctx)` transforme la sortie structurée du LLM
  * (`PreRapportOutput`) en un **document HTML autoportant** prêt à être imprimé en
@@ -15,6 +15,10 @@
  *    avec une stack de secours système.
  *  - **Style de prose naturel** : aucun tiret cadratin ni point-virgule dans les
  *    textes codés en dur (consigne CEO : éviter ce qui « fait IA »).
+ *  - **Sources en fin de document uniquement** (retours CEO 13/07) : les références
+ *    inline « (Organisation, année) » écrites par le LLM sont retirées au rendu
+ *    (`stripSourceRefs`) ; la traçabilité complète reste dans `report_json` et
+ *    dans la section « Sources mobilisées pour votre pré-diagnostic ».
  *
  * Structure (refonte CEO) : page de garde (branding) → carte d'identité (page 2) →
  * sections §0..§9 (avec tableau récapitulatif en §3) → sources allégées → page de fin.
@@ -67,7 +71,18 @@ const BRAND = {
  */
 export const SLOGAN = 'L’IA redessine la carte des compétences, MIRA donne la boussole.';
 export const VALUE_PROP =
-  'MIRA est votre pré-diagnostic d’exposition à l’IA de votre organisation. Ce pré-rapport offert applique l’état de l’art, recherche internationale de référence et données françaises, aux familles de métiers que vous avez déclarées, pour distinguer clairement ce qui s’automatise, ce qui s’augmente et ce qui se recompose. Chaque chiffre est sourcé. C’est une lecture externe, pas un audit de vos données internes. Voyez-le comme une invitation à un premier pas. La transformation commence par disposer des clés de lecture et se poser les bonnes questions, avant de passer à l’action.';
+  'MIRA est votre pré-diagnostic d’exposition à l’IA de votre organisation. Ce pré-diagnostic offert applique l’état de l’art, recherche internationale de référence et données françaises, aux familles de métiers que vous avez déclarées, pour distinguer clairement ce qui s’automatise, ce qui s’augmente et ce qui se recompose. Chaque chiffre est sourcé. C’est une lecture externe, pas un audit de vos données internes. Voyez-le comme une invitation à un premier pas. La transformation commence par disposer des clés de lecture et se poser les bonnes questions, avant de passer à l’action.';
+
+/**
+ * Ligne de bas de page du document (retours CEO 13/07), répétée sur chaque page
+ * par le `footerTemplate` Chromium (`lib/pdf.ts`). Le mois et l'année sont ceux
+ * de la GÉNÉRATION (dynamiques), en français. Séparateurs « · », jamais de
+ * tiret cadratin (règle CTO 13/07).
+ */
+export function reportFooterText(now: Date): string {
+  const moisAnnee = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return `Mira audit · Anticiper, mesurer et piloter l’impact de l’IA sur vos métiers et compétences · ${moisAnnee}`;
+}
 
 /** Logo MIRA inliné (SVG autoportant, couleurs littérales pour le rendu PDF). */
 const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 26 26" fill="none">
@@ -117,6 +132,58 @@ const STAT_BY_ID: Map<string, StatEntry> = new Map(statbank.map((s) => [s.id, s]
 /** Numéro de section (§N) par id, dérivé de la structure de référence. */
 const SECTION_NUM_BY_ID: Map<string, number> = new Map(reportSections.map((s) => [s.id, s.num]));
 
+// --- Retrait des références sources inline (retours CEO 13/07) --------------
+
+/**
+ * Organisations émettrices connues de la stat-bank (+ sources d'origine des
+ * données secondaires) : servent à reconnaître une référence « (Org, année) »
+ * écrite par le LLM. Le prompt (module verrouillé) impose ces citations inline ;
+ * on les retire donc AU RENDU uniquement, la traçabilité restant intacte dans
+ * `report_json.sections[].sources_citees` et la section « Sources mobilisées ».
+ */
+const KNOWN_ORGS: string[] = [
+  ...new Set(
+    statbank.flatMap((s) => {
+      const orgs: string[] = [];
+      const push = (raw?: string) => {
+        const clean = raw?.trim();
+        if (!clean) return;
+        orgs.push(clean);
+        // Alias de sigle : « Organisation internationale du travail (OIT) » → « OIT »
+        // et « Organisation internationale du travail » (le LLM cite l'une ou l'autre forme).
+        const alias = /\(([^()]+)\)/.exec(clean)?.[1]?.trim();
+        if (alias) orgs.push(alias);
+        const sansAlias = clean.replace(/\s*\([^()]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+        if (sansAlias && sansAlias !== clean) orgs.push(sansAlias);
+      };
+      push(s.source.org);
+      // « Crédoc · Baromètre du Numérique 2025 » → l'organisation est le 1er segment.
+      push(s.source.originalSource?.split(/[·—]/)[0]);
+      return orgs;
+    }),
+  ),
+];
+
+/**
+ * Retire d'un texte LLM les parenthèses de référence source, ex.
+ * « (World Economic Forum, 2025) » ou « (Crédoc, citée par Parlons RH, 2025) ».
+ * Conservateur : ne supprime une parenthèse QUE si elle contient une année ET
+ * une organisation connue (ou une mention « citée par »). Les parenthèses de
+ * contenu comme « (83 %) » ou « (EPP 2026) » sont préservées. Le motif tolère
+ * un niveau d'imbrication (« (Organisation internationale du travail (OIT), 2023) »).
+ */
+export function stripSourceRefs(text: string): string {
+  return text
+    .replace(/\s*\(((?:[^()]|\([^()]*\)){0,160}?)\)/g, (whole, inner: string) => {
+      const hasYear = /(?:19|20)\d{2}/.test(inner);
+      const isRef = KNOWN_ORGS.some((org) => inner.includes(org)) || /cit[ée]e?s? par/i.test(inner);
+      return hasYear && isRef ? '' : whole;
+    })
+    .replace(/ {2,}/g, ' ')
+    .replace(/\s+([.,])/g, '$1')
+    .trim();
+}
+
 // --- Blocs de contenu ------------------------------------------------------
 
 function renderBloc(bloc: ReportBloc): string {
@@ -126,6 +193,7 @@ function renderBloc(bloc: ReportBloc): string {
       )}</h3>`
     : '';
   const paras = bloc.paragraphes
+    .map((p) => stripSourceRefs(p))
     // La sanitisation de style (reportSanitize) peut vider une chaîne réduite à
     // un tiret : ne pas rendre de <p> vide.
     .filter((p) => p.trim() !== '')
@@ -134,7 +202,11 @@ function renderBloc(bloc: ReportBloc): string {
   return titre + paras;
 }
 
-/** Carte de caractérisation d'une famille de métiers (§3). */
+/**
+ * Carte de caractérisation d'une famille de métiers (§3).
+ * NB (retours CEO 13/07) : le niveau de confiance (`fam.confiance`) reste dans le
+ * JSON du rapport (traçabilité) mais n'est PLUS affiché dans le document.
+ */
 function renderFamille(fam: ReportFamille): string {
   const color = expositionColor(fam.exposition);
   const natures = fam.natures
@@ -155,8 +227,7 @@ function renderFamille(fam: ReportFamille): string {
       <span style="font-size:12px;font-weight:600;color:${color}">Exposition ${esc(fam.exposition)}${part}</span>
     </div>
     <div style="margin:8px 0 4px">${natures}</div>
-    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${esc(fam.explication)}</p>
-    <div style="font-size:11px;color:${BRAND.ink3};margin-top:6px">Confiance : ${esc(fam.confiance)}</div>
+    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${esc(stripSourceRefs(fam.explication))}</p>
     ${transpo}
   </div>`;
 }
@@ -262,9 +333,10 @@ function renderIdentity(ctx: ReportRenderContext): string {
 }
 
 /**
- * Section « Sources » allégée (refonte CEO B5) : on ne conserve que les titres des
- * documents mobilisés (organisation + année), dédupliqués, sans l'appareil de
- * références détaillé qui prenait plusieurs pages.
+ * Section « Sources mobilisées pour votre pré-diagnostic » (refonte CEO B5 +
+ * retours 13/07) : seule trace visible des sources dans le document. On ne
+ * conserve que les titres des documents mobilisés (organisation + année),
+ * dédupliqués, sans l'appareil de références détaillé qui prenait plusieurs pages.
  */
 function renderSources(report: PreRapportOutput): string {
   const citedIds = new Set<string>();
@@ -289,23 +361,24 @@ function renderSources(report: PreRapportOutput): string {
     .map((t) => `<li style="margin:0 0 5px;line-height:1.5;color:${BRAND.ink2}">${esc(t)}</li>`)
     .join('');
   return `<section style="margin:0 0 26px;page-break-inside:avoid">
-    <h2 style="font-family:var(--serif);font-size:19px;font-weight:500;color:${BRAND.violet};margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid ${BRAND.lineSoft}">Sources mobilisées</h2>
+    <h2 style="font-family:var(--serif);font-size:19px;font-weight:500;color:${BRAND.violet};margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid ${BRAND.lineSoft}">Sources mobilisées pour votre pré-diagnostic</h2>
     <ul style="margin:0;padding:0 0 0 18px;font-size:12.5px">${items}</ul>
   </section>`;
 }
 
 /**
- * Filigrane « Mira Audit » répété sur chaque page (demande CEO 10/07).
+ * Filigrane « mira-audit.fr » répété sur chaque page (demande CEO 10/07,
+ * texte revu retours 13/07 : mauve léger = violet de la palette à faible opacité).
  * En impression Chromium, un élément `position:fixed` est re-peint sur chaque
  * page du PDF : c'est le seul moyen de couvrir toutes les pages sans connaître
  * les sauts de page à l'avance (vérifié sur PDF généré en local).
  * `z-index:10` le place AU-DESSUS du contenu : les cartes (§3, carte d'identité)
  * ont des fonds opaques qui l'occulteraient sinon ; à 5 % d'opacité il ne gêne
- * pas la lecture.
+ * pas la lecture. ⚠️ Ne pas retirer `position:fixed` ni le `z-index`.
  */
 function renderWatermark(): string {
   return `<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10">
-    <span style="font-family:var(--serif);font-size:92px;font-weight:500;letter-spacing:.08em;color:${BRAND.violet};opacity:.05;transform:rotate(-32deg);white-space:nowrap">MIRA AUDIT</span>
+    <span style="font-family:var(--serif);font-size:84px;font-weight:500;letter-spacing:.06em;color:${BRAND.violet};opacity:.05;transform:rotate(-32deg);white-space:nowrap">mira-audit.fr</span>
   </div>`;
 }
 
@@ -313,7 +386,7 @@ function renderWatermark(): string {
 function renderClosing(): string {
   return `<div style="page-break-before:always;padding-top:30px">
     <h2 style="font-family:var(--serif);font-size:22px;font-weight:500;color:${BRAND.violet};margin:0 0 14px">Transparence et mentions</h2>
-    <p style="font-size:13px;line-height:1.7;color:${BRAND.ink};margin:0 0 18px">Ce pré-rapport a été généré avec l’aide de l’intelligence artificielle, à partir de sources publiques de référence. Il constitue une lecture indicative et ne remplace pas un audit de vos données internes.</p>
+    <p style="font-size:13px;line-height:1.7;color:${BRAND.ink};margin:0 0 18px">Ce pré-diagnostic a été généré avec l’aide de l’intelligence artificielle, à partir de sources publiques de référence. Il constitue une lecture indicative et ne remplace pas un audit de vos données internes.</p>
     <div style="font-size:10.5px;line-height:1.5;color:${BRAND.ink3};border-top:1px solid ${BRAND.lineSoft};padding-top:12px">${esc(RGPD_PDF_FOOTER)}</div>
   </div>`;
 }
@@ -321,7 +394,7 @@ function renderClosing(): string {
 // --- Document complet ------------------------------------------------------
 
 /**
- * Rend le document HTML complet du pré-rapport. Le résultat est autoportant
+ * Rend le document HTML complet du pré-diagnostic. Le résultat est autoportant
  * (styles inline + `<link>` Google Fonts) et destiné à `htmlToPdf`.
  */
 export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderContext): string {
@@ -337,7 +410,7 @@ export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderCont
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pré-rapport MIRA${ctx.nomEntreprise ? ` · ${esc(ctx.nomEntreprise)}` : ''}</title>
+<title>Pré-diagnostic MIRA${ctx.nomEntreprise ? ` · ${esc(ctx.nomEntreprise)}` : ''}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">

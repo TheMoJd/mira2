@@ -22,7 +22,7 @@ import { RESPONSE_FORMAT, parseReport } from '../../src/data/reportSchema';
 import type { PreRapportOutput } from '../../src/data/reportSchema';
 import { enforceSectionGrid } from '../../src/data/rapportStructure';
 import { statbank } from '../../src/data/statbank';
-import { renderReportHtml } from '../../src/data/reportHtml';
+import { renderReportHtml, reportFooterText } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
 import { htmlToPdf } from './lib/pdf';
 import { sendReportEmail, notifyFailure } from './lib/email';
@@ -98,7 +98,9 @@ export const handler: Handler = async (event) => {
     }
 
     // Assemblage du contexte = fonction pure (testée isolément dans lib/context).
-    const ctx = buildGenerationContext(lead, { siret: siretInfo, sourceResume }, new Date());
+    // `now` sert aussi au pied de page du PDF (mois + année de génération).
+    const now = new Date();
+    const ctx = buildGenerationContext(lead, { siret: siretInfo, sourceResume }, now);
 
     // On persiste ce qu'on a découvert (qualification du lead) sans écraser l'existant.
     if ((!lead.naf_code && ctx.nafCode) || (!lead.effectif_tranche && ctx.effectifTranche)) {
@@ -143,7 +145,8 @@ export const handler: Handler = async (event) => {
       famillesLabels: ctx.famillesDeclarees.map((f) => f.label),
       dateRapport: ctx.dateRapport,
     };
-    const pdf = await htmlToPdf(renderReportHtml(report, renderCtx));
+    // Bas de page CEO 13/07 : « Mira audit · … · <mois année> », répété sur chaque page.
+    const pdf = await htmlToPdf(renderReportHtml(report, renderCtx), { footer: reportFooterText(now) });
 
     const pdfPath = `${leadId}/prerapport-mira.pdf`;
     const { error: uploadError } = await supabase.storage

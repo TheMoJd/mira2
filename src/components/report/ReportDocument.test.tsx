@@ -20,7 +20,13 @@ const report: PreRapportOutput = {
     {
       id: 'familles-metiers',
       titre: 'Vos familles de métiers',
-      contenu: [{ intertitre: 'Analyse', paragraphes: ['Texte.'] }],
+      contenu: [
+        {
+          intertitre: 'Analyse',
+          // Référence inline « (org, année) » : doit être retirée au rendu (CEO 13/07).
+          paragraphes: [`Texte adossé à une source (${citedStat.source.org}, ${citedStat.source.year}).`],
+        },
+      ],
       sources_citees: [citedStat.id],
       familles: [
         {
@@ -60,9 +66,26 @@ describe('ReportDocument', () => {
     expect(html).toContain('non directement transposable');
   });
 
-  it('rend la section Sources (titre du document) pour les sources citées', () => {
-    expect(html).toContain('Sources mobilisées');
+  it('n’affiche plus le niveau de confiance des familles (CEO 13/07)', () => {
+    expect(html).not.toContain('Confiance');
+  });
+
+  it('retire les références sources inline du corps (CEO 13/07)', () => {
+    // Le paragraphe du fixture porte une référence « (org, année) » d'une source réelle.
+    expect(html).not.toContain(`(${citedStat.source.org}, ${citedStat.source.year})`);
+  });
+
+  it('rend la section Sources renommée pour les sources citées', () => {
+    expect(html).toContain('Sources mobilisées pour votre pré-diagnostic');
     expect(html).toContain(citedStat.source.org);
+  });
+
+  it('rend la ligne de bas de page « Mira audit · … » (pendant web du footer PDF)', () => {
+    expect(html).toContain('Mira audit · Anticiper, mesurer et piloter');
+  });
+
+  it('ne parle plus de « pré-rapport » (renommage CEO 13/07)', () => {
+    expect(html.toLowerCase()).not.toContain('pré-rapport');
   });
 
   it('omet la section Sources quand aucune source n’est citée', () => {

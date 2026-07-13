@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderReportHtml } from './reportHtml';
+import { renderReportHtml, reportFooterText, stripSourceRefs } from './reportHtml';
 import type { ReportRenderContext } from './reportHtml';
 import type { PreRapportOutput } from './reportSchema';
 import { RGPD_PDF_FOOTER } from './rgpd';
@@ -26,7 +26,14 @@ const report: PreRapportOutput = {
     {
       id: 'familles-metiers',
       titre: 'Vos familles de métiers face à l’IA',
-      contenu: [{ intertitre: 'Lecture', paragraphes: ['Analyse par famille.'] }],
+      contenu: [
+        {
+          intertitre: 'Lecture',
+          paragraphes: [
+            'Analyse par famille. 39 % des compétences seront transformées d’ici 2030 (World Economic Forum, 2025).',
+          ],
+        },
+      ],
       // une source réelle (World Economic Forum) + une source bidon ignorée
       sources_citees: ['wef-2025-skills-transformed-39', 'id-inexistant-xyz'],
       familles: [
@@ -60,11 +67,14 @@ describe('renderReportHtml', () => {
     expect(html).toContain('22 juin 2026');
   });
 
-  it('inclut le filigrane « MIRA AUDIT » répété par page (demande CEO 10/07)', () => {
+  it('inclut le filigrane « mira-audit.fr » répété par page (CEO 10/07, texte revu 13/07)', () => {
     // `position:fixed` = re-peint sur chaque page en impression Chromium ;
     // le z-index le garde visible au-dessus des cartes à fond opaque.
-    expect(html).toContain('MIRA AUDIT');
+    // Ces trois propriétés sont un ACQUIS à préserver (vérifié sur PDF 7 pages).
+    expect(html).toContain('mira-audit.fr');
+    expect(html).not.toContain('MIRA AUDIT');
     expect(html).toContain('position:fixed');
+    expect(html).toContain('z-index:10');
   });
 
   it('rend les titres de section avec leur numéro §N', () => {
@@ -73,9 +83,21 @@ describe('renderReportHtml', () => {
     expect(html).toContain('Vos familles de métiers');
   });
 
-  it('résout les sources citées depuis la stat-bank (section Sources allégée)', () => {
-    expect(html).toContain('Sources mobilisées');
+  it('résout les sources citées depuis la stat-bank (section de fin renommée, CEO 13/07)', () => {
+    expect(html).toContain('Sources mobilisées pour votre pré-diagnostic');
     expect(html).toContain('World Economic Forum');
+  });
+
+  it('retire les références sources inline du corps, la section de fin les garde (CEO 13/07)', () => {
+    // Le paragraphe §3 du fixture contient « (World Economic Forum, 2025) » :
+    // il ne doit pas survivre dans le corps. L'occurrence restante vient de la
+    // section Sources de fin.
+    expect(html).not.toContain('(World Economic Forum, 2025)');
+    expect(html).toContain('39 % des compétences seront transformées d’ici 2030.');
+  });
+
+  it('n’affiche plus le niveau de confiance des familles (CEO 13/07, champ conservé dans le JSON)', () => {
+    expect(html).not.toContain('Confiance');
   });
 
   it('ignore une source citée inexistante sans planter', () => {
@@ -102,5 +124,49 @@ describe('renderReportHtml', () => {
   it('affiche la caractérisation famille et la mention non transposable', () => {
     expect(html).toContain('Exposition élevée');
     expect(html).toContain('non directement transposable');
+  });
+
+  it('ne parle plus de « pré-rapport » ni de « gratuit » (renommage CEO 13/07)', () => {
+    expect(html.toLowerCase()).not.toContain('pré-rapport');
+    expect(html.toLowerCase()).not.toContain('gratuit');
+    expect(html).toContain('Pré-diagnostic MIRA');
+  });
+});
+
+describe('reportFooterText — bas de page CEO 13/07', () => {
+  it('rend « Mira audit · … · <mois année> » avec la date de génération, sans cadratin', () => {
+    const footer = reportFooterText(new Date('2026-07-13T10:00:00Z'));
+    expect(footer).toBe(
+      'Mira audit · Anticiper, mesurer et piloter l’impact de l’IA sur vos métiers et compétences · juillet 2026',
+    );
+    expect(footer).not.toMatch(/[—–]/);
+  });
+
+  it('suit dynamiquement le mois de génération', () => {
+    expect(reportFooterText(new Date('2027-01-05T10:00:00Z'))).toContain('janvier 2027');
+  });
+});
+
+describe('stripSourceRefs — retrait des références inline (CEO 13/07)', () => {
+  it('retire « (Organisation connue, année) » et recolle la ponctuation', () => {
+    expect(stripSourceRefs('39 % des compétences seront transformées d’ici 2030 (World Economic Forum, 2025).')).toBe(
+      '39 % des compétences seront transformées d’ici 2030.',
+    );
+    expect(stripSourceRefs('Une adoption inégale (OCDE, 2024), surtout en PME.')).toBe(
+      'Une adoption inégale, surtout en PME.',
+    );
+  });
+
+  it('retire les recrédits de données secondaires « citée par »', () => {
+    expect(stripSourceRefs('Un chiffre repris (Crédoc, citée par Parlons RH, 2025).')).toBe('Un chiffre repris.');
+  });
+
+  it('préserve les parenthèses de contenu (pourcentages, sigles, années seules)', () => {
+    expect(stripSourceRefs('L’usage individuel (83 %) devance l’intégration.')).toBe(
+      'L’usage individuel (83 %) devance l’intégration.',
+    );
+    expect(stripSourceRefs('La réforme des entretiens professionnels (EPP 2026) arrive.')).toBe(
+      'La réforme des entretiens professionnels (EPP 2026) arrive.',
+    );
   });
 });

@@ -1,16 +1,20 @@
 /**
- * email.ts — livraison du pré-rapport par email (Tranche 4b + repli Tranche 5)
- * ============================================================================
+ * email.ts — livraison du pré-diagnostic par email (Tranche 4b + repli Tranche 5)
+ * ================================================================================
  * Resend, PDF en pièce jointe. **Dégradation propre** : tant que `RESEND_API_KEY`
  * (+ `RESEND_FROM`) ne sont pas configurés, on log et on retourne `'skipped'` —
  * la génération aboutit quand même (le PDF est stocké), sans planter la chaîne.
  *
  * `notifyFailure` est l'email de repli ops en cas d'échec de génération.
+ *
+ * NB : le nom de la pièce jointe est renommé « pre-diagnostic » (retours CEO
+ * 13/07) mais le CHEMIN de stockage Supabase reste `<leadId>/prerapport-mira.pdf`
+ * (référencé par `scripts/resend-report.ts` et la doc ops, hors périmètre).
  */
 import { Resend } from 'resend';
 import { RGPD_EMAIL_NOTICE, EMAIL_SENDER_NAME } from '../../../src/data/rgpd';
 
-const PDF_FILENAME = 'prerapport-mira.pdf';
+const PDF_FILENAME = 'pre-diagnostic-mira.pdf';
 
 /** Échappe le HTML (le nom d'entreprise vient d'une API externe, donné non fiable). */
 const escapeHtml = (s: string): string =>
@@ -31,7 +35,7 @@ export interface SendReportArgs {
 
 export type SendResult = 'sent' | 'skipped' | 'error';
 
-/** Envoie le pré-rapport (PDF joint). Retourne le statut sans jamais throw. */
+/** Envoie le pré-diagnostic (PDF joint). Retourne le statut sans jamais throw. */
 export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs): Promise<SendResult> {
   const from = senderOrNull();
   if (!from) {
@@ -42,7 +46,7 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
   const cible = nomEntreprise ? ` de ${escapeHtml(nomEntreprise)}` : '';
   const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#160f2e;line-height:1.6;font-size:15px">
     <p>Bonjour,</p>
-    <p>Votre pré-rapport MIRA${cible} est prêt : vous le trouverez en pièce jointe (PDF).</p>
+    <p>Votre pré-diagnostic MIRA${cible} est prêt : vous le trouverez en pièce jointe (PDF).</p>
     <p>Il applique l'état de l'art public à vos familles de métiers. Chaque chiffre y est sourcé. Pour aller plus loin (diagnostic à partir de vos données internes, feuille de route), répondez simplement à cet email.</p>
     <p>L'équipe ${EMAIL_SENDER_NAME}</p>
     <hr style="border:none;border-top:1px solid #eee;margin:22px 0">
@@ -60,7 +64,7 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
       from,
       to: [to],
       ...(replyTo ? { replyTo } : {}),
-      subject: 'Votre pré-rapport MIRA',
+      subject: 'Votre pré-diagnostic MIRA',
       html,
       attachments: [{ filename: PDF_FILENAME, content: pdf.toString('base64') }],
     });
@@ -89,8 +93,8 @@ export async function notifyFailure({ leadId, error }: { leadId: string; error: 
     await resend.emails.send({
       from,
       to: [ops],
-      subject: `[MIRA] Échec génération pré-rapport — lead ${leadId}`,
-      text: `La génération du pré-rapport a échoué pour le lead ${leadId}.\n\nErreur : ${message}`,
+      subject: `[MIRA] Échec génération pré-diagnostic · lead ${leadId}`,
+      text: `La génération du pré-diagnostic a échoué pour le lead ${leadId}.\n\nErreur : ${message}`,
     });
   } catch (err) {
     console.error('[email] échec de l’email de repli ops', err);
