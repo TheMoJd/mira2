@@ -70,10 +70,14 @@ export const preRapport = {
       label: 'Nom',
       placeholder: 'Durand',
     },
+    entreprise: {
+      label: 'Entreprise',
+      placeholder: 'Ex. : Transports Durand',
+    },
     fonction: {
       label: 'Votre fonction',
       placeholder: 'Ex. : DRH, dirigeant·e, responsable formation…',
-      hint: 'Optionnel mais recommandé : nous adaptons le suivi à votre rôle.',
+      hint: 'Nous adaptons le suivi à votre rôle.',
     },
     telephone: {
       label: 'Téléphone',

@@ -88,6 +88,7 @@ export const handler: Handler = async (event) => {
   const siret = (fields.siret ?? '').replace(/\s/g, '').trim();
   const prenom = cleanIdentity(fields.prenom ?? '');
   const nom = cleanIdentity(fields.nom ?? '');
+  const entreprise = cleanIdentity(fields.entreprise ?? '');
   const fonction = cleanIdentity(fields.fonction ?? '');
   const telephone = normalizePhone(fields.telephone ?? '');
   const consentRgpd = fields.consentRgpd === 'true';
@@ -114,7 +115,15 @@ export const handler: Handler = async (event) => {
     return fail(422, 'Indiquez 1 à 6 familles de métiers.');
   }
   if (!prenom || !nom) return fail(422, 'Merci d’indiquer votre prénom et votre nom.');
-  if (prenom.length > MAX_IDENTITY_LEN || nom.length > MAX_IDENTITY_LEN || fonction.length > MAX_IDENTITY_LEN) {
+  // Entreprise + fonction obligatoires (décision CTO 13/07), mêmes règles que le wizard.
+  if (!entreprise) return fail(422, 'Merci d’indiquer le nom de votre entreprise.');
+  if (!fonction) return fail(422, 'Merci d’indiquer votre fonction.');
+  if (
+    prenom.length > MAX_IDENTITY_LEN ||
+    nom.length > MAX_IDENTITY_LEN ||
+    entreprise.length > MAX_IDENTITY_LEN ||
+    fonction.length > MAX_IDENTITY_LEN
+  ) {
     return fail(422, 'Champ d’identité trop long.');
   }
   if (telephone && !PHONE_RE.test(telephone)) return fail(422, 'Numéro de téléphone invalide.');
@@ -168,7 +177,8 @@ export const handler: Handler = async (event) => {
       siret: siret || null,
       prenom,
       nom,
-      fonction: fonction || null,
+      entreprise,
+      fonction,
       telephone: telephone || null,
       email,
       consent_rgpd: consentRgpd,

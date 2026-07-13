@@ -57,7 +57,8 @@ const validFields = {
   siret: '',
   prenom: 'Camille',
   nom: 'Durand',
-  fonction: '',
+  entreprise: 'Transports Durand',
+  fonction: 'DRH',
   telephone: '',
   email: 'camille@exemple.fr',
   consentRgpd: 'true',
@@ -86,9 +87,17 @@ describe('submit-prerapport — validation serveur des champs d’identité', ()
     expect(h.inserts).toHaveLength(0);
   });
 
+  it('rejette en 422 une entreprise ou une fonction manquante (décision CTO 13/07)', async () => {
+    expect((await submit({ entreprise: '' })).statusCode).toBe(422);
+    expect((await submit({ entreprise: '   ' })).statusCode).toBe(422);
+    expect((await submit({ fonction: '' })).statusCode).toBe(422);
+    expect(h.inserts).toHaveLength(0);
+  });
+
   it('borne les champs d’identité à 120 caractères (121 rejeté, 120 accepté)', async () => {
     expect((await submit({ prenom: 'a'.repeat(121) })).statusCode).toBe(422);
     expect((await submit({ fonction: 'b'.repeat(121) })).statusCode).toBe(422);
+    expect((await submit({ entreprise: 'd'.repeat(121) })).statusCode).toBe(422);
     expect((await submit({ nom: 'c'.repeat(120) })).statusCode).toBe(202);
   });
 
@@ -110,11 +119,17 @@ describe('submit-prerapport — validation serveur des champs d’identité', ()
     expect(h.inserts.at(-1)).toMatchObject({ prenom: 'Camille', nom: 'Du rand' });
   });
 
-  it('insère null pour fonction et téléphone vides, et les valeurs saisies sinon', async () => {
+  it('insère entreprise et fonction saisies, null pour le téléphone vide', async () => {
     await submit();
-    expect(h.inserts.at(-1)).toMatchObject({ prenom: 'Camille', nom: 'Durand', fonction: null, telephone: null });
-    await submit({ fonction: 'DRH', telephone: '06 12 34 56 78' });
-    expect(h.inserts.at(-1)).toMatchObject({ fonction: 'DRH', telephone: '0612345678' });
+    expect(h.inserts.at(-1)).toMatchObject({
+      prenom: 'Camille',
+      nom: 'Durand',
+      entreprise: 'Transports Durand',
+      fonction: 'DRH',
+      telephone: null,
+    });
+    await submit({ fonction: 'Responsable formation', telephone: '06 12 34 56 78' });
+    expect(h.inserts.at(-1)).toMatchObject({ fonction: 'Responsable formation', telephone: '0612345678' });
   });
 
   it('borne les textes libres qui partent au LLM (3000 caractères max)', async () => {

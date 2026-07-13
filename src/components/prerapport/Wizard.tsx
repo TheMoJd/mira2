@@ -199,14 +199,23 @@ export default function Wizard() {
               />
             </div>
             <TextField
+              label={f.entreprise.label}
+              placeholder={f.entreprise.placeholder}
+              value={form.entreprise}
+              onChange={(v) => set('entreprise', v)}
+              error={errors.entreprise}
+              autoComplete="organization"
+              maxLength={MAX_IDENTITY_LEN}
+            />
+            <TextField
               label={f.fonction.label}
               placeholder={f.fonction.placeholder}
               hint={f.fonction.hint}
               value={form.fonction}
               onChange={(v) => set('fonction', v)}
+              error={errors.fonction}
               autoComplete="organization-title"
               maxLength={MAX_IDENTITY_LEN}
-              optional
             />
             <TextField
               label={f.telephone.label}

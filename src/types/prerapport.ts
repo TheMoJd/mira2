@@ -23,7 +23,9 @@ export interface PreRapportForm {
   prenom: string;
   /** Nom — requis (qualification du lead). */
   nom: string;
-  /** Fonction dans l'entreprise — optionnelle mais recommandée (ciblage RH/dirigeant). */
+  /** Nom de l'entreprise — requis (décision CTO du 13/07, texte libre). */
+  entreprise: string;
+  /** Fonction dans l'entreprise — requise depuis le 13/07 (texte libre, ciblage RH/dirigeant). */
   fonction: string;
   /** Téléphone — optionnel (suivi commercial personnalisé). */
   telephone: string;
@@ -46,6 +48,7 @@ export const emptyPreRapportForm: PreRapportForm = {
   plaquette: null,
   prenom: '',
   nom: '',
+  entreprise: '',
   fonction: '',
   telephone: '',
   email: '',

@@ -23,6 +23,7 @@ export type Database = {
           created_at: string
           effectif_tranche: string | null
           email: string
+          entreprise: string | null
           familles_metiers: string[]
           fonction: string | null
           id: string
@@ -44,6 +45,7 @@ export type Database = {
           created_at?: string
           effectif_tranche?: string | null
           email: string
+          entreprise?: string | null
           familles_metiers: string[]
           fonction?: string | null
           id?: string
@@ -65,6 +67,7 @@ export type Database = {
           created_at?: string
           effectif_tranche?: string | null
           email?: string
+          entreprise?: string | null
           familles_metiers?: string[]
           fonction?: string | null
           id?: string

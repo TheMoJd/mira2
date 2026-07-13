@@ -16,6 +16,7 @@ function lead(overrides: Partial<LeadRow> = {}): LeadRow {
     created_at: '2026-06-22T10:00:00Z',
     effectif_tranche: null,
     email: 'a@b.fr',
+    entreprise: null,
     familles_metiers: [],
     fonction: null,
     naf_code: null,
