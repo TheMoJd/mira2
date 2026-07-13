@@ -3,6 +3,7 @@ import type { MotionValue } from 'framer-motion';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Reveal from '../ui/Reveal';
 import Head from '../ui/Head';
+import Button from '../ui/Button';
 import SpotlightCard from '../ui/SpotlightCard';
 import { useMotionPrefs, useMediaQuery } from '../../hooks/useMotionPrefs';
 import mira from '../../data/mira';
@@ -13,8 +14,14 @@ const halo = (
 );
 
 const head = (
-  <Head dark split kicker="Le protocole en 3 phases" title="Du pré-rapport sectoriel au plan de transformation." sub="MIRA n'est pas un chatbot RH. C'est un protocole de diagnostic structuré qui produit une intelligence organisationnelle actionnable." center max={680} />
+  <Head dark split kicker="Le parcours MIRA, trois étapes" title="Un parcours, trois étapes. Vous avancez à votre rythme." sub="MIRA est plus qu'un audit. C'est un parcours d'accompagnement : comprendre où vous en êtes, cartographier ce qui va bouger, puis transformer avec méthode, avec vos équipes, et dans un cadre respectueux des personnes." center max={680} />
 );
+
+/** Puce des points d'étape : petit trait dessiné en CSS (aucun caractère
+ *  cadratin dans le DOM, cf. verrou de style du 13/07). */
+function PointDash({ color }: { color: string }) {
+  return <span aria-hidden style={{ width: 14, height: 2, borderRadius: 2, background: color, marginTop: 8, flexShrink: 0 }} />;
+}
 
 export default function Methode() {
   const { reduced } = useMotionPrefs();
@@ -53,11 +60,16 @@ function MethodeGrid() {
                   <div style={{ marginTop: 'auto', display: 'grid', gap: 9, paddingTop: 18, borderTop: '1px solid var(--dk-line)' }}>
                     {p.points.map((pt) => (
                       <div key={pt} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13.5, color: 'var(--dk-ink)' }}>
-                        <span style={{ color: 'var(--violet)', marginTop: 1 }}>—</span>
+                        <PointDash color="var(--violet)" />
                         <span>{pt}</span>
                       </div>
                     ))}
                   </div>
+                  {p.cta && (
+                    <div style={{ marginTop: 22 }}>
+                      <Button primary={p.cta.primary} dark={!p.cta.primary} small href={p.cta.href}>{p.cta.label}</Button>
+                    </div>
+                  )}
                 </div>
               </SpotlightCard>
             </Reveal>
@@ -131,9 +143,12 @@ function PhasePane({ phase: p, index, total, progress }: PhasePaneProps) {
     first ? [end - fade, end] : [start, start + fade],
     first ? [0, -36] : [36, 0]
   );
+  // Les panneaux se superposent : seul le panneau visible doit capter les
+  // clics (le CTA de l'étape), les autres restent transparents à la souris.
+  const pointerEvents = useTransform(opacity, (o) => (o > 0.5 ? 'auto' : 'none'));
 
   return (
-    <motion.div style={{ position: 'absolute', inset: 0, opacity, y, pointerEvents: 'none' }}>
+    <motion.div style={{ position: 'absolute', inset: 0, opacity, y, pointerEvents }}>
       <div style={{ display: 'grid', gridTemplateColumns: '0.4fr 0.6fr', gap: 60, alignItems: 'center', height: '100%' }}>
         <div style={{ textAlign: 'right' }}>
           <div className="tnum" style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(90px,11vw,150px)', lineHeight: 1, color: 'var(--violet-300)' }}>{p.n}</div>
@@ -146,11 +161,16 @@ function PhasePane({ phase: p, index, total, progress }: PhasePaneProps) {
           <div style={{ display: 'grid', gap: 9, paddingTop: 18, borderTop: '1px solid var(--dk-line)', maxWidth: 520 }}>
             {p.points.map((pt) => (
               <div key={pt} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13.5, color: 'var(--dk-ink)' }}>
-                <span style={{ color: 'var(--violet-300)', marginTop: 1 }}>—</span>
+                <PointDash color="var(--violet-300)" />
                 <span>{pt}</span>
               </div>
             ))}
           </div>
+          {p.cta && (
+            <div style={{ marginTop: 22 }}>
+              <Button primary={p.cta.primary} dark={!p.cta.primary} small href={p.cta.href}>{p.cta.label}</Button>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -27,7 +27,10 @@ export default function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/pre-rapport" element={<PreRapport />} />
+        <Route path="/pre-diagnostic" element={<PreRapport />} />
+        {/* Ancienne URL du wizard (site v1) : redirection côté client. Netlify
+            sert aussi un 301 (netlify.toml) pour les accès directs. */}
+        <Route path="/pre-rapport" element={<Navigate to="/pre-diagnostic" replace />} />
         <Route
           path="/rapport/:leadId"
           element={

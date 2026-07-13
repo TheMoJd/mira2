@@ -4,9 +4,9 @@ import ScatterMatrix from '../charts/ScatterMatrix';
 import mira from '../../data/mira';
 
 const legend = [
-  ['var(--risk)', 'Exposition forte — à reconvertir'],
-  ['var(--violet)', 'Zone mixte — à arbitrer'],
-  ['var(--opp)', 'Fort potentiel — à augmenter'],
+  ['var(--risk)', 'Exposition forte : à reconvertir'],
+  ['var(--violet)', 'Zone mixte : à arbitrer'],
+  ['var(--opp)', 'Fort potentiel : à augmenter'],
 ] as const;
 
 // Échelle de discernement humain : du plus automatisable (délégation à l'IA)

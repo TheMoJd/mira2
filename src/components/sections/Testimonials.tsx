@@ -13,7 +13,7 @@ import SpotlightCard from '../ui/SpotlightCard';
 const temoignages = [
   {
     quote:
-      'Le pré-rapport a posé des mots clairs sur ce que nos managers pressentaient. On a enfin une lecture commune de ce qui s’automatise et de ce qui s’augmente, métier par métier.',
+      'Le pré-diagnostic a posé des mots clairs sur ce que nos managers pressentaient. On a enfin une lecture commune de ce qui s’automatise et de ce qui s’augmente, métier par métier.',
     who: 'Directrice des Ressources Humaines',
     org: 'ETI industrielle · 400 salariés',
     initials: 'DRH',
@@ -39,9 +39,9 @@ export default function Testimonials() {
     <section id="temoignages" style={{ padding: '0 0 110px' }}>
       <div className="wrap">
         <Head
-          kicker="Ils ont lancé leur pré-rapport"
+          kicker="Ils ont lancé leur pré-diagnostic"
           title="Une lecture externe qui éclaire la décision."
-          sub="Premiers retours de DRH et de dirigeants ayant testé le pré-rapport MIRA."
+          sub="Premiers retours de DRH et de dirigeants ayant testé le pré-diagnostic MIRA."
           center
           max={620}
         />

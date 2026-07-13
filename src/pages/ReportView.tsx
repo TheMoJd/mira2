@@ -47,10 +47,10 @@ export default function ReportView() {
             margin: '0 0 12px',
           }}
         >
-          Votre pré-rapport arrive par email
+          Votre pré-diagnostic arrive par email
         </h1>
         <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink-2)', margin: '0 0 24px' }}>
-          Nous livrons votre pré-rapport MIRA en PDF directement par email, d’ici 1 à 2 minutes après
+          Nous livrons votre pré-diagnostic MIRA en PDF directement par email, d’ici 1 à 2 minutes après
           votre demande. Pensez à vérifier vos courriers indésirables.
         </p>
         <Link

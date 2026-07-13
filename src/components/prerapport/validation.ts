@@ -50,7 +50,7 @@ export function validateStep(step: number, f: PreRapportForm): PreRapportErrors 
       }
       if (!f.email.trim()) e.email = 'Votre email est requis.';
       else if (!EMAIL_RE.test(f.email.trim())) e.email = 'Cet email semble invalide.';
-      if (!f.consentRgpd) e.consentRgpd = 'Le consentement est nécessaire pour générer le rapport.';
+      if (!f.consentRgpd) e.consentRgpd = 'Le consentement est nécessaire pour générer votre pré-diagnostic.';
       break;
   }
 

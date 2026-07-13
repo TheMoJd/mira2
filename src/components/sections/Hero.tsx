@@ -13,7 +13,7 @@ const ticker = [
   { k: 'Vulnérabilité moy.', v: '61', s: '/100', c: 'var(--risk)' },
   { k: 'Métiers cartographiés', v: '12', s: 'filières', c: 'var(--violet)' },
   { k: 'Opportunité Data/IT', v: '+82', s: '%', c: 'var(--opp)' },
-  { k: 'Pré-rapport en', v: '10', s: 'minutes', c: 'var(--cyan)' },
+  { k: 'Pré-diagnostic en', v: '10', s: 'minutes', c: 'var(--cyan)' },
 ];
 
 export default function Hero() {
@@ -64,7 +64,7 @@ export default function Hero() {
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.6 }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Button primary href="/pre-rapport">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
+            <Button primary href="/pre-diagnostic">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
             <Button href="#tarifs">{mira.brand.ctaContact}</Button>
           </motion.div>
         </div>

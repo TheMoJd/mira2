@@ -6,7 +6,7 @@ export default function Conformite() {
   return (
     <section id="conformite" style={{ padding: '110px 0' }}>
       <div className="wrap">
-        <Head kicker="Conformité & éthique" title="Conçu pour le cadre légal français." sub="MIRA s'inscrit nativement dans l'entretien professionnel obligatoire, respecte le RGPD et produit des diagnostics — jamais des décisions." max={640} />
+        <Head kicker="Conformité & éthique" title="Conçu pour le cadre légal français." sub="MIRA s'inscrit nativement dans les temps RH, respecte le RGPD, l'IA Act et produit des diagnostics et jamais des décisions." max={640} />
         <div className="conf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {mira.compliance.map((c, i) => (
             <Reveal key={c.t} delay={i * 0.08} y={22}>

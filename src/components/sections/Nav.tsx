@@ -85,7 +85,7 @@ export default function Nav() {
         </nav>
 
         <div className="nav-actions">
-          <Button primary small href="/pre-rapport">{mira.brand.cta}</Button>
+          <Button primary small href="/pre-diagnostic">{mira.brand.cta}</Button>
         </div>
 
         {/* hamburger — affiché en ≤1000px via .mobile-menu-btn (CSS) */}
@@ -129,7 +129,7 @@ export default function Nav() {
                 </a>
               ))}
               <span onClick={() => setOpen(false)} style={{ display: 'block', marginTop: 8 }}>
-                <Button primary href="/pre-rapport">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
+                <Button primary href="/pre-diagnostic">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
               </span>
             </div>
           </motion.nav>
