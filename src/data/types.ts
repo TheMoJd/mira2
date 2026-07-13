@@ -18,6 +18,14 @@ export interface Stat {
   source?: string;
 }
 
+/** Bouton d'action d'une étape du parcours (section Méthode). */
+export interface PhaseCta {
+  label: string;
+  href: string;
+  /** true → CTA principal (pilule violette) ; sinon bouton secondaire sombre. */
+  primary?: boolean;
+}
+
 export interface Phase {
   n: string;
   tag: string;
@@ -26,6 +34,8 @@ export interface Phase {
   role?: string;
   body: string;
   points: string[];
+  /** Bouton d'action de l'étape. Optionnel : masqué si absent. */
+  cta?: PhaseCta;
 }
 
 export interface Reading {

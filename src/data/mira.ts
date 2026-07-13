@@ -5,16 +5,16 @@ const mira: MiraData = {
     name: "MIRA",
     full: "Mapping des Impacts et des Risques IA",
     tagline: "L'IA redessine la carte des compétences. MIRA donne la boussole.",
-    cta: "Générer mon pré-rapport gratuit",
+    cta: "Commencer le pré-diagnostic offert",
     ctaSub: "Profilage en 10 minutes · sans engagement",
-    ctaContact: "Nous contacter pour une analyse complète",
+    ctaContact: "Découvrir le parcours MIRA",
   },
 
   nav: [
     { label: "Le produit", href: "#produit" },
-    { label: "Méthode", href: "#methode" },
-    { label: "Les 3 lectures", href: "#lectures" },
-    { label: "Tarifs", href: "#tarifs" },
+    { label: "Le parcours", href: "#methode" },
+    { label: "Feuille de route", href: "#lectures" },
+    { label: "Accompagnement", href: "#tarifs" },
     { label: "Conformité", href: "#conformite" },
   ],
 
@@ -22,42 +22,46 @@ const mira: MiraData = {
     eyebrow: "Diagnostic RH-IA · v1.0",
     h1a: "L'IA redessine la carte des compétences,",
     h1b: "MIRA donne la boussole.",
-    sub: "Le protocole de diagnostic qui permet aux organisations d'anticiper, mesurer et piloter l'impact de l'IA sur leurs ressources humaines — du score d'exposition par métier au plan de transformation actionnable.",
+    sub: "MIRA est la plateforme d'accompagnement qui aide les organisations à anticiper, mesurer et piloter l'impact de l'IA sur leurs métiers et leurs compétences, du premier diagnostic jusqu'à la transformation.",
   },
 
   refs: ["OCDE", "McKinsey Global Institute", "World Economic Forum", "France Stratégie", "MIT Work of the Future"],
   refsLead: "Socle de connaissance croisé en continu avec les meilleurs rapports sectoriels",
 
   stats: [
-    { value: 63, suffix: " %", label: "des employeurs jugent le déficit de compétences comme leur principal frein à la transformation d'ici 2030", tone: "risk", source: "World Economic Forum — Future of Jobs Report 2025" },
-    { value: 39, suffix: " %", label: "des compétences actuelles seront transformées ou obsolètes d'ici 2030", tone: "amber", source: "World Economic Forum — Future of Jobs Report 2025" },
-    { value: 92, suffix: " M", label: "d'emplois menacés de disparition dans le monde d'ici 2030 (sur 170 M créés)", tone: "violet", source: "World Economic Forum — Future of Jobs Report 2025" },
+    { value: 63, suffix: " %", label: "des employeurs jugent le déficit de compétences comme leur principal frein à la transformation d'ici 2030", tone: "risk", source: "World Economic Forum · Future of Jobs Report 2025" },
+    { value: 39, suffix: " %", label: "des compétences actuelles seront transformées ou obsolètes d'ici 2030", tone: "amber", source: "World Economic Forum · Future of Jobs Report 2025" },
+    { value: 92, suffix: " M", label: "d'emplois menacés de disparition dans le monde d'ici 2030 (sur 170 M créés)", tone: "violet", source: "World Economic Forum · Future of Jobs Report 2025" },
     { value: 21, suffix: " M", label: "de salariés du privé en France, soumis à l'entretien professionnel obligatoire", tone: "cyan", source: "INSEE, 2024" },
   ],
 
   phases: [
     {
       n: "01",
-      tag: "Freemium",
-      title: "Pré-rapport contextuel automatisé",
-      body: "Un formulaire de profilage (secteur, taille, métiers, maturité IA) croisé avec les rapports de référence génère un pré-rapport sectoriel personnalisé : grandes vulnérabilités et opportunités IA de votre périmètre RH.",
+      tag: "Disponible · Offert",
+      title: "Étape 1 · Pré-diagnostic",
+      role: "Situez votre exposition à l'IA.",
+      body: "À partir de votre secteur, de votre taille et de vos familles de métiers, MIRA vous offre un pré-diagnostic structuré : intensité d'exposition à l'IA de chaque famille de métiers, nature de l'impact (automatisation, augmentation ou création) et compétences montantes et déclinantes. Chaque donnée du rapport est rattachée à une source identifiée : recherche internationale (OIT, OCDE, WEF) et données officielles françaises (INSEE, LaborIA). Aucune donnée interne n'est requise à ce stade.",
       points: ["Cartographie macro des métiers de votre secteur", "1 rapport de référence intégré", "Synthèse des risques sectoriels"],
+      cta: { label: "Commencer le pré-diagnostic offert", href: "/pre-rapport", primary: true },
     },
     {
       n: "02",
-      tag: "Abonnement",
-      title: "Entretiens individuels augmentés",
-      role: "Cœur du modèle — collecte de données terrain",
-      body: "MIRA enrichit l'entretien annuel et professionnel d'un module de questions calibré par profil de poste, adapté à la trajectoire individuelle et contextualisé par les dynamiques IA du secteur.",
+      tag: "Parcours MIRA",
+      title: "Étape 2 · Cartographie des compétences",
+      role: "Construisez votre cartographie dynamique des compétences",
+      body: "La cartographie MIRA densifie, affine et clarifie la lecture de vos métiers jusqu'à la compétence. À travers des questions calibrées par profil de poste, adaptées à la trajectoire individuelle et contextualisées par les dynamiques IA du secteur, la récolte des données s'inscrit dans vos temps RH existants (entretiens, GEPP, plan de développement des compétences). De cette matière, MIRA produit une cartographie de vos compétences au niveau systémique et individuel de votre organisation.",
       points: ["Calibré sur le profil de poste", "Co-construit avec experts RH & GPEC", "Analyse fine, agrégée, anonymisée"],
+      cta: { label: "Découvrir le parcours MIRA", href: "#tarifs" },
     },
     {
       n: "03",
-      tag: "Inclus",
-      title: "Rapport final de transformation",
-      role: "Le livrable stratégique visible",
-      body: "Une synthèse analytique multicouche : scores d'exposition par métier, matrices de risques et d'opportunités, plan de transformation RH priorisé et actions opérationnelles avec indicateurs de suivi.",
-      points: ["Scoring d'exposition par métier", "Matrice risques / opportunités", "Plan d'action priorisé & suivi"],
+      tag: "Parcours MIRA",
+      title: "Étape 3 · Transformation des métiers",
+      role: "Pilotez la transformation avec une feuille de route opérationnelle.",
+      body: "Vous passez du constat à la trajectoire. MIRA accompagne la traduction de la cartographie en plan d'action RH : scores d'exposition par métier, matrices de risques et d'opportunités, plan de transformation RH (évolution des fiches métiers, parcours de montée en compétences, redéploiement des expertises), dialogue social outillé et actions opérationnelles avec indicateurs de suivi.",
+      points: ["Scoring d'exposition par métier", "Matrices risques/opportunités", "Plan d'actions priorisés & suivi"],
+      cta: { label: "Découvrir le parcours MIRA", href: "#tarifs" },
     },
   ],
 
@@ -86,10 +90,10 @@ const mira: MiraData = {
   ],
 
   diff: [
-    { t: "Ancrage méthodologique", d: "Questions d'entretien co-construites avec des experts RH, GPEC et IA — pas un questionnaire générique." },
-    { t: "Veille continue", d: "Mise à jour automatisée des rapports de référence (OCDE, McKinsey, WEF, France Stratégie, MIT)." },
+    { t: "Ancrage méthodologique", d: "Questions d'entretien co-construites avec des experts RH, GPEC et IA, pas un questionnaire générique." },
+    { t: "Veille continue", d: "Mise à jour automatisée des rapports de référence (OCDE, McKinsey, WEF, France Stratégie, MIT…)." },
     { t: "Restitution tricouche", d: "Stratégique, managériale et individuelle réunies dans un seul outil." },
-    { t: "Conformité native", d: "S'inscrit dans le cadre des entretiens professionnels obligatoires — preuve de bilan à 6 ans." },
+    { t: "Conformité native", d: "S'inscrit dans le cadre des temps RH (entretiens, GEPP, plan de développement des compétences)." },
     { t: "Indépendance totale", d: "Adossé à aucun prestataire de formation ni éditeur SIRH. Aucune recommandation intéressée." },
     { t: "Effet de lock-in", d: "Historique comparé dans le temps + données terrain accumulées, vague après vague." },
   ],
@@ -124,7 +128,7 @@ const mira: MiraData = {
   compliance: [
     { t: "Loi Avenir Professionnel", d: "Le module augmenté enrichit l'entretien obligatoire sans le remplacer. Le rapport sert de preuve de bilan à 6 ans." },
     { t: "RGPD natif & IA Act", d: "Pseudonymisation des données agrégées, droit d'accès individuel, consentement explicite et DPA signé avec chaque client. Conforme à l'AI Act : usages RH documentés, transparence méthodologique, traçabilité et supervision humaine." },
-    { t: "Éthique IA", d: "MIRA produit des diagnostics, jamais des décisions. Garde-fous anti-discrimination et transparence méthodologique." },
+    { t: "Éthique", d: "MIRA analyse des familles de métiers, mappées sur les référentiels internationaux ISCO/ESCO. Aucun salarié n'est évalué, noté ou prédit. Le dispositif est conçu pour s'inscrire dans le cadre réglementaire (RGPD, IA Act, dialogue social) et pour le respecter par construction, pas par déclaration." },
   ],
 
   jobs: [

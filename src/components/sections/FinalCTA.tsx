@@ -20,7 +20,7 @@ export default function FinalCTA() {
             </Reveal>
             <Reveal delay={0.1}>
               <p style={{ fontSize: 18, color: 'var(--dk-mut)', maxWidth: 540, margin: '0 auto 34px', lineHeight: 1.6 }}>
-                Lancez votre pré-rapport sectoriel gratuit en 10 minutes. Sans engagement.
+                Lancez votre pré-diagnostic sectoriel offert en 10 minutes. Sans engagement.
               </p>
             </Reveal>
             <Reveal delay={0.15}>

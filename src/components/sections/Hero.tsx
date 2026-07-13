@@ -13,7 +13,7 @@ const ticker = [
   { k: 'Vulnérabilité moy.', v: '61', s: '/100', c: 'var(--risk)' },
   { k: 'Métiers cartographiés', v: '12', s: 'filières', c: 'var(--violet)' },
   { k: 'Opportunité Data/IT', v: '+82', s: '%', c: 'var(--opp)' },
-  { k: 'Pré-rapport en', v: '10', s: 'minutes', c: 'var(--cyan)' },
+  { k: 'Pré-diagnostic en', v: '10', s: 'minutes', c: 'var(--cyan)' },
 ];
 
 export default function Hero() {
