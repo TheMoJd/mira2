@@ -41,8 +41,15 @@ export async function htmlToPdf(html: string, options: PdfOptions = {}): Promise
 
     // Repli neutre si aucun texte fourni (règle CTO : pas de tiret cadratin).
     const footer = options.footer ?? 'MIRA · document indicatif';
+    // Le template Chromium est du HTML : `footer` est traité comme du texte
+    // brut et échappé (défense en profondeur si un appelant futur y passe une
+    // valeur externe, ex. un nom d'entreprise).
+    const footerHtml = footer.replace(
+      /[&<>"']/g,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
+    );
     const footerTemplate = `<div style="width:100%;font-size:8px;color:#8a83a6;padding:0 14mm;display:flex;justify-content:space-between;font-family:sans-serif">
-      <span>${footer}</span>
+      <span>${footerHtml}</span>
       <span>page <span class="pageNumber"></span> / <span class="totalPages"></span></span>
     </div>`;
 

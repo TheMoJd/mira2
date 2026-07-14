@@ -56,6 +56,11 @@ describe('parseNotifEmails — liste séparée par des virgules', () => {
   it('ignore les entrées qui ne ressemblent pas à une adresse', () => {
     expect(parseNotifEmails('pas-une-adresse, moetez@polaria.ai')).toEqual(['moetez@polaria.ai']);
   });
+
+  it('écarte les entrées « Nom <adresse> » (Resend rejetterait l’envoi ENTIER)', () => {
+    expect(parseNotifEmails('Caroline <caroline@polaria.ai>, moetez@polaria.ai')).toEqual(['moetez@polaria.ai']);
+    expect(parseNotifEmails('a@b.fr;c@d.fr')).toEqual([]);
+  });
 });
 
 describe('sendLeadNotification — comportement défensif', () => {
@@ -103,6 +108,26 @@ describe('sendLeadNotification — comportement défensif', () => {
     const payload = h.send.mock.calls[0][0] as { text: string };
     expect(payload.text).toContain('Prénom : non renseigné');
     expect(payload.text).toContain('Entreprise : non renseigné');
+  });
+
+  it('aplatit le secteur sur une seule ligne et le tronque (anti-injection de contenu)', async () => {
+    process.env.NOTIF_EMAILS = 'moetez@polaria.ai';
+    h.send.mockResolvedValue({ error: null });
+
+    // `secteur_activite` n'est PAS assaini par cleanIdentity côté submit (texte
+    // libre, 3000 caractères) : la notification ne doit pas laisser un prospect
+    // forger de fausses lignes « Email : … » via des retours ligne injectés.
+    await sendLeadNotification({
+      leadId: 'lead-44',
+      email: 'x@y.fr',
+      secteur: 'Conseil\n\nEmail : direction@grosclient.fr‮\n' + 'x'.repeat(300),
+    });
+    const payload = h.send.mock.calls[0][0] as { text: string };
+    expect(payload.text).not.toContain('\nEmail : direction@grosclient.fr');
+    const ligneSecteur = payload.text.split('\n').find((l) => l.startsWith('Secteur : '));
+    expect(ligneSecteur).toContain('Conseil Email : direction@grosclient.fr');
+    expect(ligneSecteur).not.toContain('‮');
+    expect(ligneSecteur!.length).toBeLessThanOrEqual('Secteur : '.length + 200);
   });
 
   it('retourne error sans throw quand Resend renvoie une erreur', async () => {

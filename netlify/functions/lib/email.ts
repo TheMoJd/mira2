@@ -13,6 +13,7 @@
  */
 import { Resend } from 'resend';
 import { RGPD_EMAIL_NOTICE, EMAIL_SENDER_NAME } from '../../../src/data/rgpd';
+import { EMAIL_RE } from '../../../src/components/prerapport/validation';
 
 const PDF_FILENAME = 'pre-diagnostic-mira.pdf';
 
@@ -85,10 +86,19 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
  * vides ; ignore ce qui ne ressemble pas à une adresse. Exportée pour test.
  */
 export function parseNotifEmails(raw: string | undefined): string[] {
-  return (raw ?? '')
+  const entries = (raw ?? '')
     .split(',')
     .map((s) => s.trim())
-    .filter((s) => s.includes('@'));
+    .filter(Boolean);
+  // Resend rejette l'envoi ENTIER si un seul destinataire est malformé (ex.
+  // « Caroline <caroline@…> » avec chevrons) : on écarte l'entrée invalide et
+  // on le signale (compte seulement, pas la valeur) plutôt que de perdre
+  // silencieusement toutes les notifications.
+  const valid = entries.filter((s) => EMAIL_RE.test(s));
+  if (valid.length < entries.length) {
+    console.warn(`[email] NOTIF_EMAILS : ${entries.length - valid.length} entrée(s) au format invalide ignorée(s).`);
+  }
+  return valid;
 }
 
 /** Données du lead reprises dans la notification interne (décision CTO 13/07). */
@@ -122,7 +132,17 @@ export async function sendLeadNotification(args: LeadNotificationArgs): Promise<
     return 'skipped';
   }
 
-  const ligne = (label: string, value?: string | null) => `${label} : ${value?.trim() || 'non renseigné'}`;
+  // Aplatissement anti-injection : les champs d'identité sont assainis par
+  // `cleanIdentity` côté submit, mais PAS `secteur_activite` (texte libre,
+  // 3000 caractères, retours ligne permis). Sans ce repli, un prospect
+  // pourrait forger de fausses lignes « Email : … » dans cet email interne.
+  const aplatit = (value?: string | null) =>
+    (value ?? '')
+      .replace(/[\p{Cc}\p{Cf}]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 200);
+  const ligne = (label: string, value?: string | null) => `${label} : ${aplatit(value) || 'non renseigné'}`;
   const text = [
     'Un nouveau pré-diagnostic vient d’être généré et envoyé au prospect.',
     '',
