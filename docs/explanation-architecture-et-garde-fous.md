@@ -1,10 +1,10 @@
-# Explication — Architecture & garde-fous du pré-rapport
+# Explication — Architecture & garde-fous du pré-diagnostic
 
 > **Quadrant Diataxis : Explanation.** Le *pourquoi* des choix de conception. Pour la
 > description exhaustive des fichiers et signatures, voir
 > [reference-pipeline-prerapport.md](reference-pipeline-prerapport.md).
 
-Le pré-rapport a une contrainte produit forte : il doit être **crédible et défendable**
+Le pré-diagnostic a une contrainte produit forte : il doit être **crédible et défendable**
 (c'est un outil de lead-gen pour des DRH), sans cannibaliser l'offre payante ni « ressembler
 à du ChatGPT déguisé ». Cette contrainte explique la plupart des décisions ci-dessous.
 
@@ -104,9 +104,10 @@ Quand aucune source ne couvre directement une famille déclarée, la caractéris
 honnêtement la limite plutôt que de combler par du vide sourcé. C'est assumé : le socle ne
 couvre pas les 28 familles.
 
-### La frontière gratuit / payant
+### La frontière offert / payant
 
-Le freemium applique **l'état de l'art public à vos métiers**. Il ne touche **jamais** aux
+Le freemium (le pré-diagnostic « offert » de la landing) applique **l'état de l'art public à
+vos métiers**. Il ne touche **jamais** aux
 données internes de l'entreprise (maturité IA, inventaire de compétences, organisation) — le
 formulaire n'en collecte d'ailleurs aucune. Le scoring fin par métier, l'analyse d'écart et la
 feuille de route sont réservés au payant, vers lequel la section §8 fait un pont (texte figé).
@@ -163,7 +164,7 @@ Depuis le 10/07, deux gardes s'y ajoutent côté validation serveur :
   une soumission acceptée peut y injecter des mégaoctets (coût + surface d'injection). Plafond
   à 3 000 caractères (`MAX_FREETEXT_LEN`), 120 pour les champs d'identité et chaque famille
   (`MAX_IDENTITY_LEN`, aussi appliqué en `maxLength` côté wizard).
-- **`cleanIdentity` sur les champs d'identité** (prénom, nom, fonction) : caractères de
+- **`cleanIdentity` sur les champs d'identité** (prénom, nom, entreprise, fonction) : caractères de
   contrôle/format retirés (retours ligne, RTL override…), espaces repliés. Défense en
   profondeur : ces PII partiront un jour vers CRM/emails où elles seraient des vecteurs
   d'injection (en-têtes, templates).
@@ -188,7 +189,7 @@ Depuis le 10/07, deux gardes s'y ajoutent côté validation serveur :
   `get-report`) a été retiré : un seul canal de livraison = un seul rendu à maintenir, pas
   d'endpoint public à protéger, et le PDF joint reste l'objet qui circule. La route
   `/rapport/:leadId` est conservée comme page-message pour les anciens liens partagés.
-- **Filigrane « MIRA AUDIT »** répété sur chaque page (demande CEO 10/07). En impression
+- **Filigrane « mira-audit.fr »** répété sur chaque page (demande CEO 10/07, texte revu le 13/07). En impression
   Chromium, un élément `position:fixed` est re-peint sur chaque page du PDF — le seul moyen de
   couvrir toutes les pages sans connaître les sauts de page à l'avance. Il est placé au-dessus
   du contenu (`z-index`) car les cartes à fond opaque l'occulteraient sinon ; à 5 % d'opacité,
@@ -206,10 +207,13 @@ Trois choix éditoriaux, tous au service de la même contrainte « crédible et 
   avant de lire : la structure donne le diagnostic dès les premières pages, les fiches par
   famille détaillent ensuite.
 - **Sources allégées.** L'appareil de références détaillé (claim + verbatim + flags par stat)
-  prenait plusieurs pages et faisait « annexe académique ». La section « Sources mobilisées »
-  ne liste plus que les documents (organisation + année, dédupliqués). La traçabilité fine
-  n'est pas perdue : elle reste dans le texte (chaque chiffre cite sa source) et en base
-  (`reports.sources`).
+  prenait plusieurs pages et faisait « annexe académique ». La section « Sources mobilisées
+  pour votre pré-diagnostic » ne liste plus que les documents (organisation + année,
+  dédupliqués), et depuis le 13/07 les sources vivent **en fin de document uniquement**
+  (retours CEO) : les références inline « (Organisation, année) » écrites par le LLM sont
+  retirées au rendu (`stripSourceRefs`, conservateur : seules les parenthèses contenant une
+  année ET une organisation connue sautent). La traçabilité fine n'est pas perdue : elle
+  reste dans `report_json` (`sources_citees` par section) et en base (`reports.sources`).
 - **Prose naturelle : ni tiret cadratin ni point-virgule.** Consigne CEO : ces signes « font
   écrit par une IA » et abîment la crédibilité. La règle est imposée trois fois — règle n°8 du
   `SYSTEM_PROMPT` pour le texte généré, relecture des textes codés en dur (`reportHtml.ts`,

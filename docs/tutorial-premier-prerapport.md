@@ -1,10 +1,10 @@
-# Tutoriel — Votre premier pré-rapport, de zéro au PDF
+# Tutoriel — Votre premier pré-diagnostic, de zéro au PDF
 
 > **Quadrant Diataxis : Tutorial.** Orienté apprentissage. Vous partez d'un repo cloné et,
-> en quelques étapes, vous voyez un vrai pré-rapport PDF se générer. À la fin, vous aurez une
+> en quelques étapes, vous voyez un vrai pré-diagnostic PDF se générer. À la fin, vous aurez une
 > carte mentale du pipeline complet et saurez où regarder pour la suite.
 
-Vous allez : lancer l'app en local, soumettre une demande de pré-rapport pour une entreprise
+Vous allez : lancer l'app en local, soumettre une demande de pré-diagnostic pour une entreprise
 fictive, et récupérer le PDF généré par le LLM. On vise un **premier résultat visible vite** ;
 les détails viennent ensuite.
 
@@ -39,7 +39,7 @@ stocké dans Supabase — parfait pour un premier essai.
 netlify dev
 ```
 
-Ouvrez **`http://localhost:8888/pre-rapport`**. Le wizard MIRA s'affiche : un écran d'intro
+Ouvrez **`http://localhost:8888/pre-diagnostic`**. Le wizard MIRA s'affiche : un écran d'intro
 avec une double accroche RH / dirigeant. Vous venez de lancer le front *et* les Netlify
 Functions d'une seule commande. 🎉
 
@@ -51,9 +51,9 @@ Cliquez sur **Commencer**, puis déroulez les 5 étapes avec une entreprise fict
 2. **Offre** — produits/services et clients (deux phrases suffisent).
 3. **Métiers** — tapez 3 familles, par ex. `Conduite / livraison`, `Relation client`, `Comptabilité` (Entrée après chacune).
 4. **Compléments** — laissez vide, ou collez l'URL d'un site public pour voir l'enrichissement.
-5. **Réception** — votre prénom, votre nom et votre email + cochez le consentement (fonction et téléphone sont optionnels).
+5. **Réception** — votre prénom, votre nom, une entreprise (par ex. `Transports Rapides IDF`), votre fonction (par ex. `DRH`) et votre email + cochez le consentement (seul le téléphone est optionnel).
 
-Validez **Recevoir mon pré-rapport**. Vous arrivez sur l'écran « Votre pré-rapport arrive
+Validez **Recevoir mon pré-diagnostic**. Vous arrivez sur l'écran « Votre pré-diagnostic arrive
 par email ». Côté coulisses, `submit-prerapport` vient de répondre `202` et a déclenché la
 génération.
 
@@ -77,9 +77,11 @@ Une fois en `status = sent` :
 Ouvrez-le. Vous obtenez un document de marque MIRA : page de garde (logo, slogan,
 proposition de valeur), carte d'identité de l'entreprise, 10 sections (§0 périmètre → §9
 sources & méthode) avec en §3 un tableau « En un coup d'œil » puis une fiche par famille de
-métiers, la liste des sources mobilisées, une page de fin « Transparence et mentions »
-(génération assistée par IA + mention RGPD), et un filigrane « MIRA AUDIT » en travers de
-chaque page. **Chaque chiffre du rapport vient de la stat-bank** — le LLM n'en a inventé aucun.
+métiers, la section « Sources mobilisées pour votre pré-diagnostic », une page de fin
+« Transparence et mentions » (génération assistée par IA + mention RGPD), un filigrane
+« mira-audit.fr » en travers de chaque page, et en bas de page « Mira audit · … · <mois
+année> » avec le mois de génération. **Chaque chiffre du rapport vient de la stat-bank** —
+le LLM n'en a inventé aucun.
 
 ## Ce que vous avez construit (et la suite)
 
