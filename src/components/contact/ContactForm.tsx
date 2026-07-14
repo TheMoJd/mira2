@@ -84,7 +84,7 @@ export default function ContactForm() {
 
   const f = contact.fields;
 
-  if (done) return <Success onStart={() => navigate('/pre-rapport')} />;
+  if (done) return <Success onStart={() => navigate('/pre-diagnostic')} />;
 
   return (
     <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 'var(--r-xl)', boxShadow: 'var(--shadow)', padding: 'clamp(26px,4.5vw,48px)' }}>

@@ -52,7 +52,7 @@ const mira: MiraData = {
       role: "Construisez votre cartographie dynamique des compétences",
       body: "La cartographie MIRA densifie, affine et clarifie la lecture de vos métiers jusqu'à la compétence. À travers des questions calibrées par profil de poste, adaptées à la trajectoire individuelle et contextualisées par les dynamiques IA du secteur, la récolte des données s'inscrit dans vos temps RH existants (entretiens, GEPP, plan de développement des compétences). De cette matière, MIRA produit une cartographie de vos compétences au niveau systémique et individuel de votre organisation.",
       points: ["Calibré sur le profil de poste", "Co-construit avec experts RH & GPEC", "Analyse fine, agrégée, anonymisée"],
-      cta: { label: "Découvrir le parcours MIRA", href: "#tarifs" },
+      cta: { label: "Découvrir le parcours MIRA", href: "/contact" },
     },
     {
       n: "03",
@@ -61,7 +61,7 @@ const mira: MiraData = {
       role: "Pilotez la transformation avec une feuille de route opérationnelle.",
       body: "Vous passez du constat à la trajectoire. MIRA accompagne la traduction de la cartographie en plan d'action RH : scores d'exposition par métier, matrices de risques et d'opportunités, plan de transformation RH (évolution des fiches métiers, parcours de montée en compétences, redéploiement des expertises), dialogue social outillé et actions opérationnelles avec indicateurs de suivi.",
       points: ["Scoring d'exposition par métier", "Matrices risques/opportunités", "Plan d'actions priorisés & suivi"],
-      cta: { label: "Découvrir le parcours MIRA", href: "#tarifs" },
+      cta: { label: "Découvrir le parcours MIRA", href: "/contact" },
     },
   ],
 
