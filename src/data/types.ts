@@ -18,6 +18,14 @@ export interface Stat {
   source?: string;
 }
 
+/** Bouton d'action d'une étape du parcours (section Méthode). */
+export interface PhaseCta {
+  label: string;
+  href: string;
+  /** true → CTA principal (pilule violette) ; sinon bouton secondaire sombre. */
+  primary?: boolean;
+}
+
 export interface Phase {
   n: string;
   tag: string;
@@ -26,6 +34,8 @@ export interface Phase {
   role?: string;
   body: string;
   points: string[];
+  /** Bouton d'action de l'étape. Optionnel : masqué si absent. */
+  cta?: PhaseCta;
 }
 
 export interface Reading {
@@ -46,8 +56,6 @@ export interface PricingPlan {
   featured: boolean;
   features: string[];
 }
-
-export interface PricingTier { range: string; price: string; }
 
 export interface ComplianceItem { t: string; d: string; }
 
@@ -74,8 +82,6 @@ export interface MiraData {
   readings: Reading[];
   diff: Differentiator[];
   pricing: PricingPlan[];
-  tiers: PricingTier[];
-  tiersNote: string;
   compliance: ComplianceItem[];
   jobs: Job[];
 }

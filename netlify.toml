@@ -17,6 +17,13 @@
   # inlinés par esbuild : ils embarquent un binaire/des assets résolus au runtime.
   external_node_modules = ["@sparticuz/chromium", "puppeteer-core"]
 
+# Renommage site v2 (13/07) : l'ancienne URL du wizard redirige en 301
+# vers la nouvelle. Doit précéder le fallback SPA pour être prioritaire.
+[[redirects]]
+  from = "/pre-rapport"
+  to = "/pre-diagnostic"
+  status = 301
+
 # SPA fallback — toutes les routes renvoient vers index.html
 # (utile dès que tu ajouteras du routing côté client)
 [[redirects]]

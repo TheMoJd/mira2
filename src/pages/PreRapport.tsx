@@ -41,7 +41,7 @@ export default function PreRapport() {
       <main className="wrap" style={{ position: 'relative', maxWidth: 760, paddingTop: 116, paddingBottom: 80 }}>
         <Wizard />
         <p style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--ink-3)', marginTop: 22, lineHeight: 1.5 }}>
-          Vos données ne sont utilisées que pour produire votre pré-rapport.
+          Vos données ne sont utilisées que pour produire votre pré-diagnostic.
         </p>
       </main>
     </div>

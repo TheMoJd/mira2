@@ -15,7 +15,7 @@ export default function Stats() {
   return (
     <section style={{ padding: '100px 0' }}>
       <div className="wrap">
-        <Head kicker="L'angle mort des directions RH" title="Ce que l'IA change. Sans que personne ne le mesure." sub="Une obligation légale. Aucun outil pour la piloter." max={560} />
+        <Head kicker="L'angle mort des directions" title="Métiers, compétences : actionner les leviers de transformation IA" max={560} />
         <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, background: 'var(--line)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
           {mira.stats.map((s, i) => (
             <Reveal key={i} delay={i * 0.08} y={0}>

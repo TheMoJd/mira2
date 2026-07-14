@@ -97,7 +97,7 @@ export default function Lectures() {
   return (
     <section id="lectures" style={{ padding: '110px 0' }}>
       <div className="wrap">
-        <Head kicker="Un diagnostic, trois lectures" title="Le même rapport, parlé dans trois langues." sub="Chaque niveau hiérarchique reçoit une restitution calibrée — de la vision stratégique consolidée à la fiche individuelle." />
+        <Head kicker="Feuille de route" title="La feuille de route MIRA, 3 niveaux opérationnels" sub="Chaque acteur de l'organisation reçoit une restitution calibrée selon le besoin, de la vision stratégique consolidée à la fiche individuelle." />
         <div className="lect-grid" style={{ display: 'grid', gridTemplateColumns: '0.85fr 1.15fr', gap: 40, alignItems: 'stretch' }}>
           {/* tabs */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

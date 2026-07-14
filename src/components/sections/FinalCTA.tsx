@@ -20,12 +20,12 @@ export default function FinalCTA() {
             </Reveal>
             <Reveal delay={0.1}>
               <p style={{ fontSize: 18, color: 'var(--dk-mut)', maxWidth: 540, margin: '0 auto 34px', lineHeight: 1.6 }}>
-                Lancez votre pré-rapport sectoriel gratuit en 10 minutes. Sans engagement.
+                Lancez votre pré-diagnostic sectoriel offert en 10 minutes. Sans engagement.
               </p>
             </Reveal>
             <Reveal delay={0.15}>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Button primary href="/pre-rapport">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
+                <Button primary href="/pre-diagnostic">{mira.brand.cta} <span style={{ fontSize: 17 }}>→</span></Button>
                 <Button dark href="#tarifs">Voir les tarifs</Button>
               </div>
             </Reveal>

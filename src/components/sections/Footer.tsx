@@ -2,7 +2,7 @@ import Logo from '../ui/Logo';
 import mira from '../../data/mira';
 
 const footerLinks = [
-  ['Produit', ['Le pré-rapport', 'Entretiens augmentés', 'Les 3 lectures', 'Tarifs']],
+  ['Produit', ['Le pré-diagnostic', 'Entretiens augmentés', 'Les 3 lectures', 'Tarifs']],
   ['Ressources', ['Méthodologie', 'Sources de référence', 'Conformité RGPD', 'Loi Avenir']],
   ['Société', ["L'équipe", 'Contact', 'Mentions légales', 'DPA']],
 ] as const;

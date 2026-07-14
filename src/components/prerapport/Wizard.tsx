@@ -310,7 +310,7 @@ export default function Wizard() {
                 <span />
               )}
               <WizardButton type="submit" disabled={submitting}>
-                {step < STEP_COUNT - 1 ? 'Continuer →' : submitting ? 'Génération…' : 'Recevoir mon pré-rapport'}
+                {step < STEP_COUNT - 1 ? 'Continuer →' : submitting ? 'Génération…' : 'Recevoir mon pré-diagnostic'}
               </WizardButton>
             </div>
           </form>
@@ -337,7 +337,7 @@ function Intro({ onStart }: { onStart: () => void }) {
           <div key={p.t} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
             <span style={{ color: 'var(--opp)', flexShrink: 0, fontWeight: 700 }}>✓</span>
             <span style={{ fontSize: 15, color: 'var(--ink-1)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--ink)' }}>{p.t}</strong> — {p.d}
+              <strong style={{ color: 'var(--ink)' }}>{p.t}</strong> · {p.d}
             </span>
           </div>
         ))}
