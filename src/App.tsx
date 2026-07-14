@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Landing from './pages/Landing';
 import PreRapport from './pages/PreRapport';
+import Contact from './pages/Contact';
 import Grain from './components/fx/Grain';
 import { scrollToTop } from './lib/scroll';
 
@@ -31,6 +32,7 @@ export default function App() {
         {/* Ancienne URL du wizard (site v1) : redirection côté client. Netlify
             sert aussi un 301 (netlify.toml) pour les accès directs. */}
         <Route path="/pre-rapport" element={<Navigate to="/pre-diagnostic" replace />} />
+        <Route path="/contact" element={<Contact />} />
         <Route
           path="/rapport/:leadId"
           element={

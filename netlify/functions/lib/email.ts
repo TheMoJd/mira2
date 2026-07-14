@@ -9,6 +9,8 @@
  */
 import { Resend } from 'resend';
 import { RGPD_EMAIL_NOTICE, EMAIL_SENDER_NAME } from '../../../src/data/rgpd';
+import type { ContactForm } from '../../../src/types/contact';
+import { FONCTION_AUTRE } from '../../../src/data/contact';
 
 const PDF_FILENAME = 'prerapport-mira.pdf';
 
@@ -72,6 +74,76 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
   } catch (err) {
     console.error('[email] exception Resend', err);
     return 'error';
+  }
+}
+
+/**
+ * Notifie l'équipe d'une nouvelle demande de contact (fiche « parcours MIRA »).
+ * Best-effort : ne throw jamais, log et sort si Resend ou le destinataire ne
+ * sont pas configurés (comme la livraison du rapport). Destinataires :
+ * `CONTACT_NOTIFY_EMAIL` (une ou plusieurs adresses séparées par une virgule,
+ * ex. « moetez@…,caroline@… ») sinon repli sur `OPS_EMAIL`.
+ */
+export async function notifyContactRequest(form: ContactForm): Promise<void> {
+  const from = senderOrNull();
+  // Plusieurs destinataires possibles : liste séparée par des virgules.
+  const recipients = (process.env.CONTACT_NOTIFY_EMAIL || process.env.OPS_EMAIL || '')
+    .split(',')
+    .map((addr) => addr.trim())
+    .filter(Boolean);
+  if (!from || recipients.length === 0) {
+    console.warn('[email] CONTACT_NOTIFY_EMAIL/OPS_EMAIL absent — notification contact ignorée (demande enregistrée).');
+    return;
+  }
+
+  const fonction =
+    form.fonction === FONCTION_AUTRE && form.fonctionAutre
+      ? `${form.fonction} : ${form.fonctionAutre}`
+      : form.fonction;
+
+  // Toutes les valeurs viennent du formulaire (donné non fiable) → échappées.
+  const rows: Array<[string, string]> = [
+    ['Nom', `${form.prenom} ${form.nom}`],
+    ['Email', form.email],
+    ['Téléphone', form.telephone || '—'],
+    ['Fonction', fonction],
+    ['Entreprise', form.entreprise],
+    ['Secteur', form.secteur],
+    ['Effectif', form.effectif],
+    ['Maturité IA', `${form.maturiteIa}/10`],
+    ['Pré-diagnostic réalisé', form.preDiagnostic],
+    ['Priorité', form.priorite],
+    ['Horizon', form.horizon],
+    ['Veille MIRA', form.newsletter ? 'oui' : 'non'],
+  ];
+  const rowsHtml = rows
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:4px 14px 4px 0;color:#8a83a6;white-space:nowrap;vertical-align:top">${escapeHtml(k)}</td><td style="padding:4px 0;color:#160f2e">${escapeHtml(v)}</td></tr>`,
+    )
+    .join('');
+  const messageHtml = form.message
+    ? `<p style="margin:18px 0 0"><strong>Contexte :</strong><br>${escapeHtml(form.message).replace(/\n/g, '<br>')}</p>`
+    : '';
+
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#160f2e;line-height:1.6;font-size:15px">
+    <p>Nouvelle demande de contact via le parcours MIRA :</p>
+    <table style="border-collapse:collapse;font-size:14px">${rowsHtml}</table>
+    ${messageHtml}
+  </div>`;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.emails.send({
+      from,
+      to: recipients,
+      ...(process.env.RESEND_REPLY_TO ? { replyTo: process.env.RESEND_REPLY_TO } : {}),
+      subject: `[MIRA] Demande de contact — ${form.prenom} ${form.nom} (${form.entreprise})`,
+      html,
+    });
+    if (error) console.error('[email] échec notification contact', error);
+  } catch (err) {
+    console.error('[email] exception notification contact', err);
   }
 }
 

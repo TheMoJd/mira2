@@ -165,6 +165,17 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 .pr-field--error { border-color: var(--risk); }
 .pr-field--error:focus { box-shadow: 0 0 0 3px rgba(239, 108, 77, .15); }
 
+/* Select : on masque le chevron natif (remplacé par un SVG maison) et on
+   réserve la place à droite. `:invalid` cible l'option placeholder (value="")
+   pour la griser comme un vrai placeholder tant qu'aucun choix n'est fait. */
+.pr-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+}
+.pr-select:invalid { color: var(--ink-3); }
+
 .pr-dropzone {
   display: flex;
   flex-direction: column;

@@ -11,6 +11,7 @@ interface TextAreaProps {
   optional?: boolean;
   rows?: number;
   autoFocus?: boolean;
+  maxLength?: number;
 }
 
 export default function TextArea({
@@ -23,6 +24,7 @@ export default function TextArea({
   optional,
   rows = 4,
   autoFocus,
+  maxLength,
 }: TextAreaProps) {
   const id = useId();
   return (
@@ -32,6 +34,7 @@ export default function TextArea({
         id={id}
         rows={rows}
         autoFocus={autoFocus}
+        maxLength={maxLength}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}

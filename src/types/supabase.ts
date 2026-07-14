@@ -16,6 +16,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      contact_requests: {
+        Row: {
+          created_at: string
+          effectif: string
+          email: string
+          entreprise: string
+          fonction: string
+          fonction_autre: string | null
+          horizon: string
+          id: string
+          maturite_ia: number
+          message: string | null
+          newsletter_opt_in: boolean
+          nom: string
+          pre_diagnostic: string
+          prenom: string
+          priorite: string
+          secteur: string
+          status: string
+          telephone: string | null
+        }
+        Insert: {
+          created_at?: string
+          effectif: string
+          email: string
+          entreprise: string
+          fonction: string
+          fonction_autre?: string | null
+          horizon: string
+          id?: string
+          maturite_ia: number
+          message?: string | null
+          newsletter_opt_in?: boolean
+          nom: string
+          pre_diagnostic: string
+          prenom: string
+          priorite: string
+          secteur: string
+          status?: string
+          telephone?: string | null
+        }
+        Update: {
+          created_at?: string
+          effectif?: string
+          email?: string
+          entreprise?: string
+          fonction?: string
+          fonction_autre?: string | null
+          horizon?: string
+          id?: string
+          maturite_ia?: number
+          message?: string | null
+          newsletter_opt_in?: boolean
+          nom?: string
+          pre_diagnostic?: string
+          prenom?: string
+          priorite?: string
+          secteur?: string
+          status?: string
+          telephone?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           clients: string
