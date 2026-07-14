@@ -2,6 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { preRapport } from './prerapport';
 import { famillesMetiers, domainesOrdre } from './famillesMetiers';
 import { statbank } from './statbank';
+import { reportSections } from './rapportStructure';
+import { RGPD_PDF_FOOTER, RGPD_EMAIL_NOTICE } from './rgpd';
+import { SLOGAN, VALUE_PROP, reportFooterText } from './reportHtml';
+import { collectStrings, offenders } from './styleLock.helpers';
+import type { FoundString } from './styleLock.helpers';
 
 /**
  * Verrou de style étendu (Lot 2, sur le modèle de `mira.test.ts` créé au Lot 1) :
@@ -21,30 +26,6 @@ import { statbank } from './statbank';
  *    d'origine exacte (piste d'audit, jamais affichée) — la réécrire fausserait
  *    la vérification à la source.
  */
-
-interface FoundString {
-  path: string;
-  text: string;
-}
-
-/** Aplati récursivement toutes les chaînes d'une valeur, avec leur chemin. */
-function collectStrings(value: unknown, path: string, out: FoundString[]): void {
-  if (typeof value === 'string') {
-    out.push({ path, text: value });
-    return;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((v, i) => collectStrings(v, `${path}[${i}]`, out));
-    return;
-  }
-  if (value !== null && typeof value === 'object') {
-    for (const [key, v] of Object.entries(value)) {
-      collectStrings(v, `${path}.${key}`, out);
-    }
-  }
-}
-
-const offenders = (strings: FoundString[]) => strings.filter(({ text }) => /[—–]/.test(text));
 
 describe('verrou de style — pas de tiret cadratin ni demi-cadratin (CTO 13/07)', () => {
   it('prerapport (copie du wizard) : aucune chaîne', () => {
@@ -80,6 +61,23 @@ describe('verrou de style — pas de tiret cadratin ni demi-cadratin (CTO 13/07)
       collectStrings(visible, `statbank[${i}]<${s.id}>`, strings);
     });
     expect(strings.length).toBeGreaterThan(200);
+    expect(offenders(strings)).toEqual([]);
+  });
+
+  it('rapportStructure (title, fixedText), rgpd et chaînes exportées de reportHtml', () => {
+    // `intent`/`allowedSources` restent hors périmètre (prompt interne, jamais
+    // affichés) — même logique que l'exclusion de `verbatim` ci-dessus.
+    const strings: FoundString[] = [];
+    reportSections.forEach((s, i) =>
+      collectStrings({ title: s.title, fixedText: s.fixedText }, `reportSections[${i}]<${s.id}>`, strings),
+    );
+    collectStrings({ RGPD_PDF_FOOTER, RGPD_EMAIL_NOTICE }, 'rgpd', strings);
+    collectStrings(
+      { SLOGAN, VALUE_PROP, footer: reportFooterText(new Date('2026-07-14T12:00:00Z')) },
+      'reportHtml',
+      strings,
+    );
+    expect(strings.length).toBeGreaterThan(10);
     expect(offenders(strings)).toEqual([]);
   });
 });
