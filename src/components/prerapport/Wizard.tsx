@@ -64,6 +64,14 @@ export default function Wizard() {
     const errs = validateStep(step, form);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+      // Amener l'utilisateur SUR l'erreur : à l'étape identité (4 champs requis
+      // depuis le 13/07), le champ fautif peut être hors viewport sur mobile et
+      // le bouton semblerait mort. rAF : attendre le rendu des aria-invalid.
+      requestAnimationFrame(() => {
+        const fautif = document.querySelector<HTMLElement>('[aria-invalid="true"]');
+        fautif?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        fautif?.focus({ preventScroll: true });
+      });
       return;
     }
     setErrors({});

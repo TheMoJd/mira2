@@ -31,6 +31,7 @@ export default function TextField({
   maxLength,
 }: TextFieldProps) {
   const id = useId();
+  const messageId = `${id}-message`;
   return (
     <div>
       <FieldLabel htmlFor={id} optional={optional}>{label}</FieldLabel>
@@ -45,9 +46,10 @@ export default function TextField({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={!!error}
+        aria-describedby={error || hint ? messageId : undefined}
         className={`pr-field${error ? ' pr-field--error' : ''}`}
       />
-      <FieldMessage error={error} hint={hint} />
+      <FieldMessage id={messageId} error={error} hint={hint} />
     </div>
   );
 }
