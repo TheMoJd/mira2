@@ -200,6 +200,32 @@ describe('stripSourceRefs — retrait des références inline (CEO 13/07)', () =
   it('nettoie les artefacts de ponctuation laissés par le retrait', () => {
     expect(stripSourceRefs('La courbe augmente. (WEF, 2025).')).toBe('La courbe augmente.');
   });
+
+  it('retire une citation portant un segment de page « p.11 »', () => {
+    expect(stripSourceRefs('Un chiffre marquant (Parlons RH, 2025, p.11).')).toBe('Un chiffre marquant.');
+  });
+
+  it('parenthèse mixte avec page : la donnée survit, citation et page partent', () => {
+    expect(stripSourceRefs('L’usage individuel (83 %, Parlons RH, 2025, p.11) devance l’intégration.')).toBe(
+      'L’usage individuel (83 %) devance l’intégration.',
+    );
+  });
+
+  it('retire une citation sans virgule « (WEF 2025) »', () => {
+    expect(stripSourceRefs('39 % des compétences transformées (WEF 2025).')).toBe(
+      '39 % des compétences transformées.',
+    );
+  });
+
+  it('préserve une parenthèse d’année sans organisation, même sans virgule', () => {
+    expect(stripSourceRefs('Un cap se prépare (estimations pour 2030).')).toBe(
+      'Un cap se prépare (estimations pour 2030).',
+    );
+  });
+
+  it('normalise les points de suspension tapés en « … » au lieu de les manger', () => {
+    expect(stripSourceRefs('Ils hésitent... puis adoptent.')).toBe('Ils hésitent… puis adoptent.');
+  });
 });
 
 describe('prepareProse — filet de renommage hérité + retrait des références', () => {

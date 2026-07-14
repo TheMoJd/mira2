@@ -184,6 +184,13 @@ const ORG_RES: RegExp[] = KNOWN_ORGS.map(
 /** Segment d'année de citation : « 2025 », « 2024b ». */
 const YEAR_SEG_RE = /^(?:19|20)\d{2}[ab]?$/;
 
+/** Segment « page » d'une citation : « p.11 », « pp. 4-5 », « page 12 ».
+ *  Toléré dans la queue de citation (le LLM recopie parfois la page de la
+ *  stat-bank), mais JAMAIS suffisant : la validité exige année + organisation. */
+function isPageSegment(seg: string): boolean {
+  return /^p(?:ages?|p)?\.?\s?\d+([-–]\d+)?$/i.test(seg);
+}
+
 /** Un segment de parenthèse est « organisation » s'il est court et nomme une
  *  organisation connue, ou s'il recrédite une source (« citée par X »). */
 function isOrgSegment(seg: string): boolean {
@@ -194,9 +201,11 @@ function isOrgSegment(seg: string): boolean {
 
 /**
  * Retire d'un texte LLM les parenthèses de référence source, ex.
- * « (World Economic Forum, 2025) », « (WEF, 2025) » ou « (Crédoc, citée par
- * Parlons RH, 2025) ». Analyse par segments (virgules) depuis la fin :
- *  - parenthèse entièrement faite d'organisations/années → supprimée ;
+ * « (World Economic Forum, 2025) », « (WEF, 2025) », « (WEF 2025) » ou
+ * « (Crédoc, citée par Parlons RH, 2025, p.11) ». Analyse par segments
+ * (virgules) depuis la fin :
+ *  - parenthèse entièrement faite d'organisations/années/pages → supprimée
+ *    (les pages sont tolérées en queue, jamais suffisantes) ;
  *  - parenthèse MIXTE « (83 %, Parlons RH, 2025) » → seule la queue de citation
  *    part, la donnée reste : « (83 %) » (un rapport chiffré ne perd jamais ses
  *    nombres) ;
@@ -217,10 +226,26 @@ export function stripSourceRefs(text: string): string {
           .map((s) => s.trim())
           .filter(Boolean);
         if (segments.length === 0) return whole;
+        // Citation sans virgule « (WEF 2025) » : segment unique qui se termine
+        // par une année, court et nommant une organisation connue → citation
+        // pure, supprimée. Sans organisation (« (estimations pour 2030) »,
+        // « (réforme prévue pour 2026) »), la parenthèse reste intacte.
+        if (segments.length === 1) {
+          const seul = segments[0];
+          const citation =
+            /(?:19|20)\d{2}[ab]?$/.test(seul) &&
+            seul.split(/\s+/).length <= 7 &&
+            ORG_RES.some((re) => re.test(seul));
+          return citation ? avant : whole;
+        }
         // Queue de citation : on remonte depuis la fin tant que le segment est
-        // une année ou une organisation connue.
+        // une année, une organisation connue ou une page (« p.11 »).
         let cut = segments.length;
-        while (cut > 0 && (YEAR_SEG_RE.test(segments[cut - 1]) || isOrgSegment(segments[cut - 1]))) cut -= 1;
+        while (
+          cut > 0 &&
+          (YEAR_SEG_RE.test(segments[cut - 1]) || isOrgSegment(segments[cut - 1]) || isPageSegment(segments[cut - 1]))
+        )
+          cut -= 1;
         const tail = segments.slice(cut);
         if (!tail.some((s) => YEAR_SEG_RE.test(s)) || !tail.some((s) => isOrgSegment(s))) {
           return whole; // pas une référence : il faut année ET organisation en queue
@@ -229,6 +254,9 @@ export function stripSourceRefs(text: string): string {
         return `${avant} (${segments.slice(0, cut).join(', ')})`; // mixte → la donnée survit
       },
     )
+    // Typographie française : « ... » tapés par le LLM → « … », AVANT les
+    // nettoyages d'artefacts (le collapse de points ci-dessous les mangerait).
+    .replace(/\.{3}/g, '…')
     .replace(/ {2,}/g, ' ')
     .replace(/\s+([.,])/g, '$1')
     // Artefacts de retrait : « augmente. (WEF, 2025). » → « augmente.. »,
@@ -241,10 +269,10 @@ export function stripSourceRefs(text: string): string {
 
 /**
  * Prose LLM prête à afficher : filet de renommage hérité PUIS retrait des
- * références. Le SYSTEM_PROMPT (verrouillé pendant le benchmark R4) présente
- * encore le livrable comme « pré-rapport » : le modèle peut donc écrire ce mot
- * dans la prose des documents réels ; on le replie au rendu, la correction du
- * prompt étant déléguée à la session benchmark.
+ * références. Le SYSTEM_PROMPT dit désormais « pré-diagnostic » (corrigé en
+ * 599e145) ; le filet reste en ceinture pour (a) les `report_json` historiques
+ * générés avec l'ancien prompt et re-rendus tels quels, et (b) une éventuelle
+ * désobéissance du modèle qui écrirait encore « pré-rapport » dans la prose.
  */
 export function prepareProse(text: string): string {
   return stripSourceRefs(
