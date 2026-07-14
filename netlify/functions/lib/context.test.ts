@@ -85,6 +85,18 @@ describe('buildGenerationContext — assemblage pur', () => {
     });
   });
 
+  it('replie nomEntreprise sur l’entreprise déclarée quand l’enrichissement SIRET est muet', () => {
+    const ctx = buildGenerationContext(lead({ entreprise: 'Transports Durand' }), NO_ENRICH, NOW);
+    expect(ctx.nomEntreprise).toBe('Transports Durand');
+    // La raison sociale INSEE (donnée vérifiée) reste prioritaire quand elle existe.
+    const enrichi = buildGenerationContext(
+      lead({ entreprise: 'Transports Durand' }),
+      { siret: { nomEntreprise: 'TRANSPORTS DURAND SAS' } },
+      NOW,
+    );
+    expect(enrichi.nomEntreprise).toBe('TRANSPORTS DURAND SAS');
+  });
+
   it('privilégie le NAF/effectif déjà présent sur le lead sur celui de l’enrichissement', () => {
     const ctx = buildGenerationContext(
       lead({ naf_code: '6201Z', effectif_tranche: '20 à 49 salariés' }),

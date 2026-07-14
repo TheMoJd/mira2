@@ -94,6 +94,16 @@ describe('submit-prerapport — validation serveur des champs d’identité', ()
     expect(h.inserts).toHaveLength(0);
   });
 
+  it('accepte un client antérieur au 13/07 (clé entreprise ABSENTE) avec entreprise null', async () => {
+    // Période de grâce expand/contract : l'ancien wizard n'envoie pas la clé du
+    // tout et son UI ne peut pas corriger un 422 (le champ n'y existe pas).
+    // Un champ PRÉSENT mais vide reste refusé (test ci-dessus).
+    const { entreprise: _omise, ...sansEntreprise } = validFields;
+    const res = await handler(multipartEvent(sansEntreprise), {} as HandlerContext);
+    expect((res as { statusCode: number }).statusCode).toBe(202);
+    expect(h.inserts.at(-1)).toMatchObject({ entreprise: null, fonction: 'DRH' });
+  });
+
   it('borne les champs d’identité à 120 caractères (121 rejeté, 120 accepté)', async () => {
     expect((await submit({ prenom: 'a'.repeat(121) })).statusCode).toBe(422);
     expect((await submit({ fonction: 'b'.repeat(121) })).statusCode).toBe(422);

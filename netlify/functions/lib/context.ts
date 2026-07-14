@@ -66,7 +66,10 @@ export function buildGenerationContext(
   });
 
   return {
-    nomEntreprise: siret.nomEntreprise,
+    // Raison sociale INSEE en premier (donnée vérifiée), sinon l'entreprise
+    // DÉCLARÉE au wizard (obligatoire depuis le 13/07) : page de garde et email
+    // personnalisés même sans SIRET.
+    nomEntreprise: siret.nomEntreprise ?? lead.entreprise ?? undefined,
     secteurDeclare: lead.secteur_activite,
     nafCode: nafCode ?? undefined,
     nafLibelle: siret.nafLibelle,

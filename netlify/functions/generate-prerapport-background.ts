@@ -144,6 +144,7 @@ export const handler: Handler = async (event) => {
       localisation: ctx.localisation,
       famillesLabels: ctx.famillesDeclarees.map((f) => f.label),
       dateRapport: ctx.dateRapport,
+      dateGeneration: now.toISOString(),
     };
     // Bas de page CEO 13/07 : « Mira audit · … · <mois année> », répété sur chaque page.
     const pdf = await htmlToPdf(renderReportHtml(report, renderCtx), { footer: reportFooterText(now) });
@@ -173,6 +174,22 @@ export const handler: Handler = async (event) => {
       });
     }
 
+    // Statut d'abord, notification ensuite : l'email prospect est déjà parti,
+    // on fige `sent` au plus tôt pour réduire la fenêtre où une relance ops
+    // renverrait le PDF. Un échec de cet update est signalé à l'ops SANS
+    // rethrow : re-passer le lead en `failed` déclencherait précisément la
+    // relance qu'on veut éviter.
+    const { error: statusError } = await supabase.from('leads').update({ status: 'sent' }).eq('id', leadId);
+    if (statusError) {
+      console.error(`[generate] lead ${leadId} livré mais passage à 'sent' échoué`, statusError);
+      await notifyFailure({
+        leadId,
+        error: new Error(
+          `Email livré mais statut resté 'generating' (NE PAS relancer sans vérifier) : ${statusError.message}`,
+        ),
+      });
+    }
+
     // Notification interne (décision CTO 13/07) : uniquement après livraison
     // effective au prospect. `sendLeadNotification` ne throw jamais (skip/log),
     // le try/catch est une ceinture supplémentaire : un échec de notification
@@ -194,7 +211,6 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    await supabase.from('leads').update({ status: 'sent' }).eq('id', leadId);
     return { statusCode: 200 };
   } catch (err) {
     console.error('[generate] échec', err);
