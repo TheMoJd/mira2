@@ -45,6 +45,9 @@ export interface ReportRenderContext {
   famillesLabels: string[];
   /** Date du rapport, déjà formatée (ex. « 22 juin 2026 »). */
   dateRapport: string;
+  /** Date de GÉNÉRATION en ISO 8601 : alimente `reportFooterText` côté web pour
+   *  afficher le même mois/année que le PDF. Absente → date de consultation. */
+  dateGeneration?: string;
 }
 
 /** Jetons de marque MIRA (alignés sur `src/styles/globals.css`). */
@@ -142,8 +145,8 @@ const SECTION_NUM_BY_ID: Map<string, number> = new Map(reportSections.map((s) =>
  * `report_json.sections[].sources_citees` et la section « Sources mobilisées ».
  */
 const KNOWN_ORGS: string[] = [
-  ...new Set(
-    statbank.flatMap((s) => {
+  ...new Set([
+    ...statbank.flatMap((s) => {
       const orgs: string[] = [];
       const push = (raw?: string) => {
         const clean = raw?.trim();
@@ -161,27 +164,92 @@ const KNOWN_ORGS: string[] = [
       push(s.source.originalSource?.split(/[·—]/)[0]);
       return orgs;
     }),
-  ),
+    // Alias courts que le LLM emploie spontanément : le nom exact de la
+    // stat-bank ne suffit pas (« (WEF, 2025) », « (DARES, 2022) »…).
+    'WEF', 'ILO', 'OIT', 'OCDE', 'OECD', 'MIT', 'PwC', 'McKinsey', 'Indeed',
+    'Stanford HAI', 'Stanford AI Index', 'HAI', 'DARES', 'France Stratégie',
+    'CIANum', 'CEGOS', 'Parlons RH', 'Neobrain', 'Sopra Steria', 'Crédoc',
+  ]),
 ];
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Motifs « organisation » bornés par des non-lettres : un alias court ne doit
+ *  pas matcher À L'INTÉRIEUR d'un mot français (« OIT » dans « droit », « HAI »
+ *  dans « souhait »). Insensibles à la casse (le LLM écrit parfois « wef »). */
+const ORG_RES: RegExp[] = KNOWN_ORGS.map(
+  (org) => new RegExp(`(?:^|[^\\p{L}\\p{N}])${escapeRegExp(org)}(?:[^\\p{L}\\p{N}]|$)`, 'iu'),
+);
+
+/** Segment d'année de citation : « 2025 », « 2024b ». */
+const YEAR_SEG_RE = /^(?:19|20)\d{2}[ab]?$/;
+
+/** Un segment de parenthèse est « organisation » s'il est court et nomme une
+ *  organisation connue, ou s'il recrédite une source (« citée par X »). */
+function isOrgSegment(seg: string): boolean {
+  if (/cit[ée]e?s? par/i.test(seg)) return true;
+  if (seg.split(/\s+/).length > 6) return false;
+  return ORG_RES.some((re) => re.test(seg));
+}
 
 /**
  * Retire d'un texte LLM les parenthèses de référence source, ex.
- * « (World Economic Forum, 2025) » ou « (Crédoc, citée par Parlons RH, 2025) ».
- * Conservateur : ne supprime une parenthèse QUE si elle contient une année ET
- * une organisation connue (ou une mention « citée par »). Les parenthèses de
- * contenu comme « (83 %) » ou « (EPP 2026) » sont préservées. Le motif tolère
- * un niveau d'imbrication (« (Organisation internationale du travail (OIT), 2023) »).
+ * « (World Economic Forum, 2025) », « (WEF, 2025) » ou « (Crédoc, citée par
+ * Parlons RH, 2025) ». Analyse par segments (virgules) depuis la fin :
+ *  - parenthèse entièrement faite d'organisations/années → supprimée ;
+ *  - parenthèse MIXTE « (83 %, Parlons RH, 2025) » → seule la queue de citation
+ *    part, la donnée reste : « (83 %) » (un rapport chiffré ne perd jamais ses
+ *    nombres) ;
+ *  - « Selon (OCDE, 2024), … » → conservée (le retrait casserait la phrase) ;
+ *  - parenthèses de contenu « (83 %) », « (EPP 2026) », caveats longs → intactes.
+ * Le motif tolère un niveau d'imbrication (« (Organisation internationale du
+ * travail (OIT), 2023) »).
  */
 export function stripSourceRefs(text: string): string {
   return text
-    .replace(/\s*\(((?:[^()]|\([^()]*\)){0,160}?)\)/g, (whole, inner: string) => {
-      const hasYear = /(?:19|20)\d{2}/.test(inner);
-      const isRef = KNOWN_ORGS.some((org) => inner.includes(org)) || /cit[ée]e?s? par/i.test(inner);
-      return hasYear && isRef ? '' : whole;
-    })
+    .replace(
+      /([^\s(]*)\s*\(((?:[^()]|\([^()]*\)){0,160}?)\)/g,
+      (whole, avant: string, inner: string) => {
+        // « Selon (OCDE, 2024), … » : retirer la référence casserait la phrase.
+        if (/^(?:selon|d[’']après)[:,]?$/i.test(avant)) return whole;
+        const segments = inner
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (segments.length === 0) return whole;
+        // Queue de citation : on remonte depuis la fin tant que le segment est
+        // une année ou une organisation connue.
+        let cut = segments.length;
+        while (cut > 0 && (YEAR_SEG_RE.test(segments[cut - 1]) || isOrgSegment(segments[cut - 1]))) cut -= 1;
+        const tail = segments.slice(cut);
+        if (!tail.some((s) => YEAR_SEG_RE.test(s)) || !tail.some((s) => isOrgSegment(s))) {
+          return whole; // pas une référence : il faut année ET organisation en queue
+        }
+        if (cut === 0) return avant; // parenthèse = pure citation → supprimée
+        return `${avant} (${segments.slice(0, cut).join(', ')})`; // mixte → la donnée survit
+      },
+    )
     .replace(/ {2,}/g, ' ')
     .replace(/\s+([.,])/g, '$1')
+    // Artefacts de retrait : « augmente. (WEF, 2025). » → « augmente.. »,
+    // « texte, (OCDE, 2024), suite » → « texte,, suite ».
+    .replace(/,(\s*,)+/g, ',')
+    .replace(/,\s*\./g, '.')
+    .replace(/\.( *\.)+/g, '.')
     .trim();
+}
+
+/**
+ * Prose LLM prête à afficher : filet de renommage hérité PUIS retrait des
+ * références. Le SYSTEM_PROMPT (verrouillé pendant le benchmark R4) présente
+ * encore le livrable comme « pré-rapport » : le modèle peut donc écrire ce mot
+ * dans la prose des documents réels ; on le replie au rendu, la correction du
+ * prompt étant déléguée à la session benchmark.
+ */
+export function prepareProse(text: string): string {
+  return stripSourceRefs(
+    text.replace(/pré-rapport/giu, (m) => (m.startsWith('P') ? 'Pré-diagnostic' : 'pré-diagnostic')),
+  );
 }
 
 // --- Blocs de contenu ------------------------------------------------------
@@ -189,11 +257,11 @@ export function stripSourceRefs(text: string): string {
 function renderBloc(bloc: ReportBloc): string {
   const titre = bloc.intertitre
     ? `<h3 style="font-size:14px;font-weight:600;color:${BRAND.violet700};margin:18px 0 6px">${esc(
-        bloc.intertitre,
+        prepareProse(bloc.intertitre),
       )}</h3>`
     : '';
   const paras = bloc.paragraphes
-    .map((p) => stripSourceRefs(p))
+    .map((p) => prepareProse(p))
     // La sanitisation de style (reportSanitize) peut vider une chaîne réduite à
     // un tiret : ne pas rendre de <p> vide.
     .filter((p) => p.trim() !== '')
@@ -227,7 +295,7 @@ function renderFamille(fam: ReportFamille): string {
       <span style="font-size:12px;font-weight:600;color:${color}">Exposition ${esc(fam.exposition)}${part}</span>
     </div>
     <div style="margin:8px 0 4px">${natures}</div>
-    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${esc(stripSourceRefs(fam.explication))}</p>
+    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${esc(prepareProse(fam.explication))}</p>
     ${transpo}
   </div>`;
 }
@@ -273,7 +341,7 @@ function renderSection(section: ReportSectionOutput): string {
     : '';
   return `<section style="margin:0 0 26px;page-break-inside:avoid">
     <h2 style="font-family:var(--serif);font-size:19px;font-weight:500;color:${BRAND.violet};margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid ${BRAND.lineSoft}">
-      <span style="font-size:13px;color:${BRAND.ink3};font-family:var(--sans)">${prefix}</span>${esc(section.titre)}
+      <span style="font-size:13px;color:${BRAND.ink3};font-family:var(--sans)">${prefix}</span>${esc(prepareProse(section.titre))}
     </h2>
     ${recap}
     ${section.contenu.map(renderBloc).join('')}

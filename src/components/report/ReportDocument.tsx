@@ -20,7 +20,7 @@
 import type { CSSProperties } from 'react';
 import type { PreRapportOutput, ReportSectionOutput, ReportBloc, ReportFamille } from '../../data/reportSchema';
 import type { ReportRenderContext } from '../../data/reportHtml';
-import { SLOGAN, VALUE_PROP, stripSourceRefs, reportFooterText } from '../../data/reportHtml';
+import { SLOGAN, VALUE_PROP, prepareProse, reportFooterText } from '../../data/reportHtml';
 import { reportSections } from '../../data/rapportStructure';
 import { statbank } from '../../data/statbank';
 import type { StatEntry } from '../../data/statbank';
@@ -123,10 +123,12 @@ function Bloc({ bloc }: { bloc: ReportBloc }) {
   return (
     <>
       {bloc.intertitre && (
-        <h3 style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--violet-700)', margin: '18px 0 6px' }}>{bloc.intertitre}</h3>
+        <h3 style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--violet-700)', margin: '18px 0 6px' }}>
+          {prepareProse(bloc.intertitre)}
+        </h3>
       )}
       {bloc.paragraphes
-        .map((p) => stripSourceRefs(p))
+        .map((p) => prepareProse(p))
         .filter((p) => p.trim() !== '')
         .map((p, i) => (
           <p key={i} style={{ margin: '0 0 10px', lineHeight: 1.65, color: 'var(--ink)', fontSize: 15 }}>
@@ -194,7 +196,7 @@ function FamilleCard({ fam }: { fam: ReportFamille }) {
           </span>
         ))}
       </div>
-      <p style={{ margin: '6px 0 0', lineHeight: 1.55, color: 'var(--ink)', fontSize: 14.5 }}>{stripSourceRefs(fam.explication)}</p>
+      <p style={{ margin: '6px 0 0', lineHeight: 1.55, color: 'var(--ink)', fontSize: 14.5 }}>{prepareProse(fam.explication)}</p>
       {!fam.transposable_france && (
         <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 6, fontStyle: 'italic' }}>
           Donnée non directement transposable à une PME française.
@@ -213,7 +215,7 @@ function Section({ section }: { section: ReportSectionOutput }) {
         {num !== undefined && (
           <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--sans, sans-serif)' }}>§{num} · </span>
         )}
-        {section.titre}
+        {prepareProse(section.titre)}
       </h2>
       {hasFamilles && <RecapTable familles={section.familles!} />}
       {section.contenu.map((b, i) => (
@@ -292,8 +294,12 @@ export default function ReportDocument({ report, context }: ReportDocumentProps)
       <p style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid var(--line-soft)', fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>
         {RGPD_PDF_FOOTER}
       </p>
-      {/* Pendant web de la ligne de bas de page du PDF (retours CEO 13/07). */}
-      <p style={{ marginTop: 8, fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>{reportFooterText(new Date())}</p>
+      {/* Pendant web de la ligne de bas de page du PDF (retours CEO 13/07) :
+          même mois/année que le PDF (date de génération), pas la date de
+          consultation, pour qu'un même rapport reste daté de façon cohérente. */}
+      <p style={{ marginTop: 8, fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>
+        {reportFooterText(context.dateGeneration ? new Date(context.dateGeneration) : new Date())}
+      </p>
     </article>
   );
 }

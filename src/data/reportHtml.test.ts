@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderReportHtml, reportFooterText, stripSourceRefs } from './reportHtml';
+import { renderReportHtml, reportFooterText, stripSourceRefs, prepareProse } from './reportHtml';
 import type { ReportRenderContext } from './reportHtml';
 import type { PreRapportOutput } from './reportSchema';
 import { RGPD_PDF_FOOTER } from './rgpd';
@@ -28,7 +28,8 @@ const report: PreRapportOutput = {
       titre: 'Vos familles de métiers face à l’IA',
       contenu: [
         {
-          intertitre: 'Lecture',
+          // L'intertitre porte AUSSI une référence : le retrait doit couvrir les titres.
+          intertitre: 'Lecture sectorielle (World Economic Forum, 2025)',
           paragraphes: [
             'Analyse par famille. 39 % des compétences seront transformées d’ici 2030 (World Economic Forum, 2025).',
           ],
@@ -94,6 +95,8 @@ describe('renderReportHtml', () => {
     // section Sources de fin.
     expect(html).not.toContain('(World Economic Forum, 2025)');
     expect(html).toContain('39 % des compétences seront transformées d’ici 2030.');
+    // L'intertitre du fixture portait la même référence : couvert aussi.
+    expect(html).toContain('Lecture sectorielle');
   });
 
   it('n’affiche plus le niveau de confiance des familles (CEO 13/07, champ conservé dans le JSON)', () => {
@@ -168,5 +171,42 @@ describe('stripSourceRefs — retrait des références inline (CEO 13/07)', () =
     expect(stripSourceRefs('La réforme des entretiens professionnels (EPP 2026) arrive.')).toBe(
       'La réforme des entretiens professionnels (EPP 2026) arrive.',
     );
+  });
+
+  it('parenthèse mixte donnée + référence : la donnée survit, la citation part', () => {
+    expect(stripSourceRefs('L’usage individuel (83 %, Parlons RH, 2025) devance l’intégration.')).toBe(
+      'L’usage individuel (83 %) devance l’intégration.',
+    );
+  });
+
+  it('retire les références abrégées du LLM (alias, insensible à la casse)', () => {
+    expect(stripSourceRefs('39 % des compétences transformées (WEF, 2025).')).toBe(
+      '39 % des compétences transformées.',
+    );
+    expect(stripSourceRefs('Les métiers en 2030 (DARES, 2022).')).toBe('Les métiers en 2030.');
+    expect(stripSourceRefs('Une productivité en hausse (mckinsey, 2017).')).toBe('Une productivité en hausse.');
+  });
+
+  it('ne casse pas une phrase construite sur la référence (« Selon (…) »)', () => {
+    const phrase = 'Selon (OCDE, 2024), 40 % des PME ont commencé.';
+    expect(stripSourceRefs(phrase)).toBe(phrase);
+  });
+
+  it('les alias courts ne matchent pas à l’intérieur d’un mot français', () => {
+    const phrase = 'Le cadre du droit du travail (réforme prévue pour 2026) évolue.';
+    expect(stripSourceRefs(phrase)).toBe(phrase);
+  });
+
+  it('nettoie les artefacts de ponctuation laissés par le retrait', () => {
+    expect(stripSourceRefs('La courbe augmente. (WEF, 2025).')).toBe('La courbe augmente.');
+  });
+});
+
+describe('prepareProse — filet de renommage hérité + retrait des références', () => {
+  it('replie le « pré-rapport » écrit par le LLM (prompt verrouillé, benchmark R4) sur « pré-diagnostic »', () => {
+    expect(prepareProse('Ce pré-rapport applique l’état de l’art (WEF, 2025).')).toBe(
+      'Ce pré-diagnostic applique l’état de l’art.',
+    );
+    expect(prepareProse('Pré-rapport sectoriel offert.')).toBe('Pré-diagnostic sectoriel offert.');
   });
 });
