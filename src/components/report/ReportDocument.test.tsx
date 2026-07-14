@@ -88,6 +88,13 @@ describe('ReportDocument', () => {
     expect(html.toLowerCase()).not.toContain('pré-rapport');
   });
 
+  it('date le bas de page du mois de GÉNÉRATION (dateGeneration), pas de la consultation', () => {
+    const out = renderToStaticMarkup(
+      <ReportDocument report={report} context={{ ...context, dateGeneration: '2027-01-05T10:00:00Z' }} />,
+    );
+    expect(out).toContain('janvier 2027');
+  });
+
   it('omet la section Sources quand aucune source n’est citée', () => {
     const noCites: PreRapportOutput = {
       sections: [{ id: 'perimetre', titre: 'Périmètre', contenu: [], sources_citees: [], familles: null }],

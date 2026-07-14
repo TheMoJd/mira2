@@ -1,6 +1,7 @@
 /**
- * Tests de la notification interne (décision CTO 13/07) : parsing de
- * `NOTIF_EMAILS` et comportement défensif de `sendLeadNotification`.
+ * Tests du module email : notification interne (décision CTO 13/07, parsing de
+ * `NOTIF_EMAILS` + comportement défensif de `sendLeadNotification`), livraison
+ * du pré-diagnostic (`sendReportEmail`) et repli ops (`notifyFailure`).
  * Resend est mocké : AUCUN envoi réel, aucune clé requise.
  *
  * Contrat défensif : la notification ne doit JAMAIS faire échouer le pipeline
@@ -19,7 +20,7 @@ vi.mock('resend', () => ({
   },
 }));
 
-import { parseNotifEmails, sendLeadNotification } from '../lib/email';
+import { parseNotifEmails, sendLeadNotification, sendReportEmail, notifyFailure } from '../lib/email';
 
 const LEAD = {
   leadId: 'lead-42',
@@ -36,6 +37,7 @@ beforeEach(() => {
   process.env.RESEND_API_KEY = 're_test';
   process.env.RESEND_FROM = 'rapport@mira-audit.fr';
   delete process.env.NOTIF_EMAILS;
+  delete process.env.OPS_EMAIL;
 });
 
 describe('parseNotifEmails — liste séparée par des virgules', () => {
@@ -140,5 +142,41 @@ describe('sendLeadNotification — comportement défensif', () => {
     process.env.NOTIF_EMAILS = 'moetez@polaria.ai';
     h.send.mockRejectedValue(new Error('réseau'));
     await expect(sendLeadNotification(LEAD)).resolves.toBe('error');
+  });
+});
+
+describe('sendReportEmail — livraison du pré-diagnostic au prospect', () => {
+  const args = { to: 'camille@exemple.fr', pdf: Buffer.from('%PDF-test'), nomEntreprise: 'ACME' };
+
+  it('skip (sans envoi) quand RESEND_API_KEY est absente — dégradation propre', async () => {
+    delete process.env.RESEND_API_KEY;
+    expect(await sendReportEmail(args)).toBe('skipped');
+    expect(h.send).not.toHaveBeenCalled();
+  });
+
+  it('sujet « Votre pré-diagnostic MIRA » et pièce jointe pre-diagnostic-mira.pdf', async () => {
+    h.send.mockResolvedValue({ error: null });
+    expect(await sendReportEmail(args)).toBe('sent');
+    expect(h.send).toHaveBeenCalledOnce();
+    const payload = h.send.mock.calls[0][0] as {
+      subject: string;
+      attachments: Array<{ filename: string }>;
+    };
+    expect(payload.subject).toBe('Votre pré-diagnostic MIRA');
+    expect(payload.attachments).toHaveLength(1);
+    expect(payload.attachments[0].filename).toBe('pre-diagnostic-mira.pdf');
+  });
+});
+
+describe('notifyFailure — email de repli ops', () => {
+  it('sujet « Échec génération pré-diagnostic · lead … », sans cadratin', async () => {
+    process.env.OPS_EMAIL = 'moetez@polaria.ai';
+    h.send.mockResolvedValue({});
+
+    await notifyFailure({ leadId: 'lead-42', error: new Error('boom') });
+    expect(h.send).toHaveBeenCalledOnce();
+    const payload = h.send.mock.calls[0][0] as { subject: string };
+    expect(payload.subject).toContain('Échec génération pré-diagnostic · lead ');
+    expect(payload.subject).not.toMatch(/[—–]/);
   });
 });

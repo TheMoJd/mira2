@@ -69,6 +69,7 @@ where l.id = '<leadId>' order by 1;
 | 2e | Email valide mais consentement décoché | Erreur consentement uniquement |
 | 2f | Étape 5 : prénom, nom, **entreprise** ou **fonction** vide | Erreur sous le(s) champ(s), blocage à l'étape 5 |
 | 2g | Téléphone = `123` (téléphone vide = OK) | Erreur « numéro invalide » ; vide → soumission acceptée |
+| 2h | Étape 5 sur mobile : soumettre avec **entreprise** vide | La page défile et le focus arrive sur le champ en erreur |
 
 **Résultat attendu :** aucune nouvelle ligne dans `leads` (la requête de vérification ne montre aucun nouveau lead). Les messages d'erreur s'affichent en rouge sous les champs concernés.
 
