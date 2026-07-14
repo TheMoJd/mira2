@@ -22,15 +22,19 @@ import { RESPONSE_FORMAT, parseReport } from '../../src/data/reportSchema';
 import type { PreRapportOutput } from '../../src/data/reportSchema';
 import { enforceSectionGrid } from '../../src/data/rapportStructure';
 import { statbank } from '../../src/data/statbank';
-import { renderReportHtml } from '../../src/data/reportHtml';
+import { renderReportHtml, reportFooterText } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
 import { htmlToPdf } from './lib/pdf';
-import { sendReportEmail, notifyFailure } from './lib/email';
+import { sendReportEmail, sendLeadNotification, notifyFailure } from './lib/email';
 import { enrichSiret, fetchSiteResume } from './lib/enrichment';
 import { buildGenerationContext } from './lib/context';
 
 /** Ids connus de la stat-bank — filtre les ids cités par le LLM pour un audit propre. */
 const KNOWN_STAT_IDS = new Set(statbank.map((s) => s.id));
+
+/** Format UUID des ids `leads` (Supabase). L'endpoint est public : un `leadId`
+ *  forgé est rejeté en amont, sans requête base ni alerte ops (anti-spam). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Ids (dédupliqués) des statistiques effectivement citées dans le rapport,
@@ -60,7 +64,12 @@ export const handler: Handler = async (event) => {
   } catch {
     /* body invalide */
   }
-  if (!leadId) return { statusCode: 400 };
+  if (!leadId || !UUID_RE.test(leadId)) {
+    // Pas de notifyFailure : l'endpoint est public, un leadId forgé ne doit
+    // pas pouvoir spammer l'ops.
+    console.warn('[generate] leadId absent ou non conforme (UUID attendu) — requête rejetée.');
+    return { statusCode: 400 };
+  }
 
   const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
@@ -68,7 +77,12 @@ export const handler: Handler = async (event) => {
 
   try {
     const { data: lead, error } = await supabase.from('leads').select('*').eq('id', leadId).single();
-    if (error || !lead) throw new Error(`Lead introuvable : ${leadId}`);
+    if (error || !lead) {
+      // Même logique anti-spam que le contrôle UUID : un UUID valide mais
+      // inconnu en base ne déclenche NI notifyFailure NI passage en `failed`.
+      console.warn(`[generate] lead introuvable : ${leadId} — 404 sans alerte ops.`);
+      return { statusCode: 404 };
+    }
 
     // Idempotence : on ne passe en `generating` QUE si le lead est encore `received`
     // (compare-and-set atomique). Un second déclenchement concurrent matchera 0 ligne
@@ -98,7 +112,9 @@ export const handler: Handler = async (event) => {
     }
 
     // Assemblage du contexte = fonction pure (testée isolément dans lib/context).
-    const ctx = buildGenerationContext(lead, { siret: siretInfo, sourceResume }, new Date());
+    // `now` sert aussi au pied de page du PDF (mois + année de génération).
+    const now = new Date();
+    const ctx = buildGenerationContext(lead, { siret: siretInfo, sourceResume }, now);
 
     // On persiste ce qu'on a découvert (qualification du lead) sans écraser l'existant.
     if ((!lead.naf_code && ctx.nafCode) || (!lead.effectif_tranche && ctx.effectifTranche)) {
@@ -142,8 +158,10 @@ export const handler: Handler = async (event) => {
       localisation: ctx.localisation,
       famillesLabels: ctx.famillesDeclarees.map((f) => f.label),
       dateRapport: ctx.dateRapport,
+      dateGeneration: now.toISOString(),
     };
-    const pdf = await htmlToPdf(renderReportHtml(report, renderCtx));
+    // Bas de page CEO 13/07 : « Mira audit · … · <mois année> », répété sur chaque page.
+    const pdf = await htmlToPdf(renderReportHtml(report, renderCtx), { footer: reportFooterText(now) });
 
     const pdfPath = `${leadId}/prerapport-mira.pdf`;
     const { error: uploadError } = await supabase.storage
@@ -170,7 +188,43 @@ export const handler: Handler = async (event) => {
       });
     }
 
-    await supabase.from('leads').update({ status: 'sent' }).eq('id', leadId);
+    // Statut d'abord, notification ensuite : l'email prospect est déjà parti,
+    // on fige `sent` au plus tôt pour réduire la fenêtre où une relance ops
+    // renverrait le PDF. Un échec de cet update est signalé à l'ops SANS
+    // rethrow : re-passer le lead en `failed` déclencherait précisément la
+    // relance qu'on veut éviter.
+    const { error: statusError } = await supabase.from('leads').update({ status: 'sent' }).eq('id', leadId);
+    if (statusError) {
+      console.error(`[generate] lead ${leadId} livré mais passage à 'sent' échoué`, statusError);
+      await notifyFailure({
+        leadId,
+        error: new Error(
+          `Email livré mais statut resté 'generating' (NE PAS relancer sans vérifier) : ${statusError.message}`,
+        ),
+      });
+    }
+
+    // Notification interne (décision CTO 13/07) : uniquement après livraison
+    // effective au prospect. `sendLeadNotification` ne throw jamais (skip/log),
+    // le try/catch est une ceinture supplémentaire : un échec de notification
+    // ne doit JAMAIS faire échouer le pipeline du lead.
+    if (emailResult === 'sent') {
+      try {
+        const notifResult = await sendLeadNotification({
+          leadId,
+          prenom: lead.prenom,
+          nom: lead.nom,
+          fonction: lead.fonction,
+          entreprise: lead.entreprise,
+          email: lead.email,
+          secteur: lead.secteur_activite,
+        });
+        console.log(`[generate] notification interne lead ${leadId} : ${notifResult}`);
+      } catch (notifError) {
+        console.error(`[generate] notification interne lead ${leadId} échouée (non bloquant)`, notifError);
+      }
+    }
+
     return { statusCode: 200 };
   } catch (err) {
     console.error('[generate] échec', err);

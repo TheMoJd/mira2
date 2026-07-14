@@ -35,26 +35,42 @@ describe('validateStep', () => {
     expect(validateStep(3, f({ siteUrl: 'https://ovhcloud.com' }))).toEqual({});
   });
 
+  /** Étape identité complète et valide (le 13/07 ajoute entreprise + fonction obligatoires). */
+  const identiteValide = {
+    prenom: 'Camille',
+    nom: 'Durand',
+    entreprise: 'Transports Durand',
+    fonction: 'DRH',
+    email: 'a@b.fr',
+    consentRgpd: true,
+  };
+
   it('étape 4 : email valide + consentement obligatoires', () => {
     const e = validateStep(4, f({ email: 'invalide', consentRgpd: false }));
     expect(e).toHaveProperty('email');
     expect(e).toHaveProperty('consentRgpd');
-    expect(validateStep(4, f({ prenom: 'Camille', nom: 'Durand', email: 'a@b.fr', consentRgpd: true }))).toEqual({});
+    expect(validateStep(4, f(identiteValide))).toEqual({});
   });
 
   it('étape 4 : prénom et nom requis (qualification lead, réunion 10/07)', () => {
-    const e = validateStep(4, f({ prenom: '', nom: ' ', email: 'a@b.fr', consentRgpd: true }));
+    const e = validateStep(4, f({ ...identiteValide, prenom: '', nom: ' ' }));
     expect(e).toHaveProperty('prenom');
     expect(e).toHaveProperty('nom');
   });
 
-  it('étape 4 : fonction et téléphone optionnels, téléphone FR validé si fourni', () => {
-    const base = { prenom: 'Camille', nom: 'Durand', email: 'a@b.fr', consentRgpd: true };
-    expect(validateStep(4, f({ ...base, fonction: '', telephone: '' }))).toEqual({});
-    expect(validateStep(4, f({ ...base, telephone: '06 12 34 56 78' }))).toEqual({});
-    expect(validateStep(4, f({ ...base, telephone: '+33 6 12 34 56 78' }))).toEqual({});
-    expect(validateStep(4, f({ ...base, telephone: '123' }))).toHaveProperty('telephone');
-    expect(validateStep(4, f({ ...base, telephone: '00 12 34 56 78' }))).toHaveProperty('telephone');
+  it('étape 4 : entreprise et fonction requises (décision CTO 13/07)', () => {
+    const e = validateStep(4, f({ ...identiteValide, entreprise: '  ', fonction: '' }));
+    expect(e).toHaveProperty('entreprise');
+    expect(e).toHaveProperty('fonction');
+    expect(validateStep(4, f(identiteValide))).toEqual({});
+  });
+
+  it('étape 4 : téléphone optionnel, format FR validé si fourni', () => {
+    expect(validateStep(4, f({ ...identiteValide, telephone: '' }))).toEqual({});
+    expect(validateStep(4, f({ ...identiteValide, telephone: '06 12 34 56 78' }))).toEqual({});
+    expect(validateStep(4, f({ ...identiteValide, telephone: '+33 6 12 34 56 78' }))).toEqual({});
+    expect(validateStep(4, f({ ...identiteValide, telephone: '123' }))).toHaveProperty('telephone');
+    expect(validateStep(4, f({ ...identiteValide, telephone: '00 12 34 56 78' }))).toHaveProperty('telephone');
   });
 });
 

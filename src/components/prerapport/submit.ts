@@ -29,6 +29,7 @@ export async function submitPreRapport(form: PreRapportForm, honeypot = ''): Pro
   fd.set('siret', form.siret.replace(/\s/g, ''));
   fd.set('prenom', form.prenom);
   fd.set('nom', form.nom);
+  fd.set('entreprise', form.entreprise);
   fd.set('fonction', form.fonction);
   fd.set('telephone', normalizePhone(form.telephone));
   fd.set('email', form.email);

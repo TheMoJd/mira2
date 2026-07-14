@@ -9,8 +9,8 @@ const URL_RE = /^https?:\/\/.+\..+/i;
 const SIRET_RE = /^\d{14}$/;
 /** Téléphone FR (0X… ou +33X…) après normalisation. */
 export const PHONE_RE = /^(?:\+33|0)[1-9]\d{8}$/;
-/** Longueur max des champs d'identité (prénom, nom, fonction) — garde anti-abus,
- *  appliquée en `maxLength` côté wizard et en 422 côté serveur. */
+/** Longueur max des champs d'identité (prénom, nom, entreprise, fonction) — garde
+ *  anti-abus, appliquée en `maxLength` côté wizard et en 422 côté serveur. */
 export const MAX_IDENTITY_LEN = 120;
 
 /** Normalise un téléphone saisi : retire espaces, points, tirets et parenthèses,
@@ -45,6 +45,9 @@ export function validateStep(step: number, f: PreRapportForm): PreRapportErrors 
     case 4:
       if (!f.prenom.trim()) e.prenom = 'Votre prénom est requis.';
       if (!f.nom.trim()) e.nom = 'Votre nom est requis.';
+      // Entreprise + fonction obligatoires depuis les retours CEO/CTO du 13/07.
+      if (!f.entreprise.trim()) e.entreprise = 'Le nom de votre entreprise est requis.';
+      if (!f.fonction.trim()) e.fonction = 'Votre fonction est requise.';
       if (f.telephone.trim() && !PHONE_RE.test(normalizePhone(f.telephone))) {
         e.telephone = 'Ce numéro semble invalide (ex. 06 12 34 56 78).';
       }

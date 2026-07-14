@@ -1,11 +1,11 @@
-# How-to — Faire tourner le pré-rapport en local
+# How-to — Faire tourner le pré-diagnostic en local
 
 > **Quadrant Diataxis : How-to.** Tâche ciblée : lancer le front + les Netlify Functions
 > ensemble, avec Supabase et la génération PDF, sur votre machine. Suppose que vous avez déjà
 > cloné le repo et fait `npm install`. Pour une découverte pas à pas, voir plutôt le
 > [tutoriel](tutorial-premier-prerapport.md).
 
-À la fin, une soumission du wizard sur `http://localhost:8888/pre-rapport` crée un lead en
+À la fin, une soumission du wizard sur `http://localhost:8888/pre-diagnostic` crée un lead en
 base, génère un PDF et (si Resend est configuré) l'envoie par email.
 
 ## Prérequis
@@ -50,6 +50,7 @@ RESEND_API_KEY=re_...
 RESEND_FROM=rapport@votre-domaine-verifie     # ou « MIRA <rapport@votre-domaine-verifie> »
 RESEND_REPLY_TO=vous@votre-boite-relevee      # optionnel : où partent les réponses des prospects
 OPS_EMAIL=ops@votre-domaine                   # optionnel : destinataire des alertes d'échec
+NOTIF_EMAILS=vous@votre-boite-relevee         # optionnel : notifs « Nouveau pré-diagnostic généré » (virgules) — en local, UNIQUEMENT votre propre adresse
 ```
 
 ## Étape 2 — Lancer le serveur de dev
@@ -61,14 +62,15 @@ netlify dev
 Cela sert le front et les functions sur `http://localhost:8888`. Utilisez **ce** port (pas le
 `5173` de Vite seul) : c'est lui qui expose `/.netlify/functions/*`.
 
-Vérification : ouvrez `http://localhost:8888/pre-rapport` — le wizard s'affiche.
+Vérification : ouvrez `http://localhost:8888/pre-diagnostic` — le wizard s'affiche
+(l'ancienne URL `/pre-rapport` redirige).
 
 ## Étape 3 — Soumettre une demande
 
 Déroulez le wizard et validez la dernière étape. Au submit, vous devez observer :
 
 1. Une réponse `202` côté réseau (onglet Network du navigateur).
-2. L'écran de succès « Votre pré-rapport arrive par email ».
+2. L'écran de succès « Votre pré-diagnostic arrive par email ».
 
 ## Étape 4 — Vérifier la chaîne
 
@@ -76,7 +78,7 @@ Suivez le lead dans Supabase et les logs `netlify dev` :
 
 - **Table `leads`** : une nouvelle ligne, `status` passant `received` → `generating` → `sent`.
 - **Bucket `uploads`** : la plaquette si vous en avez joint une.
-- **Logs** : `[generate] email lead <id> : sent | skipped | error`.
+- **Logs** : `[generate] email lead <id> : sent | skipped | error` et, si `NOTIF_EMAILS` est renseignée, `[generate] notification interne lead <id> : sent | skipped | error`.
 - **Table `reports`** : une ligne avec `pdf_path` et `sources` (les ids de stats citées).
 - **Bucket `reports`** : le PDF à `{leadId}/prerapport-mira.pdf` — téléchargez-le pour l'inspecter.
 
@@ -97,6 +99,7 @@ npm run build     # tsc app + tsc functions + vite build — doit passer avant t
 | Le statut reste à `generating` | Exception dans la génération | Lire les logs `[generate] échec …`. Souvent : clé OpenAI invalide, ou Chromium introuvable. |
 | Erreur Chromium / `Could not find browser` | Pas de Chrome local | Renseigner `CHROME_EXECUTABLE_PATH` vers chrome.exe / Edge. |
 | Email jamais reçu, logs `skipped` | `RESEND_API_KEY` ou `RESEND_FROM` absent au runtime | Renseigner les deux. En prod, vérifier ce que le runtime voit via `/.netlify/functions/envcheck` (présence des variables, jamais les valeurs). |
+| Notification interne jamais reçue | `NOTIF_EMAILS` absente/vide, ou adresse au format « Nom <adresse> » (écartée) | Renseigner `NOTIF_EMAILS` avec des adresses simples séparées par des virgules. Rappel : la notification ne part qu'après un email prospect `sent`. |
 | `429 Trop de demandes` | Rate-limit 3/email/h atteint | Changer d'email de test, ou attendre 1 h. |
 | `413` / `415` sur la plaquette | > 4 Mo, ou extension non `.pdf/.ppt(x)/.doc(x)` | Réduire le fichier (plafond = 4 Mo). |
 | Statut `failed` immédiat | Lead introuvable, ou parse JSON OpenAI vide | Vérifier `OPENAI_API_KEY` et le modèle dans `OPENAI_MODEL`. |

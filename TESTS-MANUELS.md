@@ -1,4 +1,4 @@
-# Tests manuels — Pré-rapport freemium MIRA
+# Tests manuels — Pré-diagnostic freemium MIRA
 
 Scénarios à dérouler à la main pour valider le flux bout-en-bout (wizard → capture → génération → PDF → email). Complète la suite automatique (`npm test`), elle ne la remplace pas.
 
@@ -8,11 +8,11 @@ Scénarios à dérouler à la main pour valider le flux bout-en-bout (wizard →
    Pour tester l'email : `RESEND_API_KEY`, `RESEND_FROM`. Sinon l'envoi est *skipped* (le PDF est quand même généré et stocké).
 2. Lancer en local : `netlify dev` (sert le front **et** les functions, lit le `.env`).
    ⚠️ Relancer `netlify dev` après tout ajout/renommage de function, sinon elle n'est pas servie.
-3. Ouvrir l'URL affichée (souvent `http://localhost:8888`) → page `/pre-rapport`.
+3. Ouvrir l'URL affichée (souvent `http://localhost:8888`) → page `/pre-diagnostic`.
 
 **Vérifier en base** (Supabase → SQL Editor) :
 ```sql
-select id, status, email, prenom, nom, fonction, telephone, naf_code, effectif_tranche,
+select id, status, email, prenom, nom, entreprise, fonction, telephone, naf_code, effectif_tranche,
        (report_json is not null) as has_report,
        jsonb_array_length(report_json->'sections') as n_sections, created_at
 from leads order by created_at desc limit 5;
@@ -32,13 +32,13 @@ Le PDF généré se trouve dans le bucket privé `reports` (chemin `<leadId>/pre
 - Q3 clients/interactions : *Développeurs, PME, grands comptes, secteur public ; self-service via espace client web + support + commerciaux grands comptes.*
 - Q4 familles (une par une, **Entrée** entre chaque) : `Tech, informatique & data` · `Techniciens informatique & télécoms` · `Ingénierie & sciences` · `Relation client & accueil` · `Vente & commerce`
 - Q5 site : `https://www.ovhcloud.com` (plaquette : vide)
-- Étape 5 : Prénom `Camille` · Nom `Durand` · Fonction `DRH` (optionnel) · Téléphone `06 12 34 56 78` (optionnel)
+- Étape 5 : Prénom `Camille` · Nom `Durand` · Entreprise `OVHcloud` · Fonction `DRH` · Téléphone `06 12 34 56 78` (optionnel)
 - Email : **ta propre adresse** · Consentement : coché
 
 **Étapes :** dérouler les 5 étapes du wizard, soumettre.
 
 **Résultat attendu :**
-- Écran de confirmation « votre rapport arrive par email ».
+- Écran de confirmation « votre pré-diagnostic arrive par email ».
 - En base, le lead passe `received` → `generating` → **`sent`** (quelques secondes à 1-2 min).
 - `has_report = true`, `n_sections = 10`.
 - `naf_code` ≈ `63.11Z` et `effectif_tranche` renseignés (enrichissement INSEE via le SIRET).
@@ -67,8 +67,9 @@ where l.id = '<leadId>' order by 1;
 | 2c | Étape 3 (métiers) : **0 famille** | Erreur « Ajoutez au moins une famille » |
 | 2d | Étape 5 : email = `pasunemail`, consentement **décoché** | Deux erreurs (email + consentement), pas de soumission |
 | 2e | Email valide mais consentement décoché | Erreur consentement uniquement |
-| 2f | Étape 5 : prénom ou nom **vide** | Erreur sous le(s) champ(s), blocage à l'étape 5 |
-| 2g | Téléphone = `123` (fonction/téléphone vides = OK) | Erreur « numéro invalide » ; vides → soumission acceptée |
+| 2f | Étape 5 : prénom, nom, **entreprise** ou **fonction** vide | Erreur sous le(s) champ(s), blocage à l'étape 5 |
+| 2g | Téléphone = `123` (téléphone vide = OK) | Erreur « numéro invalide » ; vide → soumission acceptée |
+| 2h | Étape 5 sur mobile : soumettre avec **entreprise** vide | La page défile et le focus arrive sur le champ en erreur |
 
 **Résultat attendu :** aucune nouvelle ligne dans `leads` (la requête de vérification ne montre aucun nouveau lead). Les messages d'erreur s'affichent en rouge sous les champs concernés.
 

@@ -64,6 +64,14 @@ export default function Wizard() {
     const errs = validateStep(step, form);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+      // Amener l'utilisateur SUR l'erreur : à l'étape identité (4 champs requis
+      // depuis le 13/07), le champ fautif peut être hors viewport sur mobile et
+      // le bouton semblerait mort. rAF : attendre le rendu des aria-invalid.
+      requestAnimationFrame(() => {
+        const fautif = document.querySelector<HTMLElement>('[aria-invalid="true"]');
+        fautif?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        fautif?.focus({ preventScroll: true });
+      });
       return;
     }
     setErrors({});
@@ -199,14 +207,23 @@ export default function Wizard() {
               />
             </div>
             <TextField
+              label={f.entreprise.label}
+              placeholder={f.entreprise.placeholder}
+              value={form.entreprise}
+              onChange={(v) => set('entreprise', v)}
+              error={errors.entreprise}
+              autoComplete="organization"
+              maxLength={MAX_IDENTITY_LEN}
+            />
+            <TextField
               label={f.fonction.label}
               placeholder={f.fonction.placeholder}
               hint={f.fonction.hint}
               value={form.fonction}
               onChange={(v) => set('fonction', v)}
+              error={errors.fonction}
               autoComplete="organization-title"
               maxLength={MAX_IDENTITY_LEN}
-              optional
             />
             <TextField
               label={f.telephone.label}

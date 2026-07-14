@@ -88,6 +88,11 @@ export const handler: Handler = async (event) => {
   const siret = (fields.siret ?? '').replace(/\s/g, '').trim();
   const prenom = cleanIdentity(fields.prenom ?? '');
   const nom = cleanIdentity(fields.nom ?? '');
+  // `undefined` = clé absente du FormData : client chargé AVANT le déploiement
+  // du 13/07 (le champ n'existait pas dans son wizard). À distinguer d'un champ
+  // présent mais vide (contournement du nouveau client → 422).
+  const entrepriseRaw = fields.entreprise;
+  const entreprise = cleanIdentity(entrepriseRaw ?? '');
   const fonction = cleanIdentity(fields.fonction ?? '');
   const telephone = normalizePhone(fields.telephone ?? '');
   const consentRgpd = fields.consentRgpd === 'true';
@@ -114,7 +119,25 @@ export const handler: Handler = async (event) => {
     return fail(422, 'Indiquez 1 à 6 familles de métiers.');
   }
   if (!prenom || !nom) return fail(422, 'Merci d’indiquer votre prénom et votre nom.');
-  if (prenom.length > MAX_IDENTITY_LEN || nom.length > MAX_IDENTITY_LEN || fonction.length > MAX_IDENTITY_LEN) {
+  // Entreprise + fonction obligatoires (décision CTO 13/07), mêmes règles que le
+  // wizard. Période de grâce expand/contract (à retirer à la prochaine release) :
+  // un onglet ouvert avant le déploiement n'envoie PAS la clé `entreprise` et son
+  // UI ne peut pas corriger un 422 → on accepte le lead avec entreprise null,
+  // comme les leads historiques. `fonction` existe dans l'ancien wizard : pas de
+  // grâce nécessaire, l'utilisateur peut la remplir.
+  if (entrepriseRaw !== undefined && !entreprise) {
+    return fail(422, 'Merci d’indiquer le nom de votre entreprise.');
+  }
+  if (entrepriseRaw === undefined) {
+    console.log('[submit] client antérieur au 13/07 (champ entreprise absent), lead accepté sans entreprise.');
+  }
+  if (!fonction) return fail(422, 'Merci d’indiquer votre fonction.');
+  if (
+    prenom.length > MAX_IDENTITY_LEN ||
+    nom.length > MAX_IDENTITY_LEN ||
+    entreprise.length > MAX_IDENTITY_LEN ||
+    fonction.length > MAX_IDENTITY_LEN
+  ) {
     return fail(422, 'Champ d’identité trop long.');
   }
   if (telephone && !PHONE_RE.test(telephone)) return fail(422, 'Numéro de téléphone invalide.');
@@ -168,7 +191,8 @@ export const handler: Handler = async (event) => {
       siret: siret || null,
       prenom,
       nom,
-      fonction: fonction || null,
+      entreprise: entreprise || null,
+      fonction,
       telephone: telephone || null,
       email,
       consent_rgpd: consentRgpd,

@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { RGPD_EMAIL_NOTICE } from '../src/data/rgpd';
 
 // --- mini parseur .env (évite une dépendance dotenv) ---
 const env: Record<string, string> = {};
@@ -43,14 +44,18 @@ const { data, error } = await resend.emails.send({
   from: env.RESEND_FROM,
   to: [lead.email],
   replyTo: env.RESEND_REPLY_TO || undefined,
-  subject: 'Votre pré-rapport MIRA',
+  // Copie alignée sur `netlify/functions/lib/email.ts` (renommage pré-diagnostic,
+  // retours CEO 13/07). Seul le CHEMIN de stockage garde l'ancien nom (cf. pdfPath).
+  subject: 'Votre pré-diagnostic MIRA',
   html: `<div style="font-family:system-ui,sans-serif;color:#160f2e;line-height:1.6;font-size:15px">
     <p>Bonjour,</p>
-    <p>Votre pré-rapport MIRA est prêt : vous le trouverez en pièce jointe (PDF).</p>
+    <p>Votre pré-diagnostic MIRA est prêt : vous le trouverez en pièce jointe (PDF).</p>
     <p>Il applique l'état de l'art public à vos familles de métiers. Chaque chiffre y est sourcé. Pour aller plus loin, répondez simplement à cet email.</p>
     <p>L'équipe MIRA</p>
+    <hr style="border:none;border-top:1px solid #eee;margin:22px 0">
+    <p style="font-size:11px;color:#8a83a6">${RGPD_EMAIL_NOTICE}</p>
   </div>`,
-  attachments: [{ filename: 'prerapport-mira.pdf', content: pdf.toString('base64') }],
+  attachments: [{ filename: 'pre-diagnostic-mira.pdf', content: pdf.toString('base64') }],
 });
 if (error) throw new Error(`Resend : ${JSON.stringify(error)}`);
 console.log(`Email envoyé, id Resend : ${data?.id}`);

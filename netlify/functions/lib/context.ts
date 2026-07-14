@@ -25,11 +25,21 @@ export interface LeadEnrichment {
   sourceResume?: string;
 }
 
+/**
+ * Normalise un libellé de famille pour la comparaison : casse + séparateurs.
+ * Les leads antérieurs au 13/07 ont stocké des libellés avec tiret cadratin
+ * (« Santé — praticiens ») ; les libellés canoniques utilisent désormais « · »
+ * (règle CTO anti-cadratins). La normalisation replie —, – et · sur un espace
+ * pour que les anciens leads restent mappés à leurs codes ISCO.
+ */
+const normalizeFamilleLabel = (s: string): string =>
+  s.toLowerCase().replace(/\s*[—–·]\s*/g, ' ').replace(/\s+/g, ' ').trim();
+
 /** Mappe les familles déclarées (texte/champ guidé) vers leurs codes ISCO si on les reconnaît. */
 function mapFamilles(declarees: string[]): GenerationContext['famillesDeclarees'] {
   return declarees.map((label) => {
     const match = famillesMetiers.find(
-      (f) => f.label.toLowerCase() === label.toLowerCase() || f.id === label,
+      (f) => normalizeFamilleLabel(f.label) === normalizeFamilleLabel(label) || f.id === label,
     );
     return match ? { label: match.label, isco: match.isco } : { label };
   });
@@ -56,7 +66,10 @@ export function buildGenerationContext(
   });
 
   return {
-    nomEntreprise: siret.nomEntreprise,
+    // Raison sociale INSEE en premier (donnée vérifiée), sinon l'entreprise
+    // DÉCLARÉE au wizard (obligatoire depuis le 13/07) : page de garde et email
+    // personnalisés même sans SIRET.
+    nomEntreprise: siret.nomEntreprise ?? lead.entreprise ?? undefined,
     secteurDeclare: lead.secteur_activite,
     nafCode: nafCode ?? undefined,
     nafLibelle: siret.nafLibelle,

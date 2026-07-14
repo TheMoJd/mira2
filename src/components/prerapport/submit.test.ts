@@ -34,6 +34,7 @@ describe('submitPreRapport — contrat de transport FormData', () => {
         siret: '424 761 419 00045',
         prenom: 'Camille',
         nom: 'Durand',
+        entreprise: 'Transports Durand',
         fonction: 'DRH',
         telephone: '+33 (0)6 12 34 56 78',
         email: 'camille@exemple.fr',
@@ -48,6 +49,7 @@ describe('submitPreRapport — contrat de transport FormData', () => {
     // Les clés lues par submit-prerapport (fields.<clé>) — toute dérive = 422 en prod.
     expect(fd.get('prenom')).toBe('Camille');
     expect(fd.get('nom')).toBe('Durand');
+    expect(fd.get('entreprise')).toBe('Transports Durand');
     expect(fd.get('fonction')).toBe('DRH');
     expect(fd.get('telephone')).toBe('+33612345678');
     expect(fd.get('email')).toBe('camille@exemple.fr');

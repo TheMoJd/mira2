@@ -13,11 +13,13 @@ export function FieldLabel({ htmlFor, children, optional }: { htmlFor?: string; 
   );
 }
 
-/** Message sous le champ : erreur (prioritaire) sinon aide. */
-export function FieldMessage({ error, hint }: { error?: string; hint?: string }) {
+/** Message sous le champ : erreur (prioritaire) sinon aide. `id` permet au
+ *  champ de s'y lier via aria-describedby (lecteurs d'écran). */
+export function FieldMessage({ id, error, hint }: { id?: string; error?: string; hint?: string }) {
   if (!error && !hint) return null;
   return (
     <p
+      id={id}
       role={error ? 'alert' : undefined}
       style={{ margin: '8px 2px 0', fontSize: 13, lineHeight: 1.45, color: error ? 'var(--risk)' : 'var(--ink-3)' }}
     >

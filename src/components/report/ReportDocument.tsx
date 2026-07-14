@@ -1,14 +1,17 @@
 /**
- * ReportDocument — rendu web responsive du pré-rapport (phase 1)
- * =============================================================
+ * ReportDocument — rendu web responsive du pré-diagnostic (phase 1)
+ * ================================================================
  * Rend la sortie structurée du LLM (`PreRapportOutput`) en React, pour la page
  * `/rapport/:leadId`. Pendant compatible web de `reportHtml.ts` (qui, lui, vise le
  * PDF print A4) : mobile-friendly, aux tokens de marque de `globals.css`.
  *
  * Toute modif de contenu/structure doit rester en phase avec `reportHtml.ts`
  * (page de garde, carte d'identité, tableau récap, sources allégées, page de fin).
- * Le slogan et la proposition de valeur sont importés depuis `reportHtml.ts`
- * (source unique). Style : pas de tiret cadratin ni de point-virgule (consigne CEO).
+ * Le slogan, la proposition de valeur, le retrait des références sources inline
+ * (`stripSourceRefs`) et la ligne de bas de page (`reportFooterText`) sont importés
+ * depuis `reportHtml.ts` (source unique). Style : pas de tiret cadratin ni de
+ * point-virgule (consigne CEO). Le niveau de confiance des familles n'est plus
+ * affiché (retours CEO 13/07), le champ reste dans le JSON.
  *
  * Imports type-only pour `PreRapportOutput`/`ReportRenderContext` → zod/openai ne
  * partent jamais dans le bundle client. Seules les données pures (`statbank`,
@@ -17,7 +20,7 @@
 import type { CSSProperties } from 'react';
 import type { PreRapportOutput, ReportSectionOutput, ReportBloc, ReportFamille } from '../../data/reportSchema';
 import type { ReportRenderContext } from '../../data/reportHtml';
-import { SLOGAN, VALUE_PROP } from '../../data/reportHtml';
+import { SLOGAN, VALUE_PROP, prepareProse, reportFooterText } from '../../data/reportHtml';
 import { reportSections } from '../../data/rapportStructure';
 import { statbank } from '../../data/statbank';
 import type { StatEntry } from '../../data/statbank';
@@ -120,13 +123,18 @@ function Bloc({ bloc }: { bloc: ReportBloc }) {
   return (
     <>
       {bloc.intertitre && (
-        <h3 style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--violet-700)', margin: '18px 0 6px' }}>{bloc.intertitre}</h3>
+        <h3 style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--violet-700)', margin: '18px 0 6px' }}>
+          {prepareProse(bloc.intertitre)}
+        </h3>
       )}
-      {bloc.paragraphes.map((p, i) => (
-        <p key={i} style={{ margin: '0 0 10px', lineHeight: 1.65, color: 'var(--ink)', fontSize: 15 }}>
-          {p}
-        </p>
-      ))}
+      {bloc.paragraphes
+        .map((p) => prepareProse(p))
+        .filter((p) => p.trim() !== '')
+        .map((p, i) => (
+          <p key={i} style={{ margin: '0 0 10px', lineHeight: 1.65, color: 'var(--ink)', fontSize: 15 }}>
+            {p}
+          </p>
+        ))}
     </>
   );
 }
@@ -188,8 +196,7 @@ function FamilleCard({ fam }: { fam: ReportFamille }) {
           </span>
         ))}
       </div>
-      <p style={{ margin: '6px 0 0', lineHeight: 1.55, color: 'var(--ink)', fontSize: 14.5 }}>{fam.explication}</p>
-      <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 6 }}>Confiance : {fam.confiance}</div>
+      <p style={{ margin: '6px 0 0', lineHeight: 1.55, color: 'var(--ink)', fontSize: 14.5 }}>{prepareProse(fam.explication)}</p>
       {!fam.transposable_france && (
         <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 6, fontStyle: 'italic' }}>
           Donnée non directement transposable à une PME française.
@@ -208,7 +215,7 @@ function Section({ section }: { section: ReportSectionOutput }) {
         {num !== undefined && (
           <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--sans, sans-serif)' }}>§{num} · </span>
         )}
-        {section.titre}
+        {prepareProse(section.titre)}
       </h2>
       {hasFamilles && <RecapTable familles={section.familles!} />}
       {section.contenu.map((b, i) => (
@@ -226,8 +233,9 @@ function Section({ section }: { section: ReportSectionOutput }) {
 }
 
 /**
- * Section « Sources » allégée (refonte CEO B5) : titres des documents mobilisés
- * (organisation + année), dédupliqués, sans l'appareil de références détaillé.
+ * Section « Sources mobilisées pour votre pré-diagnostic » (refonte CEO B5 +
+ * retours 13/07) : titres des documents mobilisés (organisation + année),
+ * dédupliqués, sans l'appareil de références détaillé.
  */
 function Sources({ report }: { report: PreRapportOutput }) {
   const citedIds = new Set<string>();
@@ -248,7 +256,7 @@ function Sources({ report }: { report: PreRapportOutput }) {
   if (titres.length === 0) return null;
   return (
     <section style={{ margin: '0 0 28px' }}>
-      <h2 style={sectionTitle}>Sources mobilisées</h2>
+      <h2 style={sectionTitle}>Sources mobilisées pour votre pré-diagnostic</h2>
       <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 13 }}>
         {titres.map((t) => (
           <li key={t} style={{ margin: '0 0 5px', lineHeight: 1.5, color: 'var(--ink-2)' }}>
@@ -266,7 +274,7 @@ function Closing() {
     <section style={{ margin: '0 0 8px' }}>
       <h2 style={sectionTitle}>Transparence et mentions</h2>
       <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink)', margin: 0 }}>
-        Ce pré-rapport a été généré avec l’aide de l’intelligence artificielle, à partir de sources publiques de
+        Ce pré-diagnostic a été généré avec l’aide de l’intelligence artificielle, à partir de sources publiques de
         référence. Il constitue une lecture indicative et ne remplace pas un audit de vos données internes.
       </p>
     </section>
@@ -285,6 +293,12 @@ export default function ReportDocument({ report, context }: ReportDocumentProps)
       <Closing />
       <p style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid var(--line-soft)', fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>
         {RGPD_PDF_FOOTER}
+      </p>
+      {/* Pendant web de la ligne de bas de page du PDF (retours CEO 13/07) :
+          même mois/année que le PDF (date de génération), pas la date de
+          consultation, pour qu'un même rapport reste daté de façon cohérente. */}
+      <p style={{ marginTop: 8, fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>
+        {reportFooterText(context.dateGeneration ? new Date(context.dateGeneration) : new Date())}
       </p>
     </article>
   );

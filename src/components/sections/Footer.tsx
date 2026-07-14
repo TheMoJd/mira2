@@ -1,10 +1,27 @@
 import Logo from '../ui/Logo';
 import mira from '../../data/mira';
 
+/** Liens de pied de page, alignés sur les noms de sections v2 (nav) ; les
+ *  entrées sans destination réelle gardent `#` en attendant leurs pages. */
 const footerLinks = [
-  ['Produit', ['Le pré-diagnostic', 'Entretiens augmentés', 'Les 3 lectures', 'Tarifs']],
-  ['Ressources', ['Méthodologie', 'Sources de référence', 'Conformité RGPD', 'Loi Avenir']],
-  ['Société', ["L'équipe", 'Contact', 'Mentions légales', 'DPA']],
+  ['Produit', [
+    { label: 'Le pré-diagnostic', href: '/pre-diagnostic' },
+    { label: 'Le produit', href: '#produit' },
+    { label: 'Feuille de route', href: '#lectures' },
+    { label: 'Accompagnement', href: '#tarifs' },
+  ]],
+  ['Ressources', [
+    { label: 'Méthodologie', href: '#methode' },
+    { label: 'Sources de référence', href: '#' },
+    { label: 'Conformité RGPD', href: '#conformite' },
+    { label: 'Loi Avenir', href: '#' },
+  ]],
+  ['Société', [
+    { label: "L'équipe", href: '#' },
+    { label: 'Contact', href: '#' },
+    { label: 'Mentions légales', href: '#' },
+    { label: 'DPA', href: '#' },
+  ]],
 ] as const;
 
 export default function Footer() {
@@ -22,7 +39,7 @@ export default function Footer() {
             <div className="kicker" style={{ color: 'var(--ink-3)', marginBottom: 16 }}>{heading}</div>
             <div style={{ display: 'grid', gap: 10 }}>
               {items.map((it) => (
-                <a key={it} href="#" style={{ fontSize: 14, color: 'var(--ink-2)' }}>{it}</a>
+                <a key={it.label} href={it.href} style={{ fontSize: 14, color: 'var(--ink-2)' }}>{it.label}</a>
               ))}
             </div>
           </div>

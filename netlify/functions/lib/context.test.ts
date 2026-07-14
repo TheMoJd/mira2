@@ -16,6 +16,7 @@ function lead(overrides: Partial<LeadRow> = {}): LeadRow {
     created_at: '2026-06-22T10:00:00Z',
     effectif_tranche: null,
     email: 'a@b.fr',
+    entreprise: null,
     familles_metiers: [],
     fonction: null,
     naf_code: null,
@@ -67,6 +68,33 @@ describe('buildGenerationContext — assemblage pur', () => {
       NOW,
     );
     expect(ctx.famillesDeclarees[0].isco).toEqual(known.isco);
+  });
+
+  it('mappe les anciens libellés à tiret cadratin stockés avant le 13/07 (rétrocompat prod)', () => {
+    // Ces chaînes exactes existent dans leads.familles_metiers en prod : le
+    // renommage « — » → « · » (règle CTO) ne doit pas casser leur mapping ISCO.
+    const ctx = buildGenerationContext(
+      lead({ familles_metiers: ['Santé — praticiens', 'Services aux personnes — hôtellerie, restauration'] }),
+      NO_ENRICH,
+      NOW,
+    );
+    expect(ctx.famillesDeclarees[0]).toEqual({ label: 'Santé · praticiens', isco: ['22'] });
+    expect(ctx.famillesDeclarees[1]).toEqual({
+      label: 'Services aux personnes · hôtellerie, restauration',
+      isco: ['51'],
+    });
+  });
+
+  it('replie nomEntreprise sur l’entreprise déclarée quand l’enrichissement SIRET est muet', () => {
+    const ctx = buildGenerationContext(lead({ entreprise: 'Transports Durand' }), NO_ENRICH, NOW);
+    expect(ctx.nomEntreprise).toBe('Transports Durand');
+    // La raison sociale INSEE (donnée vérifiée) reste prioritaire quand elle existe.
+    const enrichi = buildGenerationContext(
+      lead({ entreprise: 'Transports Durand' }),
+      { siret: { nomEntreprise: 'TRANSPORTS DURAND SAS' } },
+      NOW,
+    );
+    expect(enrichi.nomEntreprise).toBe('TRANSPORTS DURAND SAS');
   });
 
   it('privilégie le NAF/effectif déjà présent sur le lead sur celui de l’enrichissement', () => {

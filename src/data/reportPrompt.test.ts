@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildUserMessage } from './reportPrompt';
+import { SYSTEM_PROMPT, buildUserMessage } from './reportPrompt';
 import type { GenerationContext } from './reportPrompt';
 import { reportSections, statsForSection } from './rapportStructure';
 import { statsBySource } from './statbank';
@@ -89,5 +89,25 @@ describe('buildUserMessage — contenu site = donnée non fiable (anti-injection
     const msg = buildUserMessage({ ...ctx, sourceResume: 'a'.repeat(5000) });
     const block = msg.match(/<<<CONTENU_SITE_NON_VERIFIE\n([\s\S]*?)\nCONTENU_SITE_NON_VERIFIE>>>/)![1];
     expect(block.length).toBeLessThanOrEqual(2500);
+  });
+});
+
+describe('wording et style du prompt (renommage CEO 13/07 + règle anti-cadratin)', () => {
+  it('présente le livrable comme « pré-diagnostic MIRA » offert, jamais « pré-rapport » ni « gratuit »', () => {
+    expect(SYSTEM_PROMPT).toContain('pré-diagnostic MIRA');
+    expect(SYSTEM_PROMPT).toContain('diagnostic offert');
+    expect(SYSTEM_PROMPT).not.toMatch(/pré-rapport/i);
+    expect(SYSTEM_PROMPT).not.toMatch(/diagnostic gratuit/i);
+  });
+
+  it('ne contient aucun cadratin/demi-cadratin hors la mention littérale de la règle 8', () => {
+    // La règle 8 doit pouvoir NOMMER les signes proscrits : on retire cette
+    // unique mention « (— ou –) », le reste du prompt doit être irréprochable.
+    const horsRegle8 = SYSTEM_PROMPT.replace('(— ou –)', '');
+    expect(horsRegle8).not.toMatch(/[—–]/);
+  });
+
+  it('le message utilisateur assemblé ne contient ni cadratin ni demi-cadratin', () => {
+    expect(buildUserMessage(ctx)).not.toMatch(/[—–]/);
   });
 });

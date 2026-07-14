@@ -1,19 +1,21 @@
-# Référence — Pipeline du pré-rapport freemium
+# Référence — Pipeline du pré-diagnostic freemium
 
 > **Quadrant Diataxis : Reference.** Description factuelle et exhaustive du sous-système
-> pré-rapport, dérivée du code. Pour comprendre *pourquoi* il est construit ainsi, voir
+> pré-diagnostic, dérivée du code. Pour comprendre *pourquoi* il est construit ainsi, voir
 > [explanation-architecture-et-garde-fous.md](explanation-architecture-et-garde-fous.md).
 > Pour le faire tourner, voir [howto-developpement-local.md](howto-developpement-local.md).
 
-Le pré-rapport est un diagnostic gratuit : un visiteur remplit un formulaire, MIRA croise
+Le pré-diagnostic est un livrable offert : un visiteur remplit un formulaire, MIRA croise
 ses réponses avec une banque de statistiques sourcées, un LLM rédige un rapport structuré,
 et le PDF part par email. Tout le compute vit dans des **Netlify Functions** ; la donnée
-et les fichiers dans **Supabase**.
+et les fichiers dans **Supabase**. (Nommage : le livrable s'appelle « pré-diagnostic »
+depuis le 13/07/2026 ; les identifiants techniques — functions `*-prerapport*`, chemins de
+stockage, noms de fichiers du repo — gardent « prerapport ».)
 
 ## Vue d'ensemble du flux
 
 ```
-Navigateur (SPA /pre-rapport)
+Navigateur (SPA /pre-diagnostic)
    │  multipart/form-data
    ▼
 submit-prerapport            (function synchrone, < quelques s)
@@ -37,9 +39,9 @@ Supabase (Postgres + Storage)
 
 | Élément | Fichier | Rôle |
 |---------|---------|------|
-| Routing | [`src/App.tsx`](../src/App.tsx) | `/` = landing, `/pre-rapport` = wizard, `/rapport/:leadId` = page d'atterrissage des anciens liens, `*` → redirige vers `/`. |
+| Routing | [`src/App.tsx`](../src/App.tsx) | `/` = landing, `/pre-diagnostic` = wizard, `/pre-rapport` = redirection vers `/pre-diagnostic` (ancienne URL), `/rapport/:leadId` = page d'atterrissage des anciens liens, `*` → redirige vers `/`. |
 | Page wizard | [`src/pages/PreRapport.tsx`](../src/pages/PreRapport.tsx) | Header épuré + `<Wizard/>`. |
-| Page rapport (héritée) | [`src/pages/ReportView.tsx`](../src/pages/ReportView.tsx) | N'affiche **plus** le rapport : depuis le passage en livraison email-only, elle montre « Votre pré-rapport arrive par email ». La route est conservée pour que les anciens liens partagés ne tombent pas sur une 404. |
+| Page rapport (héritée) | [`src/pages/ReportView.tsx`](../src/pages/ReportView.tsx) | N'affiche **plus** le rapport : depuis le passage en livraison email-only, elle montre « Votre pré-diagnostic arrive par email ». La route est conservée pour que les anciens liens partagés ne tombent pas sur une 404. |
 | Wizard | [`src/components/prerapport/Wizard.tsx`](../src/components/prerapport/Wizard.tsx) | Formulaire en 3 vues (`intro` → `form` → `success`), 5 étapes. |
 | Validation | [`src/components/prerapport/validation.ts`](../src/components/prerapport/validation.ts) | `validateStep(step, form)` — `STEP_COUNT = 5`. Exporte les règles **partagées avec le serveur** (`EMAIL_RE`, `PHONE_RE`, `MAX_IDENTITY_LEN`, `normalizePhone`) : `submit-prerapport` importe les mêmes constantes pour éviter toute dérive client/serveur. |
 | Soumission | [`src/components/prerapport/submit.ts`](../src/components/prerapport/submit.ts) | `submitPreRapport(form, honeypot)` → POST multipart. |
@@ -54,17 +56,18 @@ Supabase (Postgres + Storage)
 | 1 — Offre | `produitsServices` (Q2), `clients` (Q3) | oui |
 | 2 — Métiers | `famillesMetiers` (Q4, liste de tags, 1 à 6) | oui (≥ 1) |
 | 3 — Compléments | `siteUrl` (URL), `plaquette` (fichier) | optionnels |
-| 4 — Réception | `prenom`, `nom`, `fonction`, `telephone`, `email` (pro), `consentRgpd` (case) | prénom, nom, email et consentement oui ; fonction et téléphone optionnels |
+| 4 — Réception | `prenom`, `nom`, `entreprise`, `fonction`, `telephone`, `email` (pro), `consentRgpd` (case) | prénom, nom, entreprise, fonction, email et consentement oui ; seul le téléphone est optionnel |
 
-Les champs d'identité (prénom, nom, fonction, téléphone) qualifient le lead pour le suivi
-commercial (réunion du 10/07/2026). Le téléphone est normalisé (`normalizePhone` : espaces,
+Les champs d'identité (prénom, nom, entreprise, fonction, téléphone) qualifient le lead pour
+le suivi commercial (réunion du 10/07/2026) ; entreprise et fonction sont obligatoires depuis
+les retours CEO/CTO du 13/07/2026. Le téléphone est normalisé (`normalizePhone` : espaces,
 points, tirets et parenthèses retirés, `0033…`/`+33 (0)…` repliés sur `+33…`) avant validation
 par `PHONE_RE` (format FR : `0X…` ou `+33X…`).
 
 Le champ `company_website_hp` est un **honeypot** anti-bot (hors flux, invisible) ; un humain
 ne le remplit jamais. Voir [explanation](explanation-architecture-et-garde-fous.md#anti-abus).
 
-Au succès de la soumission, le wizard affiche l'écran « Votre pré-rapport arrive par email »
+Au succès de la soumission, le wizard affiche l'écran « Votre pré-diagnostic arrive par email »
 (pas de redirection : le rapport n'est plus consultable en ligne).
 `src/components/report/ReportDocument.tsx` (affichage web React du rapport) est un **héritage**
 de l'époque du rapport en ligne : plus monté par aucune page, il n'est référencé que par son
@@ -101,7 +104,7 @@ Validation serveur (jamais de confiance au client) :
 | Champs obligatoires | `secteurActivite`, `produitsServices`, `clients` non vides → sinon `422`. |
 | Longueurs | Textes libres Q1–Q3 ≤ 3 000 caractères (`MAX_FREETEXT_LEN`) ; chaque famille ≤ 120 → sinon `422`. Garde anti-abus : ces textes partent dans le prompt OpenAI. |
 | Familles | 1 à 6 entrées → sinon `422`. |
-| Identité | `prenom` et `nom` non vides après `cleanIdentity` (caractères de contrôle/format retirés, espaces repliés) ; prénom, nom et fonction ≤ 120 caractères (`MAX_IDENTITY_LEN`) → sinon `422`. |
+| Identité | `prenom`, `nom`, `entreprise` et `fonction` non vides après `cleanIdentity` (caractères de contrôle/format retirés, espaces repliés) ; chacun ≤ 120 caractères (`MAX_IDENTITY_LEN`) → sinon `422`. Mêmes règles que le wizard (entreprise et fonction obligatoires depuis le 13/07/2026). |
 | Téléphone | si fourni, doit matcher `PHONE_RE` après normalisation → sinon `422`. |
 | Email | regex `EMAIL_RE` (partagée avec le wizard) → sinon `422`. |
 | Consentement | `consentRgpd === 'true'` → sinon `422`. |
@@ -127,10 +130,11 @@ jusqu'à **15 min**.
   2. Enrichissement best-effort : `enrichSiret(siret)` + `fetchSiteResume(siteUrl)`. Persiste `naf_code` / `effectif_tranche` découverts (sans écraser l'existant).
   3. Construit le `GenerationContext`, mappe les familles déclarées vers ISCO (`mapFamilles`).
   4. Appel **OpenAI** `chat.completions.create` avec `response_format = RESPONSE_FORMAT` (json_schema strict). Parse → `report_json`, persisté sur le lead.
-  5. `renderReportHtml(report, ctx)` → `htmlToPdf(html)` → upload `reports/{leadId}/prerapport-mira.pdf` (`upsert: true`).
+  5. `renderReportHtml(report, ctx)` → `htmlToPdf(html, { footer: reportFooterText(now) })` → upload `reports/{leadId}/prerapport-mira.pdf` (`upsert: true` — le chemin de stockage garde son nom historique, il est référencé par `scripts/resend-report.ts`).
   6. Insert ligne `reports` (`sources` = ids de stats réellement citées, filtrés sur la stat-bank par `citedStatIds`).
-  7. `sendReportEmail(...)`. Si l'email échoue alors que Resend était configuré → `notifyFailure` (mais on reste en `sent`, le PDF est récupérable).
-  8. `status = sent`.
+  7. `sendReportEmail(...)` (pièce jointe `pre-diagnostic-mira.pdf`). Si l'email échoue alors que Resend était configuré → `notifyFailure` (mais on reste en `sent`, le PDF est récupérable).
+  8. Si l'email est parti (`sent`) : notification interne `sendLeadNotification` aux adresses de `NOTIF_EMAILS` (« Nouveau pré-diagnostic généré », `reply_to` = email du prospect). Jamais bloquante : absente/vide ou échec → log, le pipeline du lead continue.
+  9. `status = sent`.
 - **Échec** : toute exception → `status = failed` + `notifyFailure`.
 
 ### `envcheck` (diagnostic, temporaire)
@@ -138,7 +142,7 @@ jusqu'à **15 min**.
 [`netlify/functions/envcheck.ts`](../netlify/functions/envcheck.ts)
 
 `GET /.netlify/functions/envcheck` renvoie, pour les variables d'env critiques (Resend,
-Supabase, OpenAI), **uniquement leur présence** (booléen) et la longueur de la valeur —
+Supabase, OpenAI, `NOTIF_EMAILS`), **uniquement leur présence** (booléen) et la longueur de la valeur —
 jamais la valeur — plus le préfixe (3 caractères) de la clé Resend pour vérifier qu'elle
 commence par `re_`. Sert à diagnostiquer ce que le runtime des functions voit réellement
 (cas typique : variable posée dans Netlify mais absente au runtime). **À supprimer une fois
@@ -150,8 +154,10 @@ le diagnostic terminé** (le fichier porte le même avertissement).
 |---------|--------|------|
 | [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche, categorieEntreprise, anneeCreation, localisation, actif }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Tous les champs sont best-effort (souvent partiels). Retourne `{}` en cas d'échec. |
 | | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
-| [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
-| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
+| [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. `opts.footer` alimente le `footerTemplate` Chromium (bas de page échappé + numéro de page, répété sur chaque page). Override local par `CHROME_EXECUTABLE_PATH`. |
+| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe (`pre-diagnostic-mira.pdf`). Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
+| | `sendLeadNotification({leadId, prenom, nom, fonction, entreprise, email, secteur})` | Notification interne « Nouveau pré-diagnostic généré » aux adresses de `NOTIF_EMAILS`, après livraison effective au prospect. `reply_to` = email du prospect (répondre écrit directement au lead). Champs aplatis anti-injection. Jamais bloquante : `NOTIF_EMAILS` absente/vide ou Resend non configuré → `'skipped'` silencieux ; échec → `'error'` loggé, sans throw. |
+| | `parseNotifEmails(raw)` | Parse `NOTIF_EMAILS` (adresses séparées par des virgules). Tolère espaces et entrées vides ; écarte (avec warning) les entrées qui ne matchent pas `EMAIL_RE` — Resend rejetterait l'envoi entier sur un seul destinataire malformé. |
 | | `notifyFailure({leadId, error})` | Email de repli ops (no-op loggé si `OPS_EMAIL`/Resend absents). |
 
 ---
@@ -168,7 +174,7 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 | [`reportPrompt.ts`](../src/data/reportPrompt.ts) | Prompt de génération. | `SYSTEM_PROMPT` (10 règles absolues), `buildUserMessage(ctx)`, `GenerationContext`. |
 | [`reportSchema.ts`](../src/data/reportSchema.ts) | Contrat de sortie OpenAI. `parseReport(raw)` parse, valide **et normalise** (via `sanitizeReportProse`) la réponse du modèle. | `RESPONSE_FORMAT` (json_schema, `strict: true`), `parseReport`, `PreRapportOutput`, `ReportSectionOutput`, `ReportFamille`. |
 | [`reportSanitize.ts`](../src/data/reportSanitize.ts) | Verrou de style sur la prose LLM : tirets cadratins/demi-cadratins et points-virgules → virgules (plages numériques « 2025-2030 » et signes moins « -5 % » préservés). Appliqué par `parseReport` avant persistance et rendu PDF. | `sanitizeProse`, `sanitizeReportProse`. |
-| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → sections §0→§9 avec tableau récapitulatif « En un coup d'œil » en §3 → « Sources mobilisées » (titres dédupliqués org + année) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). Un filigrane « MIRA AUDIT » (élément `position:fixed`, opacité 5 %) est répété sur chaque page du PDF. | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
+| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → sections §0→§9 avec tableau récapitulatif « En un coup d'œil » en §3 → « Sources mobilisées pour votre pré-diagnostic » (titres dédupliqués org + année) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). Les références inline « (Organisation, année) » écrites par le LLM sont retirées au rendu (`stripSourceRefs`) ; le niveau de confiance des familles n'est plus affiché (le champ `confiance` reste dans le JSON). Un filigrane « mira-audit.fr » (élément `position:fixed` + `z-index`, opacité 5 %) est répété sur chaque page du PDF, et `reportFooterText(now)` fournit le bas de page « Mira audit · Anticiper, mesurer et piloter l'impact de l'IA sur vos métiers et compétences · <mois année> » (mois/année de génération) injecté par le `footerTemplate` Chromium de `lib/pdf.ts`. | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `stripSourceRefs`, `reportFooterText`, `SLOGAN`, `VALUE_PROP`. |
 | [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~28 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
 | [`rgpd.ts`](../src/data/rgpd.ts) | Mentions RGPD factuelles (pied de la page de fin du PDF + bas de l'email). Pas d'affirmation de conformité ; la mention d'information juridique complète reste à intégrer après validation métier/juridique. | `RGPD_PDF_FOOTER`, `RGPD_EMAIL_NOTICE`, `EMAIL_SENDER_NAME`. |
 
@@ -209,8 +215,9 @@ migration via le MCP Supabase `generate_typescript_types` ou `supabase gen types
 
 Le schéma est versionné dans [`supabase/migrations/`](../supabase/migrations/) :
 `0001_init_prerapport.sql` (tables, enum, buckets), `0002_add_report_json_to_leads.sql`
-(rattrapage de la colonne `report_json` appliquée en prod le 22/06/2026) et
-`0003_leads_qualification.sql` (colonnes de qualification, 10/07/2026). Ces fichiers visent
+(rattrapage de la colonne `report_json` appliquée en prod le 22/06/2026),
+`0003_leads_qualification.sql` (colonnes de qualification, 10/07/2026) et
+`0004_add_entreprise_to_leads.sql` (colonne `entreprise`, 13/07/2026). Ces fichiers visent
 la **reconstruction d'un environnement neuf** ; contre la prod, l'historique distant utilise
 des versions horodatées différentes — ne pas lancer `supabase db push` sans
 `supabase migration repair` (voir l'en-tête de `0003`).
@@ -224,7 +231,8 @@ des versions horodatées différentes — ne pas lancer `supabase db push` sans
 | `email` | text | |
 | `prenom` | text \| null | qualification lead — requis côté formulaire depuis le 10/07/2026 (null pour les leads antérieurs) |
 | `nom` | text \| null | idem `prenom` |
-| `fonction` | text \| null | optionnel — ciblage RH / dirigeant |
+| `entreprise` | text \| null | nom d'entreprise déclaré (texte libre) — requis côté formulaire depuis le 13/07/2026, null pour les leads antérieurs (migration `0004`) |
+| `fonction` | text \| null | requis côté formulaire depuis le 13/07/2026 (null pour les leads antérieurs) — ciblage RH / dirigeant |
 | `telephone` | text \| null | optionnel — normalisé (`0X…` / `+33X…`) |
 | `siret` | text \| null | |
 | `secteur_activite` | text | Q1 |
@@ -272,6 +280,7 @@ en production. Voir [`.env.example`](../.env.example).
 | `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). Format « Nom <adresse> » ou adresse seule. |
 | `RESEND_REPLY_TO` | optionnel | email | Boîte qui reçoit les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
 | `OPS_EMAIL` | optionnel | email | Destinataire des alertes d'échec (`notifyFailure`). |
+| `NOTIF_EMAILS` | optionnel | email | Liste d'adresses séparées par des virgules, notifiées « Nouveau pré-diagnostic généré » à chaque livraison réussie au prospect (`reply_to` = email du prospect). Absente ou vide → skip silencieux, jamais bloquant pour le pipeline du lead. |
 | `CHROME_EXECUTABLE_PATH` | dev local | pdf | Chemin vers Chrome/Edge local (le binaire `@sparticuz/chromium` est Linux). |
 | `URL` | fourni par Netlify | submit | Base URL pour déclencher la background function. |
 
@@ -290,7 +299,7 @@ dotenv). Ils utilisent la clé `service_role` : **usage interne uniquement**.
 |--------|-------|------|
 | [`resend-report.ts`](../scripts/resend-report.ts) | `npx tsx scripts/resend-report.ts <leadId>` | Renvoie par email un rapport **déjà généré** : télécharge `reports/{leadId}/prerapport-mira.pdf`, l'envoie via Resend à l'email du lead (respecte `RESEND_REPLY_TO`). Ne régénère rien. |
 | [`investigate-leads.ts`](../scripts/investigate-leads.ts) | `npx tsx scripts/investigate-leads.ts` | Liste les 20 derniers leads (statut, présence du `report_json`) et les 20 dernières lignes `reports` — le premier réflexe quand « un email n'est pas parti ». |
-| [`generate-samples.ts`](../scripts/generate-samples.ts) | `npx tsx scripts/generate-samples.ts` | Génère des pré-rapports d'exemple sur de **vraies entreprises** (enrichissement INSEE réel + vrai appel OpenAI + rendu HTML), audite la grille de sources au passage, et écrit les artefacts versionnés dans [`docs/samples/`](samples/). |
+| [`generate-samples.ts`](../scripts/generate-samples.ts) | `npx tsx scripts/generate-samples.ts` | Génère des pré-diagnostics d'exemple sur de **vraies entreprises** (enrichissement INSEE réel + vrai appel OpenAI + rendu HTML), audite la grille de sources au passage, et écrit les artefacts versionnés dans [`docs/samples/`](samples/). |
 
 > Pour renvoyer un rapport ou diagnostiquer un lead pas à pas, voir le
 > [how-to](howto-developpement-local.md#scripts-dexploitation).
@@ -305,5 +314,7 @@ dotenv). Ils utilisent la clé `service_role` : **usage interne uniquement**.
 - [`src/data/reportPrompt.test.ts`](../src/data/reportPrompt.test.ts), [`src/data/reportSchema.test.ts`](../src/data/reportSchema.test.ts), [`src/data/rapportStructure.test.ts`](../src/data/rapportStructure.test.ts), [`src/data/statbank.test.ts`](../src/data/statbank.test.ts), [`src/data/reportHtml.test.ts`](../src/data/reportHtml.test.ts) — invariants de la couche contenu.
 - [`src/components/prerapport/validation.test.ts`](../src/components/prerapport/validation.test.ts) — validation du wizard (dont identité et normalisation téléphone).
 - [`src/data/reportSanitize.test.ts`](../src/data/reportSanitize.test.ts) — verrou de style (tirets/points-virgules → virgules, plages et signes moins préservés).
-- [`netlify/functions/__tests__/submit-prerapport.test.ts`](../netlify/functions/__tests__/submit-prerapport.test.ts) — validation serveur de `submit-prerapport` (branches `422`, insert Supabase mocké : normalisation téléphone, `cleanIdentity`, `null` pour les optionnels vides).
+- [`netlify/functions/__tests__/submit-prerapport.test.ts`](../netlify/functions/__tests__/submit-prerapport.test.ts) — validation serveur de `submit-prerapport` (branches `422` dont entreprise/fonction manquantes, insert Supabase mocké : normalisation téléphone, `cleanIdentity`, `null` pour les optionnels vides).
+- [`netlify/functions/__tests__/email.test.ts`](../netlify/functions/__tests__/email.test.ts) — `parseNotifEmails` (parsing de `NOTIF_EMAILS`, entrées invalides écartées) et comportement défensif de `sendLeadNotification` (skip silencieux, jamais de throw).
+- [`netlify/functions/__tests__/generate-prerapport-background.test.ts`](../netlify/functions/__tests__/generate-prerapport-background.test.ts) — orchestration de la background function (notification interne déclenchée seulement après livraison effective, échec de notification non bloquant).
 - [`src/components/prerapport/submit.test.ts`](../src/components/prerapport/submit.test.ts) — contrat de transport client/serveur : les clés `FormData` envoyées correspondent exactement à ce que lit le handler.

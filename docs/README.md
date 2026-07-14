@@ -1,7 +1,9 @@
 # Documentation MIRA
 
 Documentation technique du projet MIRA. Le repo contient aujourd'hui la **landing** et le
-**pré-rapport freemium** (formulaire → génération LLM → PDF par email).
+**pré-diagnostic freemium** (formulaire → génération LLM → PDF par email). Nommage : le
+livrable s'appelle « pré-diagnostic » depuis le 13/07/2026 ; les identifiants techniques
+(functions, chemins de stockage, noms de fichiers) gardent « prerapport ».
 
 > Les fichiers `.md` de ce dossier sont versionnés. Les binaires business (pitch
 > investisseurs, kits, notes — `.pptx`, `.pages`, `.pdf`, `.docx`) restent **confidentiels et
@@ -13,7 +15,7 @@ Suivant ce que vous cherchez (cadre [Diataxis](https://diataxis.fr/)) :
 
 | Vous voulez… | Lisez | Quadrant |
 |--------------|-------|----------|
-| Générer un premier pré-rapport pas à pas | [tutorial-premier-prerapport.md](tutorial-premier-prerapport.md) | Tutoriel |
+| Générer un premier pré-diagnostic pas à pas | [tutorial-premier-prerapport.md](tutorial-premier-prerapport.md) | Tutoriel |
 | Faire tourner le pipeline en local (env, Supabase, PDF) | [howto-developpement-local.md](howto-developpement-local.md) | How-to |
 | Renvoyer un rapport, diagnostiquer un lead (scripts ops) | [howto-developpement-local.md § Scripts d'exploitation](howto-developpement-local.md#scripts-dexploitation) | How-to |
 | Connaître les functions, le modèle de données, les variables d'env | [reference-pipeline-prerapport.md](reference-pipeline-prerapport.md) | Référence |
@@ -22,9 +24,9 @@ Suivant ce que vous cherchez (cadre [Diataxis](https://diataxis.fr/)) :
 Le [README racine](../README.md) couvre la landing et la prise en main générale ;
 [CLAUDE.md](../CLAUDE.md) porte les conventions du repo.
 
-## Le pré-rapport freemium en une phrase
+## Le pré-diagnostic freemium en une phrase
 
-Un visiteur remplit un wizard (`/pre-rapport`) → `submit-prerapport` capture le lead dans
+Un visiteur remplit un wizard (`/pre-diagnostic`) → `submit-prerapport` capture le lead dans
 Supabase → `generate-prerapport-background` enrichit, appelle OpenAI (sortie structurée),
 rend un PDF de marque (Chromium) et l'envoie par email. **Aucun chiffre n'est inventé** :
 le LLM ne cite que des statistiques sourcées de la stat-bank.

@@ -6,8 +6,8 @@ Instructions pour les agents travaillant sur ce repo. Lire en complément du REA
 
 Landing page marketing de **MIRA** (*Mapping des Impacts et des Risques IA*), un dispositif
 d'intelligence RH augmentée qui mesure et pilote l'impact de l'IA sur les métiers (cible : DRH /
-organisations). Le repo contient la **landing** et le **pré-rapport freemium** (wizard
-`/pre-rapport` → Netlify Functions → OpenAI → PDF → email, données dans Supabase — voir
+organisations). Le repo contient la **landing** et le **pré-diagnostic freemium** (wizard
+`/pre-diagnostic` → Netlify Functions → OpenAI → PDF → email, données dans Supabase — voir
 [`docs/README.md`](docs/README.md)) ; **la suite du produit (entretiens augmentés, dashboard)
 sera construite ici à terme** — anticiper que de l'auth et d'autres routes viendront s'ajouter.
 
@@ -25,10 +25,10 @@ Pas de linter : les garde-fous qualité sont le **typecheck TypeScript strict** 
 
 ## Architecture
 
-- **`src/App.tsx`** porte le routing (`/` landing, `/pre-rapport` wizard, `/rapport/:leadId`
-  page héritée). **`src/pages/Landing.tsx`** assemble la liste de sections (`<Nav/>`, `<Hero/>`,
+- **`src/App.tsx`** porte le routing (`/` landing, `/pre-diagnostic` wizard avec redirection
+  depuis l'ancienne URL `/pre-rapport`, `/rapport/:leadId` page héritée). **`src/pages/Landing.tsx`** assemble la liste de sections (`<Nav/>`, `<Hero/>`,
   `<Stats/>`, … `<Footer/>`). Ajouter/retirer une section = éditer cet assemblage.
-- **Le pipeline du pré-rapport** (wizard, functions, prompt, PDF) est documenté dans
+- **Le pipeline du pré-diagnostic** (wizard, functions, prompt, PDF) est documenté dans
   [`docs/`](docs/README.md) — la référence y détaille chaque module de `src/data` et
   `netlify/functions`.
 - **`src/data/mira.ts` est la source de vérité du contenu.** Tous les textes, chiffres et offres y
