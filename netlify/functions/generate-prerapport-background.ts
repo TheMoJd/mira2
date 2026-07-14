@@ -32,6 +32,10 @@ import { buildGenerationContext } from './lib/context';
 /** Ids connus de la stat-bank — filtre les ids cités par le LLM pour un audit propre. */
 const KNOWN_STAT_IDS = new Set(statbank.map((s) => s.id));
 
+/** Format UUID des ids `leads` (Supabase). L'endpoint est public : un `leadId`
+ *  forgé est rejeté en amont, sans requête base ni alerte ops (anti-spam). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Ids (dédupliqués) des statistiques effectivement citées dans le rapport,
  * restreints à ceux qui existent réellement dans la stat-bank (le LLM pourrait
@@ -60,7 +64,12 @@ export const handler: Handler = async (event) => {
   } catch {
     /* body invalide */
   }
-  if (!leadId) return { statusCode: 400 };
+  if (!leadId || !UUID_RE.test(leadId)) {
+    // Pas de notifyFailure : l'endpoint est public, un leadId forgé ne doit
+    // pas pouvoir spammer l'ops.
+    console.warn('[generate] leadId absent ou non conforme (UUID attendu) — requête rejetée.');
+    return { statusCode: 400 };
+  }
 
   const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
@@ -68,7 +77,12 @@ export const handler: Handler = async (event) => {
 
   try {
     const { data: lead, error } = await supabase.from('leads').select('*').eq('id', leadId).single();
-    if (error || !lead) throw new Error(`Lead introuvable : ${leadId}`);
+    if (error || !lead) {
+      // Même logique anti-spam que le contrôle UUID : un UUID valide mais
+      // inconnu en base ne déclenche NI notifyFailure NI passage en `failed`.
+      console.warn(`[generate] lead introuvable : ${leadId} — 404 sans alerte ops.`);
+      return { statusCode: 404 };
+    }
 
     // Idempotence : on ne passe en `generating` QUE si le lead est encore `received`
     // (compare-and-set atomique). Un second déclenchement concurrent matchera 0 ligne

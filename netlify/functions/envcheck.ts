@@ -29,7 +29,10 @@ const tokenOk = (provided: string | undefined, expected: string | undefined): bo
 };
 
 export const handler: Handler = async (event) => {
-  if (!tokenOk(event.headers['x-envcheck-token'], process.env.ENVCHECK_TOKEN)) {
+  // Netlify normalise les headers en minuscules, mais on lit les deux casses
+  // (parité avec submit-prerapport, qui fait de même pour content-type).
+  const provided = event.headers['x-envcheck-token'] ?? event.headers['X-Envcheck-Token'];
+  if (!tokenOk(provided, process.env.ENVCHECK_TOKEN)) {
     return { statusCode: 404, body: 'Not found' };
   }
   const body = {
