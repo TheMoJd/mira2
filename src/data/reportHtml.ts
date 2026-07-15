@@ -69,6 +69,14 @@ export const SLOGAN = 'L’IA redessine la carte des compétences, MIRA donne la
 export const VALUE_PROP =
   'MIRA est votre pré-diagnostic d’exposition à l’IA de votre organisation. Ce pré-rapport offert applique l’état de l’art, recherche internationale de référence et données françaises, aux familles de métiers que vous avez déclarées, pour distinguer clairement ce qui s’automatise, ce qui s’augmente et ce qui se recompose. Chaque chiffre est sourcé. C’est une lecture externe, pas un audit de vos données internes. Voyez-le comme une invitation à un premier pas. La transformation commence par disposer des clés de lecture et se poser les bonnes questions, avant de passer à l’action.';
 
+/**
+ * Préfixe du bas de page répété sur chaque page du PDF (demande CEO). Le mois et
+ * l’année du rapport sont ajoutés au moment du rendu (cf. `htmlToPdf` options.footer).
+ * Style maison : séparateur « · » plutôt qu’un tiret.
+ */
+export const REPORT_PAGE_FOOTER_PREFIX =
+  'MIRA Audit · Anticiper, mesurer et piloter l’impact de l’IA sur vos métiers et compétences';
+
 /** Logo MIRA inliné (SVG autoportant, couleurs littérales pour le rendu PDF). */
 const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 26 26" fill="none">
   <circle cx="13" cy="13" r="12" stroke="${BRAND.ink}" stroke-width="1.4" opacity=".25" />
@@ -156,7 +164,6 @@ function renderFamille(fam: ReportFamille): string {
     </div>
     <div style="margin:8px 0 4px">${natures}</div>
     <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${esc(fam.explication)}</p>
-    <div style="font-size:11px;color:${BRAND.ink3};margin-top:6px">Confiance : ${esc(fam.confiance)}</div>
     ${transpo}
   </div>`;
 }

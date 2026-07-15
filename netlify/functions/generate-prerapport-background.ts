@@ -22,7 +22,7 @@ import { RESPONSE_FORMAT, parseReport } from '../../src/data/reportSchema';
 import type { PreRapportOutput } from '../../src/data/reportSchema';
 import { enforceSectionGrid } from '../../src/data/rapportStructure';
 import { statbank } from '../../src/data/statbank';
-import { renderReportHtml } from '../../src/data/reportHtml';
+import { renderReportHtml, REPORT_PAGE_FOOTER_PREFIX } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
 import { htmlToPdf } from './lib/pdf';
 import { sendReportEmail, notifyFailure } from './lib/email';
@@ -143,7 +143,12 @@ export const handler: Handler = async (event) => {
       famillesLabels: ctx.famillesDeclarees.map((f) => f.label),
       dateRapport: ctx.dateRapport,
     };
-    const pdf = await htmlToPdf(renderReportHtml(report, renderCtx));
+    // Bas de page (demande CEO) : « MIRA Audit · … · mois année ». Le mois/année
+    // vient de la date déjà formatée (« 22 juin 2026 ») dont on retire le jour.
+    const moisAnnee = ctx.dateRapport.replace(/^\d+\s+/, '');
+    const pdf = await htmlToPdf(renderReportHtml(report, renderCtx), {
+      footer: `${REPORT_PAGE_FOOTER_PREFIX} · ${moisAnnee}`,
+    });
 
     const pdfPath = `${leadId}/prerapport-mira.pdf`;
     const { error: uploadError } = await supabase.storage

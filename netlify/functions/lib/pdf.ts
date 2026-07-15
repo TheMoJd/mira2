@@ -39,7 +39,7 @@ export async function htmlToPdf(html: string, options: PdfOptions = {}): Promise
     await page.setContent(html, { waitUntil: 'load' });
     await page.evaluateHandle('document.fonts.ready');
 
-    const footer = options.footer ?? 'MIRA — document indicatif';
+    const footer = options.footer ?? 'MIRA · document indicatif';
     const footerTemplate = `<div style="width:100%;font-size:8px;color:#8a83a6;padding:0 14mm;display:flex;justify-content:space-between;font-family:sans-serif">
       <span>${footer}</span>
       <span>page <span class="pageNumber"></span> / <span class="totalPages"></span></span>
