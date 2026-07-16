@@ -67,7 +67,7 @@ const BRAND = {
  */
 export const SLOGAN = 'L’IA redessine la carte des compétences, MIRA donne la boussole.';
 export const VALUE_PROP =
-  'MIRA est votre pré-diagnostic d’exposition à l’IA de votre organisation. Ce pré-rapport offert applique l’état de l’art, recherche internationale de référence et données françaises, aux familles de métiers que vous avez déclarées, pour distinguer clairement ce qui s’automatise, ce qui s’augmente et ce qui se recompose. Chaque chiffre est sourcé. C’est une lecture externe, pas un audit de vos données internes. Voyez-le comme une invitation à un premier pas. La transformation commence par disposer des clés de lecture et se poser les bonnes questions, avant de passer à l’action.';
+  'MIRA est la plateforme d’accompagnement qui aide les organisations à anticiper, mesurer et piloter l’impact de l’IA sur leurs métiers et leurs compétences, du premier diagnostic jusqu’à la transformation. Ce pré-rapport offert applique l’état de l’art, recherche internationale de référence et données françaises, aux familles de métiers que vous avez déclarées, pour distinguer clairement ce qui s’automatise, ce qui s’augmente et ce qui se recompose. Chaque chiffre est sourcé. C’est une lecture externe, pas un audit de vos données internes. Voyez-le comme une invitation à un premier pas. La transformation commence par disposer des clés de lecture et se poser les bonnes questions, avant de passer à l’action.';
 
 /**
  * Préfixe du bas de page répété sur chaque page du PDF (demande CEO). Le mois et
