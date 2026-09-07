@@ -5,11 +5,13 @@ import RadialGauge from '../charts/RadialGauge';
 import ExposureBars from '../charts/ExposureBars';
 import mira from '../../data/mira';
 
-const team = [
-  { n: 'L. Martin', role: 'Chargé support', risk: 'élevé', v: 78 },
-  { n: 'S. Dubois', role: 'Comptable', risk: 'élevé', v: 71 },
-  { n: 'A. Petit', role: 'Chargé marketing', risk: 'modéré', v: 58 },
-  { n: 'K. Roy', role: 'Analyste data', risk: 'faible', v: 36 },
+// Vue agrégée du manager : la lecture porte sur les métiers de l'équipe, jamais
+// sur des personnes identifiées (conformité RGPD / IA Act).
+const metiers = [
+  { label: 'Support client', postes: 5, risk: 'élevé', v: 78 },
+  { label: 'Comptabilité', postes: 3, risk: 'élevé', v: 71 },
+  { label: 'Marketing', postes: 2, risk: 'modéré', v: 58 },
+  { label: 'Data / IT', postes: 2, risk: 'faible', v: 36 },
 ];
 
 const skills: [string, number][] = [
@@ -42,17 +44,17 @@ function LecturePreview({ which }: { which: number }) {
   if (which === 1) {
     return (
       <div>
-        <div style={{ fontSize: 13, color: 'var(--dk-mut)', marginBottom: 16, fontFamily: 'var(--mono)' }}>ÉQUIPE OPÉRATIONS · 12 COLLABORATEURS</div>
+        <div style={{ fontSize: 13, color: 'var(--dk-mut)', marginBottom: 16, fontFamily: 'var(--mono)' }}>ÉQUIPE OPÉRATIONS · 4 MÉTIERS · 12 POSTES</div>
         <div style={{ display: 'grid', gap: 10 }}>
-          {team.map((t, i) => (
-            <motion.div key={t.n} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
+          {metiers.map((m, i) => (
+            <motion.div key={m.label} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
               style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 14, alignItems: 'center', background: 'var(--dk-2)', borderRadius: 12, padding: '13px 16px' }}>
               <div>
-                <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff' }}>{t.n}</div>
-                <div style={{ fontSize: 12, color: 'var(--dk-mut)' }}>{t.role}</div>
+                <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff' }}>{m.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--dk-mut)' }}>{m.postes} postes</div>
               </div>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: riskColor(t.risk), border: `1px solid ${riskColor(t.risk)}`, borderRadius: 999, padding: '3px 10px' }}>{t.risk}</span>
-              <span className="tnum" style={{ fontFamily: 'var(--mono)', fontSize: 15, color: 'var(--dk-ink)', width: 28, textAlign: 'right' }}>{t.v}</span>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: riskColor(m.risk), border: `1px solid ${riskColor(m.risk)}`, borderRadius: 999, padding: '3px 10px' }}>{m.risk}</span>
+              <span className="tnum" style={{ fontFamily: 'var(--mono)', fontSize: 15, color: 'var(--dk-ink)', width: 28, textAlign: 'right' }}>{m.v}</span>
             </motion.div>
           ))}
         </div>

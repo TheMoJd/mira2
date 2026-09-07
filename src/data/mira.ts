@@ -77,8 +77,8 @@ const mira: MiraData = {
       key: "manager",
       label: "Manager & Équipe",
       lead: "Vue agrégée",
-      desc: "Une lecture par équipe ou département : profils à risque, compétences manquantes, dynamiques d'adaptation collectives et prévention des ruptures d'engagement.",
-      bullets: ["Profils à risque identifiés", "Compétences manquantes par équipe", "Recommandations managériales"],
+      desc: "Une lecture par équipe ou département : métiers à risque, compétences manquantes, dynamiques d'adaptation collectives et prévention des ruptures d'engagement.",
+      bullets: ["Métiers à risque identifiés", "Compétences manquantes par équipe", "Recommandations managériales"],
     },
     {
       key: "metier",
