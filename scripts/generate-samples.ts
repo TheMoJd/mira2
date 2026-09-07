@@ -11,15 +11,23 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import OpenAI from 'openai';
-import { SYSTEM_PROMPT, buildUserMessage } from '../src/data/reportPrompt';
+import { SYSTEM_PROMPT, buildUserMessage, buildSyntheseMessage } from '../src/data/reportPrompt';
 import type { GenerationContext } from '../src/data/reportPrompt';
-import { RESPONSE_FORMAT, parseReport } from '../src/data/reportSchema';
+import {
+  RESPONSE_FORMAT_CORPS,
+  RESPONSE_FORMAT_SYNTHESE,
+  parseCorps,
+  parseSynthese,
+  parseReport,
+  assembleReport,
+} from '../src/data/reportSchema';
 import type { PreRapportOutput } from '../src/data/reportSchema';
 import { renderReportHtml } from '../src/data/reportHtml';
 import type { ReportRenderContext } from '../src/data/reportHtml';
 import { famillesMetiers } from '../src/data/famillesMetiers';
 import { statbank } from '../src/data/statbank';
 import { reportSections, statsForSection, enforceSectionGrid } from '../src/data/rapportStructure';
+import { validateReport, blockingFindings } from '../src/data/reportValidation';
 import { enrichSiret } from '../netlify/functions/lib/enrichment';
 
 const OUT_DIR = 'docs/samples';
@@ -154,6 +162,7 @@ async function main() {
     enr: Awaited<ReturnType<typeof enrichSiret>>;
     report: PreRapportOutput;
     a: ReturnType<typeof audit>;
+    bloquants: ReturnType<typeof blockingFindings>;
   };
   const rows: Row[] = [];
 
@@ -183,20 +192,34 @@ async function main() {
     const existing = `${OUT_DIR}/${c.slug}.report.json`;
     let report: PreRapportOutput;
     if (process.env.SAMPLES_REUSE && existsSync(existing)) {
-      report = JSON.parse(readFileSync(existing, 'utf8')) as PreRapportOutput;
+      // `parseReport` (et non un JSON.parse aveugle) : un échantillon d'une version
+      // antérieure du contrat est rejeté avec un message clair, pas rendu de travers.
+      report = parseReport(readFileSync(existing, 'utf8'));
       console.log('  [reuse] report.json existant réutilisé (pas d’appel OpenAI)');
     } else {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: buildUserMessage(ctx) },
-        ],
-        response_format: RESPONSE_FORMAT,
-      });
-      const raw = completion.choices[0]?.message?.content;
-      if (!raw) throw new Error(`Réponse OpenAI vide pour ${c.nom}`);
-      report = parseReport(raw);
+      // Deux appels, comme en production : le corps, puis la synthèse exécutive §1
+      // à partir de la liste héritée (union des `sources_citees` de §2 à §7).
+      const ask = async (
+        user: string,
+        format: typeof RESPONSE_FORMAT_CORPS | typeof RESPONSE_FORMAT_SYNTHESE,
+      ): Promise<string> => {
+        const completion = await openai.chat.completions.create({
+          model,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: user },
+          ],
+          response_format: format,
+        });
+        const raw = completion.choices[0]?.message?.content;
+        if (!raw) throw new Error(`Réponse OpenAI vide pour ${c.nom}`);
+        return raw;
+      };
+      const corps = parseCorps(await ask(buildUserMessage(ctx), RESPONSE_FORMAT_CORPS));
+      const synthese = parseSynthese(
+        await ask(buildSyntheseMessage(ctx, corps), RESPONSE_FORMAT_SYNTHESE),
+      );
+      report = assembleReport(corps, synthese);
     }
     // Garde-fou grille : retire les citations hors section autorisée (défense en profondeur).
     enforceSectionGrid(report);
@@ -216,28 +239,34 @@ async function main() {
     writeFileSync(`${OUT_DIR}/${c.slug}.html`, renderReportHtml(report, renderCtx), 'utf8');
 
     const a = audit(report);
-    console.log(`  citations=${a.total} inventées=${a.invented.length} hors-grille=${a.outOfGrid.length}`);
-    rows.push({ c, enr, report, a });
+    const findings = validateReport(report);
+    const bloquants = blockingFindings(findings);
+    console.log(
+      `  citations=${a.total} inventées=${a.invented.length} hors-grille=${a.outOfGrid.length} contrôles-bloquants=${bloquants.length}`,
+    );
+    for (const f of bloquants) console.log(`    [${f.code}] §${f.sectionId} : ${f.message}`);
+    rows.push({ c, enr, report, a, bloquants });
   }
 
   // Index README partageable.
   const familleVerdicts = (r: Row): string => {
     const fam = r.report.sections.find((s) => s.id === 'familles-metiers')?.familles ?? [];
-    return fam.map((f) => `${f.famille} → **${f.exposition}** (confiance ${f.confiance})`).join(' · ');
+    return fam.map((f) => `${f.famille} → **${f.exposition}** (${f.natures.join(', ')})`).join(' · ');
   };
-  const firstMsg = (r: Row): string => {
-    const s = r.report.sections.find((x) => x.id === 'synthese-strategique');
-    return s?.contenu?.[0]?.paragraphes?.[0] ?? '';
+  /** Le chiffre-signal de l'encart §1 : ce que le dirigeant retiendra. */
+  const chiffreSignal = (r: Row): string => {
+    const encart = r.report.sections.find((x) => x.id === 'synthese-executive')?.encart;
+    return encart ? `${encart.chiffre_signal.valeur} — ${encart.chiffre_signal.phrase}` : '';
   };
 
   let md = `# Pré-rapports d'exemple — entreprises réelles\n\n`;
   md += `> Générés par [\`scripts/generate-samples.ts\`](../../scripts/generate-samples.ts) sur de **vraies entreprises**, avec leurs **vraies données** d'enrichissement (INSEE Sirene) et un **vrai appel OpenAI** (modèle \`${model}\`). Régénérer : \`npx tsx scripts/generate-samples.ts\`.\n\n`;
   md += `Chaque rapport est rendu en HTML (ouvrir dans un navigateur, imprimable en PDF) + le JSON structuré brut.\n\n`;
   md += `## Récapitulatif\n\n`;
-  md += `| Entreprise | Catégorie | NAF | Effectif | Localisation | Citations | Inventées | Hors-grille |\n`;
-  md += `|---|---|---|---|---|---|---|---|\n`;
+  md += `| Entreprise | Catégorie | NAF | Effectif | Localisation | Citations | Inventées | Hors-grille | Contrôles bloquants |\n`;
+  md += `|---|---|---|---|---|---|---|---|---|\n`;
   for (const r of rows) {
-    md += `| **${r.c.nom}** | ${r.enr.categorieEntreprise ?? '—'} | ${r.enr.nafCode ?? '—'} | ${r.enr.effectifTranche ?? '—'} | ${r.enr.localisation ?? '—'} | ${r.a.total} | ${r.a.invented.length} | ${r.a.outOfGrid.length} |\n`;
+    md += `| **${r.c.nom}** | ${r.enr.categorieEntreprise ?? '—'} | ${r.enr.nafCode ?? '—'} | ${r.enr.effectifTranche ?? '—'} | ${r.enr.localisation ?? '—'} | ${r.a.total} | ${r.a.invented.length} | ${r.a.outOfGrid.length} | ${r.bloquants.length} |\n`;
   }
   md += `\n**Garde-fou « zéro chiffre inventé »** : "Inventées" = id de stat inexistant ; "Hors-grille" = stat citée hors de sa section autorisée. Objectif : **0 / 0** partout.\n\n`;
   for (const r of rows) {
@@ -246,7 +275,8 @@ async function main() {
     md += `- **Familles déclarées** : ${r.c.familles.join(', ')}.\n`;
     md += `- **§3 — verdict par famille** : ${familleVerdicts(r)}\n`;
     md += `- **Audit citations** : ${r.a.total} citées, ${r.a.invented.length} inventées, ${r.a.outOfGrid.length} hors-grille.\n`;
-    md += `- **Message clé (extrait §1)** : ${firstMsg(r).slice(0, 320)}…\n`;
+    md += `- **Contrôles V1-V12 bloquants** : ${r.bloquants.length}${r.bloquants.length ? ` (${[...new Set(r.bloquants.map((f) => f.code))].join(', ')})` : ''}.\n`;
+    md += `- **Chiffre-signal (§1)** : ${chiffreSignal(r)}\n`;
     md += `- 📄 [Rapport HTML](${r.c.slug}.html) · [JSON](${r.c.slug}.report.json)\n\n`;
   }
   writeFileSync(`${OUT_DIR}/README.md`, md, 'utf8');

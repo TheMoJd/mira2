@@ -40,7 +40,7 @@ Le PDF généré se trouve dans le bucket privé `reports` (chemin `<leadId>/pre
 **Résultat attendu :**
 - Écran de confirmation « votre rapport arrive par email ».
 - En base, le lead passe `received` → `generating` → **`sent`** (quelques secondes à 1-2 min).
-- `has_report = true`, `n_sections = 10`.
+- `has_report = true`, `n_sections = 11` (§0 → §9, avec l'encart §8bis).
 - `naf_code` ≈ `63.11Z` et `effectif_tranche` renseignés (enrichissement INSEE via le SIRET).
 - Un fichier `reports/<leadId>/prerapport-mira.pdf` existe.
 - Si Resend configuré : email reçu avec le PDF en pièce jointe (vérifier aussi les spams).
@@ -51,6 +51,21 @@ select s->>'id' as section, s->'sources_citees' as sources
 from leads l, jsonb_array_elements(l.report_json->'sections') s
 where l.id = '<leadId>' order by 1;
 ```
+
+**Vérifier les contrôles V1-V12** (un rapport propre part avec `needs_review = false`) :
+```sql
+select needs_review, validation_findings
+from reports where lead_id = '<leadId>';
+```
+Un `needs_review = true` n'est pas un échec de génération : le rapport est parti, mais des
+contrôles sont restés en échec après les rejeux. `validation_findings` dit lesquels (code,
+niveau, section, message) et sert à mesurer la qualité de sortie lead après lead.
+
+**Vérifier le rendu du PDF** : l'encart de synthèse §1 porte un chiffre-signal et trois à
+quatre points clés, chaque chiffre du rapport porte un appel de note en exposant, et la
+section « Sources de référence » en fin de document liste ces notes, groupées par section.
+Aucun `[[...]]` ne doit apparaître à l'écran, et aucun nom d'organisation ni année de
+publication ne doit figurer dans le corps du texte.
 
 ---
 

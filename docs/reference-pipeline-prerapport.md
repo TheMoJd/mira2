@@ -126,9 +126,10 @@ jusqu'à **15 min**.
   1. Charge le lead. **Claim atomique** `received → generating` (compare-and-set) — garantit l'idempotence (un second déclenchement ne matche aucune ligne et abandonne).
   2. Enrichissement best-effort : `enrichSiret(siret)` + `fetchSiteResume(siteUrl)`. Persiste `naf_code` / `effectif_tranche` découverts (sans écraser l'existant).
   3. Construit le `GenerationContext`, mappe les familles déclarées vers ISCO (`mapFamilles`).
-  4. Appel **OpenAI** `chat.completions.create` avec `response_format = RESPONSE_FORMAT` (json_schema strict). Parse → `report_json`, persisté sur le lead.
+  4. **Deux appels OpenAI** `chat.completions.create` (json_schema strict) : d'abord le corps du rapport (`RESPONSE_FORMAT_CORPS` : §0, §2 → §8), puis la synthèse exécutive §1 (`RESPONSE_FORMAT_SYNTHESE`) à partir de la **liste héritée** du corps (union des `sources_citees` de §2 à §7). Aucun chiffre neuf en première page.
+  4b. `assembleReport(corps, synthese)` recompose le document et y injecte les textes figés du code (les deux lignes de l'encart, §8bis, §9). Puis **contrôles V1 → V12** (`validateReport`) : chaque échec bloquant fait **rejouer la seule section concernée**, avec le détail des contrôles échoués, deux fois au plus. Passé le plafond, le rapport part quand même et il est marqué pour relecture (`reports.needs_review`). Parse → `report_json`, persisté sur le lead.
   5. `renderReportHtml(report, ctx)` → `htmlToPdf(html)` → upload `reports/{leadId}/prerapport-mira.pdf` (`upsert: true`).
-  6. Insert ligne `reports` (`sources` = ids de stats réellement citées, filtrés sur la stat-bank par `citedStatIds`).
+  6. Insert ligne `reports` (`sources` = ids de stats réellement citées, filtrés sur la stat-bank par `citedStatIds` ; `needs_review` + `validation_findings` pour la relecture).
   7. `sendReportEmail(...)`. Si l'email échoue alors que Resend était configuré → `notifyFailure` (mais on reste en `sent`, le PDF est récupérable).
   8. `status = sent`.
 - **Échec** : toute exception → `status = failed` + `notifyFailure`.
@@ -164,11 +165,13 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 | Module | Rôle | Surface clé |
 |--------|------|-------------|
 | [`statbank.ts`](../src/data/statbank.ts) | Banque de ~76 statistiques sourcées, **seule source de chiffres citables**. | `statbank`, `StatEntry`, `statsForSection`, `socleStats`, `franceLayerStats`, `statsBySource`, `statsByTheme`, `statById`. |
-| [`rapportStructure.ts`](../src/data/rapportStructure.ts) | Les 10 sections §0→§9 + la **grille `allowedSources`** (section → sources autorisées). | `reportSections`, `statsForSection(section)`, types `ExpositionLevel`/`ImpactNature`/`ConfidenceLevel`. |
-| [`reportPrompt.ts`](../src/data/reportPrompt.ts) | Prompt de génération. | `SYSTEM_PROMPT` (10 règles absolues), `buildUserMessage(ctx)`, `GenerationContext`. |
-| [`reportSchema.ts`](../src/data/reportSchema.ts) | Contrat de sortie OpenAI. `parseReport(raw)` parse, valide **et normalise** (via `sanitizeReportProse`) la réponse du modèle. | `RESPONSE_FORMAT` (json_schema, `strict: true`), `parseReport`, `PreRapportOutput`, `ReportSectionOutput`, `ReportFamille`. |
-| [`reportSanitize.ts`](../src/data/reportSanitize.ts) | Verrou de style sur la prose LLM : tirets cadratins/demi-cadratins et points-virgules → virgules (plages numériques « 2025-2030 » et signes moins « -5 % » préservés). Appliqué par `parseReport` avant persistance et rendu PDF. | `sanitizeProse`, `sanitizeReportProse`. |
-| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → sections §0→§9 avec tableau récapitulatif « En un coup d'œil » en §3 → « Sources mobilisées » (titres dédupliqués org + année) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). Un filigrane « MIRA AUDIT » (élément `position:fixed`, opacité 5 %) est répété sur chaque page du PDF. | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
+| [`rapportStructure.ts`](../src/data/rapportStructure.ts) | Les 11 blocs §0 → §9 (avec §8bis) + la **grille `allowedSources`** (section → sources autorisées) + les **budgets de mots** + les **textes figés injectés par le code**. | `reportSections`, `statsForSection(section)`, `corpsSections()`, `syntheseSection()`, `codeSections()`, `inheritedStatIds`, `CALIBRAGE_COURT`, `LIGNE_PERIMETRE`, `COMMENT_UTILISER_PARAGRAPHES`, `METHODE_PARAGRAPHES`, types `ExpositionLevel`/`ImpactNature`/`PointCleAxe`. |
+| [`reportPrompt.ts`](../src/data/reportPrompt.ts) | Les prompts, documentés en intégralité dans [reference-prompts-mira.md](reference-prompts-mira.md). | `SYSTEM_PROMPT` (11 règles absolues), `buildUserMessage(ctx)` (corps), `buildSyntheseMessage(ctx, corps)` (§1), `buildSectionRetryMessage`, `buildSyntheseRetryMessage`, `GenerationContext`. |
+| [`reportSchema.ts`](../src/data/reportSchema.ts) | Contrats de sortie OpenAI, un par appel, plus le contrat du document persisté. `parseCorps`/`parseSynthese` parsent, valident **et normalisent** (via `sanitizeReportProse`) ; `assembleReport` recompose le document et injecte les textes figés du code. | `RESPONSE_FORMAT_CORPS`, `RESPONSE_FORMAT_SYNTHESE` (json_schema, `strict: true`), `parseCorps`, `parseSynthese`, `parseReport`, `assembleReport`, `PreRapportOutput`, `ReportSectionOutput`, `ReportFamille`, `ReportEncart`. |
+| [`reportCitations.ts`](../src/data/reportCitations.ts) | Les marqueurs `[[id]]` posés par le modèle → **appels de note numérotés** + section « Sources de référence », construite par le code. Numérotation continue sur tout le rapport, regroupement par section dans l'ordre d'apparition. | `buildCitationIndex(report)`, `tokenizeCitations`, `markersIn`, `stripMarkers`, `encartMarkers`, `renderNoteText(entry)`. |
+| [`reportValidation.ts`](../src/data/reportValidation.ts) | Les **contrôles V1 → V12** repassés derrière le modèle (voir [reference-prompts-mira.md § Validations](reference-prompts-mira.md#validations-dans-le-code)). Un échec bloquant fait rejouer la section. | `validateReport(report)`, `blockingFindings`, `sectionsToReplay`, `findingsBrief`, `syncSourcesCitees`, `SOCLE_ORG_NAMES`, `MOTS_CREUX`, `VOCABULAIRE_DECISION`. |
+| [`reportSanitize.ts`](../src/data/reportSanitize.ts) | Verrou de style sur la prose LLM : tirets cadratins/demi-cadratins et points-virgules → virgules (plages numériques « 2025-2030 » et signes moins « -5 % » préservés). Appliqué par `parseCorps`/`parseSynthese` avant assemblage, persistance et rendu PDF. | `sanitizeProse`, `sanitizeReportProse`. |
+| [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → §0 → encart de synthèse §1 → §2 à §8 avec tableau récapitulatif « En un coup d'œil » en §3 → encart §8bis → méthode §9 → « Sources de référence » (notes numérotées, groupées par section) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). Un filigrane « MIRA AUDIT » (élément `position:fixed`, opacité 5 %) est répété sur chaque page du PDF. | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
 | [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~28 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
 | [`rgpd.ts`](../src/data/rgpd.ts) | Mentions RGPD factuelles (pied de la page de fin du PDF + bas de l'email). Pas d'affirmation de conformité ; la mention d'information juridique complète reste à intégrer après validation métier/juridique. | `RGPD_PDF_FOOTER`, `RGPD_EMAIL_NOTICE`, `EMAIL_SENDER_NAME`. |
 
@@ -178,23 +181,29 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 - **Couche France** (`inSocle: false`) : `FR1` Parlons RH 2025 · `FR2` Parlons RH 2026 · `FR3` CEGOS 2025 · `FR4` Neobrain × Sopra Steria.
 
 Chaque `StatEntry` porte : `id`, `value`, `unit`, `claim` (FR citable), `verbatim` (audit),
-`theme`, `scope`, `source` (avec `sourceId` + `inSocle` + `page`), `provenance`
-(`primaire`/`secondaire`), `projection?`.
+`theme`, `scope`, `source` (avec `sourceId` + `inSocle` + `nature` `recherche`/`commerciale`
++ `page`), `provenance` (`primaire`/`secondaire`), `projection?`, `isco?`. La `nature` de
+l'éditeur est portée par la section « Sources de référence », jamais par le corps du texte.
 
-### Les 10 sections (§0→§9)
+### Les 11 blocs (§0 → §9, avec §8bis)
 
-| § | id | Contenu | Sources autorisées |
-|---|----|---------|--------------------|
-| 0 | `perimetre` | Carte d'identité du rapport | — |
-| 1 | `synthese-strategique` | 3-4 messages clés | `*` (transversal) |
-| 2 | `contexte` | État de l'IA | S02, S07, S08, FR1, FR2 |
-| 3 | `familles-metiers` | **Cœur** : caractérisation par famille | S01, S06, S10, S12, S13, S14, FR1, FR2 |
-| 4 | `competences` | Compétences montantes/déclinantes | S06, S08, S10, S12 |
-| 5 | `reorganisation` | Collaboration humain-IA | S04, S07 |
-| 6 | `facteur-humain` | Profils exposés, équité | S01, S14 |
-| 7 | `repere-sectoriel` | Benchmark adoption secteur | S02, S05, S06, FR1–FR4 |
-| 8 | `lecture-strategique` | Pont vers le payant (texte figé) | `*` |
-| 9 | `sources-methode` | **Figé** : socle + limites | `*` |
+| § | id | Contenu | Appel | Sources autorisées |
+|---|----|---------|-------|--------------------|
+| 0 | `perimetre` | Carte d'identité du rapport | corps | — |
+| 1 | `synthese-executive` | **Vitrine** : encart (chapeau, chiffre-signal, points clés) | synthèse | liste héritée (§2 → §7) |
+| 2 | `contexte` | État de l'IA | corps | S02, S07, S08, S15, FR1, FR2 |
+| 3 | `familles-metiers` | **Cœur** : caractérisation par famille | corps | S01, S06, S10, S12, S13, S14, S15, FR1, FR2 |
+| 4 | `competences` | Compétences montantes/déclinantes | corps | S06, S08, S10, S12 |
+| 5 | `reorganisation` | Collaboration humain-IA | corps | S04, S07, S15 |
+| 6 | `facteur-humain` | Profils exposés, équité | corps | S01, S14, FR5 |
+| 7 | `repere-sectoriel` | Repère sourcé du secteur | corps | S02, S05, S06, FR1–FR5 |
+| 8 | `lecture-strategique` | Les questions que cela pose | corps | — |
+| 8bis | `comment-utiliser` | **Figé** : précautions de lecture + pont vers le payant | code | — |
+| 9 | `sources-methode` | **Figé** : méthode + socle | code | — |
+
+Les sections `code` ne sont jamais soumises au modèle : `assembleReport` les injecte depuis
+`rapportStructure.ts`. La §1 est rédigée au **second appel**, et ne peut citer que des chiffres
+déjà exposés en §2 à §7.
 
 `statsForSection(section)` applique cette grille : une section ne peut citer QUE les stats
 dont `source.sourceId` figure dans son `allowedSources` (`'*'` = toutes). C'est le verrou

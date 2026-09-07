@@ -4,6 +4,12 @@
 
 Chaque rapport est rendu en HTML (ouvrir dans un navigateur, imprimable en PDF) + le JSON structuré brut.
 
+> ⚠️ **Ces échantillons sont antérieurs à la refonte des prompts** (synthèse exécutive §1,
+> marqueurs `[[id]]` et sources de référence, encart §8bis, caractérisation §3 sans `confiance`
+> ni `transposable_france`). Ils ne sont plus conformes au contrat de sortie actuel : les
+> régénérer avec `npx tsx scripts/generate-samples.ts` (un vrai appel OpenAI par entreprise,
+> deux appels par rapport) avant de s'en servir comme référence.
+
 ## Récapitulatif
 
 | Entreprise | Catégorie | NAF | Effectif | Localisation | Citations | Inventées | Hors-grille |

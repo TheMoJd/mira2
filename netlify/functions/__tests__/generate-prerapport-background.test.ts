@@ -63,11 +63,51 @@ vi.mock('../lib/email', () => ({
 
 import { handler } from '../generate-prerapport-background';
 
-const REPORT = {
+/**
+ * Réponses du modèle, un fixture par appel. Le corps est volontairement minimal :
+ * il échoue donc aux budgets de mots (V9), ce qui exerce la boucle de rejeu et le
+ * marquage pour relecture humaine.
+ */
+const CORPS = {
   sections: [
-    { id: 'perimetre', titre: 'Périmètre', contenu: [{ intertitre: null, paragraphes: ['ok'] }], sources_citees: [], familles: null },
+    {
+      id: 'perimetre',
+      titre: 'Périmètre',
+      contenu: [{ intertitre: null, paragraphes: ['ok'] }],
+      sources_citees: [],
+      familles: null,
+    },
   ],
 };
+
+const WEF = 'wef-2025-skills-transformed-39';
+
+const SYNTHESE = {
+  section: {
+    id: 'synthese-executive',
+    titre: 'Synthèse exécutive',
+    encart: {
+      chapeau: 'ACME et ses métiers tech.',
+      chiffre_signal: { valeur: '39 %', phrase: 'des compétences transformées', source_id: WEF },
+      points_cles: [
+        {
+          axe: 'exposition',
+          titre: 'Les tâches se déplacent',
+          texte: `Un déplacement de tâches [[${WEF}]].`,
+          source_id: WEF,
+        },
+      ],
+    },
+    contenu: [],
+    sources_citees: [WEF],
+  },
+};
+
+/** Nom du `response_format` demandé, pour répondre le bon fixture. */
+function formatName(params: unknown): string {
+  return (params as { response_format?: { json_schema?: { name?: string } } }).response_format
+    ?.json_schema?.name ?? '';
+}
 
 const event = { body: JSON.stringify({ leadId: 'lead-1' }) } as never;
 const ctx = {} as never;
@@ -82,20 +122,65 @@ beforeEach(() => {
 });
 
 describe('generate-prerapport-background (OpenAI + Supabase mockés)', () => {
-  it('génère puis persiste report_json et passe par le statut generating', async () => {
-    h.createCompletion.mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(REPORT) } }],
-    });
+  it('génère en deux appels, assemble avec les textes figés et persiste report_json', async () => {
+    h.createCompletion.mockImplementation(async (params: unknown) => ({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify(formatName(params).endsWith('synthese') ? SYNTHESE : CORPS),
+          },
+        },
+      ],
+    }));
 
     const res = (await handler(event, ctx, () => {})) as { statusCode: number };
     expect(res.statusCode).toBe(200);
-    expect(h.createCompletion).toHaveBeenCalledOnce();
+
+    // Deux appels au minimum : le corps, puis la synthèse à partir de la liste héritée.
+    const names = h.createCompletion.mock.calls.map(([p]) => formatName(p));
+    expect(names[0]).toBe('prerapport_mira_corps');
+    expect(names).toContain('prerapport_mira_synthese');
+
     expect(h.updates.some((u) => u.status === 'generating')).toBe(true);
-    const stored = h.updates.find((u) => 'report_json' in u);
-    expect(stored?.report_json).toEqual(REPORT);
-    // Tranche 4b : PDF uploadé → ligne `reports` insérée → statut final `sent`.
-    expect(h.inserts.some((i) => 'pdf_path' in i)).toBe(true);
+    const stored = h.updates.find((u) => 'report_json' in u)?.report_json as {
+      sections: { id: string; encart: unknown }[];
+    };
+    // Le rapport persisté porte les sections figées du code et l'encart complété.
+    expect(stored.sections.map((s) => s.id)).toEqual([
+      'perimetre',
+      'synthese-executive',
+      'comment-utiliser',
+      'sources-methode',
+    ]);
+    expect(stored.sections.find((s) => s.id === 'synthese-executive')?.encart).toMatchObject({
+      calibrage_court: expect.any(String),
+      perimetre: expect.any(String),
+    });
+
+    // PDF uploadé → ligne `reports` insérée → statut final `sent`.
+    const inserted = h.inserts.find((i) => 'pdf_path' in i)!;
+    expect(inserted).toBeDefined();
     expect(h.updates.some((u) => u.status === 'sent')).toBe(true);
+  });
+
+  it('marque le rapport pour relecture quand des contrôles restent en échec après les rejeux', async () => {
+    h.createCompletion.mockImplementation(async (params: unknown) => ({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify(formatName(params).endsWith('synthese') ? SYNTHESE : CORPS),
+          },
+        },
+      ],
+    }));
+
+    await handler(event, ctx, () => {});
+    const inserted = h.inserts.find((i) => 'pdf_path' in i)!;
+    // §0 tient en un mot : le budget de mots (V9) reste en échec après les rejeux.
+    expect(inserted.needs_review).toBe(true);
+    expect(Array.isArray(inserted.validation_findings)).toBe(true);
+    // Plafond de deux rejeux par section : la boucle s'arrête, elle ne tourne pas sans fin.
+    expect(h.createCompletion.mock.calls.length).toBeLessThanOrEqual(12);
   });
 
   it('passe le lead en failed si OpenAI échoue', async () => {

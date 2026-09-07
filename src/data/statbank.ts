@@ -47,6 +47,15 @@ export type StatScope =
 /** Donnée propre au rapport (`primaire`) ou reprise d'un tiers (`secondaire`). */
 export type StatProvenance = 'primaire' | 'secondaire';
 
+/**
+ * Nature de l'éditeur de la source : travail de `recherche` (institution,
+ * organisation internationale, laboratoire) ou publication `commerciale`
+ * (éditeur de logiciel, cabinet de conseil, plateforme, organisme de formation).
+ * Portée par la section « Sources de référence » du rapport, JAMAIS dans le corps
+ * du texte (cf. règle 8 du `SYSTEM_PROMPT`).
+ */
+export type StatNature = 'recherche' | 'commerciale';
+
 export interface StatSource {
   /**
    * Code de source du blueprint moteur (CEO, 22/06/2026).
@@ -57,6 +66,8 @@ export interface StatSource {
   sourceId: string;
   /** `true` = source du socle des 11 ; `false` = couche France complémentaire. */
   inSocle: boolean;
+  /** Nature de l'éditeur : `recherche` ou `commerciale` (reportée dans les sources). */
+  nature: StatNature;
   /** Document du corpus MIRA d'où provient la citation. */
   report: string;
   /** Organisation émettrice de la donnée d'origine. */
@@ -103,6 +114,7 @@ export interface StatEntry {
 const ILO: StatSource = {
   sourceId: 'S01',
   inSocle: true,
+  nature: 'recherche',
   report: 'OIT (ILO) — Generative AI and jobs 2023',
   org: 'Organisation internationale du travail (OIT)',
   year: 2023,
@@ -110,6 +122,7 @@ const ILO: StatSource = {
 const STANFORD: StatSource = {
   sourceId: 'S02',
   inSocle: true,
+  nature: 'recherche',
   report: 'Stanford HAI — AI Index Report 2026',
   org: 'Stanford HAI',
   year: 2026,
@@ -117,6 +130,7 @@ const STANFORD: StatSource = {
 const MIT_COLLAB: StatSource = {
   sourceId: 'S04',
   inSocle: true,
+  nature: 'recherche',
   report: 'MIT — Collaborating with AI Agents 2025',
   org: 'MIT',
   year: 2025,
@@ -124,6 +138,7 @@ const MIT_COLLAB: StatSource = {
 const OCDE_INCLUSIVE: StatSource = {
   sourceId: 'S05',
   inSocle: true,
+  nature: 'recherche',
   report: 'OCDE — Fostering an inclusive digital transformation 2024',
   org: 'OCDE',
   year: 2024,
@@ -131,6 +146,7 @@ const OCDE_INCLUSIVE: StatSource = {
 const WEF: StatSource = {
   sourceId: 'S06',
   inSocle: true,
+  nature: 'recherche',
   report: 'WEF — Future of Jobs Report 2025',
   org: 'World Economic Forum',
   year: 2025,
@@ -138,6 +154,7 @@ const WEF: StatSource = {
 const CIANUM: StatSource = {
   sourceId: 'S07',
   inSocle: true,
+  nature: 'recherche',
   report: 'CIANum — IA agentique',
   org: 'CIANum',
   year: 2025,
@@ -145,6 +162,7 @@ const CIANUM: StatSource = {
 const OCDE_CAP: StatSource = {
   sourceId: 'S08',
   inSocle: true,
+  nature: 'recherche',
   report: 'OCDE — Introducing the OECD AI Capability Indicators 2025',
   org: 'OCDE',
   year: 2025,
@@ -152,6 +170,7 @@ const OCDE_CAP: StatSource = {
 const INDEED: StatSource = {
   sourceId: 'S10',
   inSocle: true,
+  nature: 'commerciale',
   report: 'Indeed Hiring Lab — AI at Work Report 2025',
   org: 'Indeed Hiring Lab',
   year: 2025,
@@ -159,6 +178,7 @@ const INDEED: StatSource = {
 const PWC: StatSource = {
   sourceId: 'S12',
   inSocle: true,
+  nature: 'commerciale',
   report: 'PwC — Global AI Jobs Barometer 2025',
   org: 'PwC',
   year: 2025,
@@ -166,6 +186,7 @@ const PWC: StatSource = {
 const MIT_ICEBERG: StatSource = {
   sourceId: 'S13',
   inSocle: true,
+  nature: 'recherche',
   report: 'MIT — The Iceberg Index 2025',
   org: 'MIT',
   year: 2025,
@@ -173,6 +194,7 @@ const MIT_ICEBERG: StatSource = {
 const OCDE_WORKERS: StatSource = {
   sourceId: 'S14',
   inSocle: true,
+  nature: 'recherche',
   report: 'OCDE — Who will be the workers most affected by AI? 2024',
   org: 'OCDE',
   year: 2024,
@@ -182,6 +204,7 @@ const OCDE_WORKERS: StatSource = {
 const PARLONS_RH: StatSource = {
   sourceId: 'FR1',
   inSocle: false,
+  nature: 'commerciale',
   report: 'Parlons RH — Baromètre IA & RH 2025',
   org: 'Parlons RH',
   year: 2025,
@@ -191,6 +214,7 @@ const PARLONS_RH_2026: StatSource = {
   // 2e édition (n=343, collecte déc. 2025 – fév. 2026) ; suite longitudinale de PARLONS_RH 2025.
   sourceId: 'FR2',
   inSocle: false,
+  nature: 'commerciale',
   report: 'Parlons RH — 2ᵉ Baromètre national de l’IA dans les RH 2026',
   org: 'Parlons RH',
   year: 2026,
@@ -198,6 +222,7 @@ const PARLONS_RH_2026: StatSource = {
 const CEGOS: StatSource = {
   sourceId: 'FR3',
   inSocle: false,
+  nature: 'commerciale',
   report:
     'CEGOS — Baromètre 2025 : enjeux & perspectives du développement des compétences',
   org: 'CEGOS',
@@ -206,6 +231,7 @@ const CEGOS: StatSource = {
 const NEOBRAIN: StatSource = {
   sourceId: 'FR4',
   inSocle: false,
+  nature: 'commerciale',
   report: 'Neobrain × Sopra Steria — L’IA et les métiers',
   org: 'Neobrain × Sopra Steria',
   year: 2024,
@@ -217,6 +243,7 @@ const DARES_2030: StatSource = {
   // contexte (§6 facteur humain, §7 repère sectoriel) — exclu de l'exposition §3.
   sourceId: 'FR5',
   inSocle: false,
+  nature: 'recherche',
   report: 'France Stratégie / DARES — Les métiers en 2030 (rapport 2022)',
   org: 'France Stratégie / DARES',
   year: 2022,
@@ -227,6 +254,7 @@ const MCKINSEY_2017: StatSource = {
   // mal. Ancien (2017) mais l'automatisation physique évolue lentement → reste valable.
   sourceId: 'S15',
   inSocle: true,
+  nature: 'commerciale',
   report: 'McKinsey Global Institute — Jobs lost, jobs gained (2017)',
   org: 'McKinsey Global Institute',
   year: 2017,

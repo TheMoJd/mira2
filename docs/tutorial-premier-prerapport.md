@@ -75,11 +75,14 @@ Une fois en `status = sent` :
 - Bucket `reports` : téléchargez ce PDF.
 
 Ouvrez-le. Vous obtenez un document de marque MIRA : page de garde (logo, slogan,
-proposition de valeur), carte d'identité de l'entreprise, 10 sections (§0 périmètre → §9
-sources & méthode) avec en §3 un tableau « En un coup d'œil » puis une fiche par famille de
-métiers, la liste des sources mobilisées, une page de fin « Transparence et mentions »
-(génération assistée par IA + mention RGPD), et un filigrane « MIRA AUDIT » en travers de
-chaque page. **Chaque chiffre du rapport vient de la stat-bank** — le LLM n'en a inventé aucun.
+proposition de valeur), carte d'identité de l'entreprise, puis le déroulé §0 → §9 : le
+périmètre, l'encart de **synthèse exécutive** en première page (chapeau, chiffre-signal, trois
+à quatre points clés), le corps §2 à §8 avec en §3 un tableau « En un coup d'œil » puis une
+fiche par famille de métiers, l'encart §8bis « Comment utiliser ce rapport », la méthode §9,
+et la section « Sources de référence ». Le document se ferme sur une page « Transparence et
+mentions » (génération assistée par IA + mention RGPD), avec un filigrane « MIRA AUDIT » en
+travers de chaque page. **Chaque chiffre du rapport vient de la stat-bank** et porte un appel
+de note qui renvoie à sa référence : le modèle n'en a inventé aucun.
 
 ## Ce que vous avez construit (et la suite)
 

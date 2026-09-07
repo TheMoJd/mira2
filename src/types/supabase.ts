@@ -151,24 +151,30 @@ export type Database = {
           id: string
           lead_id: string
           model: string | null
+          needs_review: boolean
           pdf_path: string
           sources: Json | null
+          validation_findings: Json | null
         }
         Insert: {
           generated_at?: string
           id?: string
           lead_id: string
           model?: string | null
+          needs_review?: boolean
           pdf_path: string
           sources?: Json | null
+          validation_findings?: Json | null
         }
         Update: {
           generated_at?: string
           id?: string
           lead_id?: string
           model?: string | null
+          needs_review?: boolean
           pdf_path?: string
           sources?: Json | null
+          validation_findings?: Json | null
         }
         Relationships: [
           {

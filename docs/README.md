@@ -17,6 +17,7 @@ Suivant ce que vous cherchez (cadre [Diataxis](https://diataxis.fr/)) :
 | Faire tourner le pipeline en local (env, Supabase, PDF) | [howto-developpement-local.md](howto-developpement-local.md) | How-to |
 | Renvoyer un rapport, diagnostiquer un lead (scripts ops) | [howto-developpement-local.md § Scripts d'exploitation](howto-developpement-local.md#scripts-dexploitation) | How-to |
 | Connaître les functions, le modèle de données, les variables d'env | [reference-pipeline-prerapport.md](reference-pipeline-prerapport.md) | Référence |
+| Lire les prompts envoyés au modèle, en intégralité | [reference-prompts-mira.md](reference-prompts-mira.md) | Référence |
 | Comprendre l'architecture et les garde-fous (pourquoi) | [explanation-architecture-et-garde-fous.md](explanation-architecture-et-garde-fous.md) | Explication |
 
 Le [README racine](../README.md) couvre la landing et la prise en main générale ;
@@ -25,14 +26,17 @@ Le [README racine](../README.md) couvre la landing et la prise en main général
 ## Le pré-rapport freemium en une phrase
 
 Un visiteur remplit un wizard (`/pre-rapport`) → `submit-prerapport` capture le lead dans
-Supabase → `generate-prerapport-background` enrichit, appelle OpenAI (sortie structurée),
-rend un PDF de marque (Chromium) et l'envoie par email. **Aucun chiffre n'est inventé** :
-le LLM ne cite que des statistiques sourcées de la stat-bank.
+Supabase → `generate-prerapport-background` enrichit, appelle OpenAI en deux temps (le corps
+du rapport, puis la synthèse exécutive à partir des seuls chiffres déjà cités), repasse
+derrière le modèle avec les contrôles V1 → V12, rend un PDF de marque (Chromium) et l'envoie
+par email. **Aucun chiffre n'est inventé** : le modèle ne cite que des statistiques sourcées
+de la stat-bank, et chaque chiffre renvoie par un appel de note à la section
+« Sources de référence ».
 
 ## Notes de décision (historique)
 
 Le *pourquoi* daté des arbitrages produit et technique. Conservées comme archive ; la vérité
-« vivante » est dans les 4 documents ci-dessus.
+« vivante » est dans les 5 documents ci-dessus.
 
 - [freemium-pre-rapport-decisions.md](freemium-pre-rapport-decisions.md) — cadrage produit + retours CEO (19/06/2026).
 - [freemium-rapport-structure.md](freemium-rapport-structure.md) — structure du rapport, stat-bank, grille de sources (Tranche 3).

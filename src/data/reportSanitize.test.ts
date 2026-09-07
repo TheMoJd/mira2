@@ -79,8 +79,6 @@ describe('sanitizeReportProse — application récursive au rapport', () => {
               exposition: 'modérée',
               natures: ['augmentation'],
               part_taches: null,
-              confiance: 'élevée',
-              transposable_france: true,
               explication: 'Les tâches répétitives — surtout administratives — s’automatisent.',
             },
           ],
@@ -96,6 +94,6 @@ describe('sanitizeReportProse — application récursive au rapport', () => {
     expect(out.sections[0].id).toBe('familles-metiers');
     expect(out.sections[0].sources_citees).toEqual(['wef-2025-01']);
     expect(out.sections[0].contenu[0].intertitre).toBeNull();
-    expect(out.sections[0].familles?.[0].transposable_france).toBe(true);
+    expect(out.sections[0].familles?.[0].part_taches).toBeNull();
   });
 });

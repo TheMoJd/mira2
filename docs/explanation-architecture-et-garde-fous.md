@@ -76,21 +76,29 @@ qu'inutile : il détruit la crédibilité. Le système le garantit par **défens
    La prévention amont (le modèle ne voit pas le chiffre) et le filtre aval (on retire la citation
    parasite) se complètent — c'est la même règle, imposée deux fois.
 
-3. **Le prompt.** `SYSTEM_PROMPT` ouvre sur 10 règles absolues, dont la règle n°1 : « Tu ne
-   cites QUE des statistiques présentes dans la banque fournie. […] Si une donnée n'est pas
-   fournie, tu n'avances aucun chiffre — tu restes qualitatif. » Plus des règles de prudence :
-   recréditer les sources secondaires, formuler les projections au conditionnel, signaler les
-   données mondiales/US non transposables à une PME française, et l'honnêteté sur les familles
-   non couvertes (« à confirmer » plutôt qu'une généralité inventée).
+3. **Le prompt.** `SYSTEM_PROMPT` ouvre sur 11 règles absolues, dont la règle n°1 : « Tu ne
+   cites que des statistiques présentes dans la liste autorisée de la section en cours. […]
+   Sans donnée fournie, tu restes qualitatif. » Plus des règles de prudence : formuler les
+   projections au conditionnel, nommer le périmètre du chiffre dans la phrase qui le porte, et
+   l'honnêteté sur les familles non couvertes (« à confirmer » plutôt qu'une généralité
+   inventée). Détail intégral dans
+   [reference-prompts-mira.md](reference-prompts-mira.md).
 
-4. **Le rendu.** `reportHtml.ts` n'affiche que le texte de `report_json` ; la section
-   « Sources mobilisées » est **reconstruite depuis `statbank`** par les `id` cités
-   (`sources_citees`), puis dédupliquée en titres (organisation + année). Un `id`
-   inexistant n'apparaît tout simplement pas. Aucune fabrication possible à l'étape de rendu.
+4. **Les contrôles.** `reportValidation.ts` repasse derrière le modèle (V1 → V12) : chaque
+   phrase chiffrée doit porter son marqueur, chaque marqueur doit exister dans la liste
+   autorisée de sa section, la première page ne peut citer qu'un chiffre déjà exposé dans le
+   corps. Un échec **bloquant** fait rejouer la seule section fautive, deux fois au plus ;
+   au-delà, le rapport est marqué pour relecture humaine plutôt que d'être publié en silence.
+
+5. **Le rendu.** `reportHtml.ts` n'affiche que le texte de `report_json` ; les marqueurs
+   `[[id]]` deviennent des appels de note et la section « Sources de référence » est
+   **reconstruite depuis `statbank`** par `reportCitations.ts`. Un `id` inexistant ne reçoit
+   pas de numéro et son marqueur est effacé : aucune fabrication possible à l'étape de rendu,
+   et aucun appel de note qui ne renvoie à rien.
 
 La sortie structurée (`response_format` json_schema `strict`) verrouille la **forme** : le
-modèle doit produire exactement les 10 sections et, en §3, une caractérisation par famille.
-Cela rend deux rapports comparables d'une entreprise à l'autre.
+modèle doit produire exactement les sections attendues de chaque appel et, en §3, une
+caractérisation par famille. Cela rend deux rapports comparables d'une entreprise à l'autre.
 
 ### Unité d'analyse : la famille de métiers, pas le secteur
 
@@ -100,17 +108,27 @@ métier est plus ou moins exposé selon le secteur, mais c'est le métier qui po
 `famillesMetiers.ts` ancre l'appariement « texte libre Q4 → ISCO ».
 
 Quand aucune source ne couvre directement une famille déclarée, la caractérisation tombe à
-`exposition: 'à confirmer'`, `confiance: 'faible'`, `transposable_france: false`. On affiche
-honnêtement la limite plutôt que de combler par du vide sourcé. C'est assumé : le socle ne
-couvre pas les 28 familles.
+`exposition: 'à confirmer'` et le rapport le dit en une phrase. On affiche honnêtement la
+limite plutôt que de combler par du vide sourcé. C'est assumé : le socle ne couvre pas les 28
+familles.
+
+La caractérisation ne porte **ni** niveau de confiance **ni** verdict de transposabilité par
+famille (décision Caroline sur la refonte des prompts). Ces mentions, répétées fiche après
+fiche, diluaient le constat sans rien apprendre au lecteur. Les précautions de lecture sont
+désormais prises **une fois pour toutes**, et pleinement, par l'encart §8bis « Comment
+utiliser ce rapport » en fin de document : ce qu'un chiffre d'exposition dit et ne dit pas, ce
+qu'un chiffre national ne dit pas de votre bassin d'emploi, ce qu'il faudrait croiser pour
+passer de la tendance à la mesure.
 
 ### La frontière gratuit / payant
 
 Le freemium applique **l'état de l'art public à vos métiers**. Il ne touche **jamais** aux
 données internes de l'entreprise (maturité IA, inventaire de compétences, organisation) — le
 formulaire n'en collecte d'ailleurs aucune. Le scoring fin par métier, l'analyse d'écart et la
-feuille de route sont réservés au payant, vers lequel la section §8 fait un pont (texte figé).
-C'est ce qui empêche le freemium de cannibaliser l'offre principale.
+feuille de route sont réservés au payant, vers lequel l'encart §8bis fait un pont (texte figé
+injecté par le code, jamais rédigé par le modèle). §8 reste analytique : elle pose des
+questions, elle ne vend rien. C'est ce qui empêche le freemium de cannibaliser l'offre
+principale.
 
 ---
 

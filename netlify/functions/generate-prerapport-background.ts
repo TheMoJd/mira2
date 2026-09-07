@@ -1,14 +1,20 @@
 /**
- * generate-prerapport-background — Netlify Background Function (Tranche 4)
- * =======================================================================
+ * generate-prerapport-background — Netlify Background Function
+ * ============================================================
  * Déclenchée par `submit-prerapport`. Tourne en asynchrone (jusqu'à 15 min).
  *
  * Étapes :
  *   1. Charge le lead, passe le statut à `generating`.
  *   2. Enrichissement INSEE Sirene (SIRET → NAF/effectif/raison sociale) + lecture du site.
- *   3. Construit le contexte + appelle OpenAI (sortie structurée json_schema).
- *   4. Persiste le rapport structuré dans `leads.report_json`.
- *   4b. Rendu HTML → PDF (Chromium) → upload `reports` → ligne `reports` → email Resend → statut `sent`.
+ *   3. Génération en DEUX appels (sortie structurée json_schema) :
+ *      a. le corps du rapport (§0, §2 → §8) ;
+ *      b. la synthèse exécutive §1, à partir de la liste héritée du corps (union des
+ *         `sources_citees` de §2 à §7) — aucun chiffre neuf en première page.
+ *   4. Assemblage (+ textes figés du code), contrôles V1 → V12, rejeu des sections
+ *      en échec (plafond de deux par section), puis marquage pour relecture humaine
+ *      s'il reste des échecs bloquants.
+ *   5. Persistance dans `leads.report_json`.
+ *   6. Rendu HTML → PDF (Chromium) → upload `reports` → ligne `reports` → email Resend → `sent`.
  *
  * Le verrou « zéro chiffre inventé » est garanti en amont : `buildUserMessage`
  * n'injecte, par section, que les stats autorisées par la grille `allowedSources`.
@@ -17,10 +23,31 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import type { Database } from '../../src/types/supabase';
-import { SYSTEM_PROMPT, buildUserMessage } from '../../src/data/reportPrompt';
-import { RESPONSE_FORMAT, parseReport } from '../../src/data/reportSchema';
-import type { PreRapportOutput } from '../../src/data/reportSchema';
-import { enforceSectionGrid } from '../../src/data/rapportStructure';
+import {
+  SYSTEM_PROMPT,
+  buildUserMessage,
+  buildSyntheseMessage,
+  buildSectionRetryMessage,
+  buildSyntheseRetryMessage,
+} from '../../src/data/reportPrompt';
+import type { GenerationContext } from '../../src/data/reportPrompt';
+import {
+  RESPONSE_FORMAT_CORPS,
+  RESPONSE_FORMAT_SYNTHESE,
+  parseCorps,
+  parseSynthese,
+  assembleReport,
+} from '../../src/data/reportSchema';
+import type { CorpsOutput, PreRapportOutput, SyntheseOutput } from '../../src/data/reportSchema';
+import { enforceSectionGrid, SYNTHESE_SECTION_ID } from '../../src/data/rapportStructure';
+import {
+  validateReport,
+  blockingFindings,
+  sectionsToReplay,
+  findingsBrief,
+  syncSourcesCitees,
+} from '../../src/data/reportValidation';
+import type { ValidationFinding } from '../../src/data/reportValidation';
 import { statbank } from '../../src/data/statbank';
 import { renderReportHtml, REPORT_PAGE_FOOTER_PREFIX } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
@@ -29,12 +56,15 @@ import { sendReportEmail, notifyFailure } from './lib/email';
 import { enrichSiret, fetchSiteResume } from './lib/enrichment';
 import { buildGenerationContext } from './lib/context';
 
-/** Ids connus de la stat-bank — filtre les ids cités par le LLM pour un audit propre. */
+/** Ids connus de la stat-bank — filtre les ids cités par le modèle pour un audit propre. */
 const KNOWN_STAT_IDS = new Set(statbank.map((s) => s.id));
+
+/** Plafond de rejeux par section avant marquage pour relecture humaine. */
+const MAX_REPLAYS_PER_SECTION = 2;
 
 /**
  * Ids (dédupliqués) des statistiques effectivement citées dans le rapport,
- * restreints à ceux qui existent réellement dans la stat-bank (le LLM pourrait
+ * restreints à ceux qui existent réellement dans la stat-bank (le modèle pourrait
  * citer un id inexistant — on ne le persiste pas dans l'audit `reports.sources`).
  */
 function citedStatIds(report: PreRapportOutput): string[] {
@@ -45,6 +75,91 @@ function citedStatIds(report: PreRapportOutput): string[] {
     }
   }
   return [...ids];
+}
+
+/**
+ * Génère le rapport : corps, puis synthèse exécutive, puis boucle de contrôle.
+ *
+ * La boucle est le pendant code de la consigne : la liste autorisée est une
+ * consigne, et une consigne peut être mal suivie. À chaque tour, on assemble, on
+ * valide, et on ne rejoue QUE les sections porteuses d'un échec bloquant, en leur
+ * renvoyant le détail des contrôles échoués. Une section ne peut être rejouée que
+ * `MAX_REPLAYS_PER_SECTION` fois : au-delà, le rapport part quand même (il reste
+ * lisible et sourcé) mais il est marqué pour relecture humaine.
+ */
+async function generateReport(
+  openai: OpenAI,
+  model: string,
+  ctx: GenerationContext,
+  leadId: string,
+): Promise<{ report: PreRapportOutput; findings: ValidationFinding[] }> {
+  type ResponseFormat = typeof RESPONSE_FORMAT_CORPS | typeof RESPONSE_FORMAT_SYNTHESE;
+  const ask = async (user: string, format: ResponseFormat): Promise<string> => {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: user },
+      ],
+      response_format: format,
+    });
+    const raw = completion.choices[0]?.message?.content;
+    if (!raw) throw new Error('Réponse OpenAI vide');
+    return raw;
+  };
+
+  // (a) le corps, (b) la synthèse exécutive à partir de la liste héritée.
+  let corps: CorpsOutput = parseCorps(await ask(buildUserMessage(ctx), RESPONSE_FORMAT_CORPS));
+  let synthese: SyntheseOutput = parseSynthese(
+    await ask(buildSyntheseMessage(ctx, corps), RESPONSE_FORMAT_SYNTHESE),
+  );
+
+  let report = assembleReport(corps, synthese);
+  let findings = validateReport(report);
+  const replays = new Map<string, number>();
+
+  while (blockingFindings(findings).length > 0) {
+    // La synthèse §1 est rejouée EN DERNIER du tour : elle s'adosse à la liste
+    // héritée du corps, donc elle doit voir les sections déjà corrigées.
+    const todo = sectionsToReplay(findings)
+      .filter((id) => (replays.get(id) ?? 0) < MAX_REPLAYS_PER_SECTION)
+      .sort((a, b) => Number(a === SYNTHESE_SECTION_ID) - Number(b === SYNTHESE_SECTION_ID));
+    if (todo.length === 0) break;
+
+    for (const sectionId of todo) {
+      replays.set(sectionId, (replays.get(sectionId) ?? 0) + 1);
+      const brief = findingsBrief(blockingFindings(findings), sectionId);
+      console.warn(`[generate] lead ${leadId} : rejeu §${sectionId}\n${brief}`);
+      try {
+        if (sectionId === SYNTHESE_SECTION_ID) {
+          synthese = parseSynthese(
+            await ask(buildSyntheseRetryMessage(ctx, corps, brief), RESPONSE_FORMAT_SYNTHESE),
+          );
+        } else {
+          const retry = parseCorps(
+            await ask(buildSectionRetryMessage(ctx, sectionId, brief), RESPONSE_FORMAT_CORPS),
+          );
+          const fresh = retry.sections.find((s) => s.id === sectionId);
+          if (!fresh) throw new Error(`le rejeu n'a pas renvoyé la section ${sectionId}`);
+          corps = {
+            sections: corps.sections.map((s) => (s.id === sectionId ? fresh : s)),
+          };
+        }
+      } catch (err) {
+        // Un rejeu qui échoue (JSON invalide, section absente) ne fait pas tomber la
+        // génération : on garde la version précédente et on consomme un essai.
+        console.warn(`[generate] lead ${leadId} : rejeu §${sectionId} échoué`, err);
+      }
+    }
+
+    report = assembleReport(corps, synthese);
+    findings = validateReport(report);
+  }
+
+  // `syncSourcesCitees` APRÈS la validation (sinon V7 ne verrait plus rien) :
+  // `reports.sources` décrit alors exactement ce que le lecteur voit en note.
+  // `enforceSectionGrid` reste le dernier filet sur la grille section → sources.
+  return { report: enforceSectionGrid(syncSourcesCitees(report)), findings };
 }
 
 export const handler: Handler = async (event) => {
@@ -110,21 +225,14 @@ export const handler: Handler = async (event) => {
 
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
     const model = process.env.OPENAI_MODEL ?? 'gpt-4.1';
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: buildUserMessage(ctx) },
-      ],
-      // Schéma strict dérivé de la source unique `PreRapportSchema` (force les 10 sections §0→§9).
-      response_format: RESPONSE_FORMAT,
-    });
+    const { report, findings } = await generateReport(openai, model, ctx, leadId);
 
-    const raw = completion.choices[0]?.message?.content;
-    if (!raw) throw new Error('Réponse OpenAI vide');
-    // Garde-fou grille : retire toute citation hors de la section autorisée (le LLM
-    // peut déraper ; la grille n'est sinon imposée que par le prompt).
-    const report = enforceSectionGrid(parseReport(raw));
+    const bloquants = blockingFindings(findings);
+    if (bloquants.length > 0) {
+      console.warn(
+        `[generate] lead ${leadId} : ${bloquants.length} contrôle(s) bloquant(s) encore en échec après rejeux, rapport marqué pour relecture.`,
+      );
+    }
 
     await supabase
       .from('leads')
@@ -161,6 +269,12 @@ export const handler: Handler = async (event) => {
       pdf_path: pdfPath,
       model,
       sources: citedStatIds(report) as unknown as Database['public']['Tables']['reports']['Insert']['sources'],
+      // Contrôles V1-V12 encore en échec après les rejeux : le rapport part, mais il
+      // est marqué pour relecture humaine (et les échecs sont conservés pour l'ops).
+      needs_review: bloquants.length > 0,
+      validation_findings: (findings.length > 0
+        ? findings
+        : null) as unknown as Database['public']['Tables']['reports']['Insert']['validation_findings'],
     });
 
     const emailResult = await sendReportEmail({ to: lead.email, pdf, nomEntreprise: ctx.nomEntreprise });

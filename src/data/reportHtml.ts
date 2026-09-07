@@ -1,29 +1,43 @@
 /**
- * GABARIT HTML DU PRÉ-RAPPORT (Tranche 4b + refonte CEO Tranche B)
- * ================================================================
+ * GABARIT HTML DU PRÉ-RAPPORT
+ * ===========================
  *
- * `renderReportHtml(report, ctx)` transforme la sortie structurée du LLM
+ * `renderReportHtml(report, ctx)` transforme la sortie structurée du modèle
  * (`PreRapportOutput`) en un **document HTML autoportant** prêt à être imprimé en
  * PDF par Chromium (`netlify/functions/lib/pdf.ts`).
  *
  * Principes :
- *  - **Fonction pure, sans dépendance** (pas de React) — testable au vitest.
- *  - **Zéro chiffre inventé au rendu** : on n'affiche que le texte de `report_json` ;
- *    les sources sont **résolues depuis `statbank`** par leur `id` (`sources_citees`).
+ *  - **Fonction pure, sans dépendance** (pas de React), testable au vitest.
+ *  - **Zéro chiffre inventé au rendu** : on n'affiche que le texte de `report_json`.
+ *    Les marqueurs `[[id]]` posés par le modèle deviennent des **appels de note
+ *    numérotés**, et la section « Sources de référence » est construite ici, à
+ *    partir de la stat-bank (cf. `reportCitations.ts`).
  *  - **Palette violet de la marque MIRA** centralisée dans `BRAND` (re-skinnable).
  *  - Polices de marque chargées via Google Fonts (le PDF est rendu avec accès réseau),
  *    avec une stack de secours système.
  *  - **Style de prose naturel** : aucun tiret cadratin ni point-virgule dans les
- *    textes codés en dur (consigne CEO : éviter ce qui « fait IA »).
+ *    textes codés en dur.
  *
- * Structure (refonte CEO) : page de garde (branding) → carte d'identité (page 2) →
- * sections §0..§9 (avec tableau récapitulatif en §3) → sources allégées → page de fin.
+ * Structure : page de garde (branding) → carte d'identité (page 2) → §0 → encart de
+ * synthèse §1 → §2 à §8 (tableau récapitulatif en §3) → encart §8bis → méthode §9 →
+ * « Sources de référence » → page de fin.
  */
 
-import type { PreRapportOutput, ReportSectionOutput, ReportBloc, ReportFamille } from './reportSchema';
-import { reportSections } from './rapportStructure';
-import { statbank } from './statbank';
-import type { StatEntry } from './statbank';
+import type {
+  PreRapportOutput,
+  ReportSectionOutput,
+  ReportBloc,
+  ReportFamille,
+  ReportEncart,
+} from './reportSchema';
+import {
+  reportSections,
+  SOURCES_SECTION_TITLE,
+  CONTACT_URL,
+  COMMENT_UTILISER_CTA,
+} from './rapportStructure';
+import type { CitationIndex } from './reportCitations';
+import { buildCitationIndex, tokenizeCitations, markersIn, renderNoteText } from './reportCitations';
 import { RGPD_PDF_FOOTER } from './rgpd';
 
 /** Contexte de l'entreprise pour la page de garde et l'entête (issu du lead + enrichissement). */
@@ -113,37 +127,117 @@ const ESCAPES: Record<string, string> = {
   '"': '&quot;',
   "'": '&#39;',
 };
-/** Échappe le texte (provient du LLM) avant insertion dans le HTML. */
+/** Échappe le texte (provient du modèle) avant insertion dans le HTML. */
 function esc(input: string): string {
   return input.replace(/[&<>"']/g, (c) => ESCAPES[c]);
 }
 
-// --- Résolution des sources citées ----------------------------------------
+// --- Appels de note --------------------------------------------------------
 
-const STAT_BY_ID: Map<string, StatEntry> = new Map(statbank.map((s) => [s.id, s]));
+/** Numéro tel qu'il s'affiche par id de section, dérivé du déroulé (« 8bis » compris). */
+const SECTION_LABEL_BY_ID: Map<string, string> = new Map(
+  reportSections.map((s) => [s.id, s.numLabel]),
+);
+/** Appel de note en exposant. Un id inconnu de la stat-bank n'affiche rien. */
+function noteCall(n: number | undefined): string {
+  if (n === undefined) return '';
+  return `<sup style="font-size:8.5px;font-weight:600;color:${BRAND.violet};line-height:0">${n}</sup>`;
+}
 
-/** Numéro de section (§N) par id, dérivé de la structure de référence. */
-const SECTION_NUM_BY_ID: Map<string, number> = new Map(reportSections.map((s) => [s.id, s.num]));
+/**
+ * Échappe une chaîne de prose et remplace ses marqueurs `[[id]]` par des appels de
+ * note numérotés. C'est ici que la traçabilité devient visible pour le lecteur.
+ */
+function escWithNotes(text: string, index: CitationIndex): string {
+  return tokenizeCitations(text)
+    .map((t) => (t.type === 'text' ? esc(t.value) : noteCall(index.numberById.get(t.id))))
+    .join('');
+}
 
 // --- Blocs de contenu ------------------------------------------------------
 
-function renderBloc(bloc: ReportBloc): string {
+function renderBloc(bloc: ReportBloc, index: CitationIndex): string {
   const titre = bloc.intertitre
-    ? `<h3 style="font-size:14px;font-weight:600;color:${BRAND.violet700};margin:18px 0 6px">${esc(
+    ? `<h3 style="font-size:14px;font-weight:600;color:${BRAND.violet700};margin:18px 0 6px">${escWithNotes(
         bloc.intertitre,
+        index,
       )}</h3>`
     : '';
   const paras = bloc.paragraphes
     // La sanitisation de style (reportSanitize) peut vider une chaîne réduite à
     // un tiret : ne pas rendre de <p> vide.
     .filter((p) => p.trim() !== '')
-    .map((p) => `<p style="margin:0 0 10px;line-height:1.6;color:${BRAND.ink}">${esc(p)}</p>`)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 10px;line-height:1.6;color:${BRAND.ink}">${escWithNotes(p, index)}</p>`,
+    )
     .join('');
   return titre + paras;
 }
 
+// --- §1 : l'encart de synthèse exécutive -----------------------------------
+
+/**
+ * Encart de format fixe en première page : chapeau, chiffre-signal isolé, trois à
+ * quatre points clés, puis les deux lignes figées injectées par le code (calibrage
+ * et périmètre). Aucun chiffre neuf ici : tout vient déjà du corps du rapport.
+ */
+function renderEncart(encart: ReportEncart, index: CitationIndex): string {
+  // Le marqueur du chiffre-signal peut être dans la phrase (format du prompt) ou
+  // seulement déclaré en `source_id` : on n'ajoute l'appel de note qu'à défaut.
+  const signalNote = markersIn(encart.chiffre_signal.phrase).includes(encart.chiffre_signal.source_id)
+    ? ''
+    : noteCall(index.numberById.get(encart.chiffre_signal.source_id));
+  const points = encart.points_cles
+    .map((pt) => {
+      // Si le modèle a oublié le marqueur dans le texte, l'appel de note est placé
+      // en fin de point clé : le chiffre reste traçable dans tous les cas.
+      const inline = markersIn(pt.texte);
+      const fallback = inline.includes(pt.source_id)
+        ? ''
+        : noteCall(index.numberById.get(pt.source_id));
+      return `<div style="padding:10px 0;border-top:1px solid ${BRAND.lineSoft}">
+        <div style="font-size:12.5px;font-weight:600;color:${BRAND.violet700};margin:0 0 3px">${escWithNotes(
+          pt.titre,
+          index,
+        )}</div>
+        <div style="font-size:12.5px;line-height:1.55;color:${BRAND.ink}">${escWithNotes(
+          pt.texte,
+          index,
+        )}${fallback}</div>
+      </div>`;
+    })
+    .join('');
+
+  return `<div style="border:1px solid ${BRAND.line};border-top:4px solid ${BRAND.violet};border-radius:14px;padding:18px 20px;background:${BRAND.bgSoft}">
+    <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${BRAND.ink}">${escWithNotes(
+      encart.chapeau,
+      index,
+    )}</p>
+    <div style="display:flex;align-items:baseline;gap:14px;padding:14px 16px;margin:0 0 12px;background:${BRAND.paper};border-radius:10px;border-left:4px solid ${BRAND.violet}">
+      <span style="font-family:var(--serif);font-size:34px;font-weight:500;color:${BRAND.violet};line-height:1;white-space:nowrap">${escWithNotes(
+        encart.chiffre_signal.valeur,
+        index,
+      )}</span>
+      <span style="font-size:13.5px;line-height:1.45;color:${BRAND.ink}">${escWithNotes(
+        encart.chiffre_signal.phrase,
+        index,
+      )}${signalNote}</span>
+    </div>
+    ${points}
+    <p style="margin:14px 0 0;font-size:11px;line-height:1.5;color:${BRAND.ink3}">${esc(
+      encart.calibrage_court,
+    )}</p>
+    <p style="margin:6px 0 0;font-size:11px;line-height:1.5;color:${BRAND.ink3}">${esc(
+      encart.perimetre,
+    )}</p>
+  </div>`;
+}
+
+// --- §3 : les familles de métiers ------------------------------------------
+
 /** Carte de caractérisation d'une famille de métiers (§3). */
-function renderFamille(fam: ReportFamille): string {
+function renderFamille(fam: ReportFamille, index: CitationIndex): string {
   const color = expositionColor(fam.exposition);
   const natures = fam.natures
     .map(
@@ -154,17 +248,16 @@ function renderFamille(fam: ReportFamille): string {
   const part = fam.part_taches
     ? `<span style="color:${BRAND.ink2}"> · ${esc(fam.part_taches)} des tâches</span>`
     : '';
-  const transpo = fam.transposable_france
-    ? ''
-    : `<div style="font-size:11px;color:${BRAND.ink3};margin-top:6px;font-style:italic">Donnée non directement transposable à une PME française.</div>`;
   return `<div style="border:1px solid ${BRAND.line};border-left:4px solid ${color};border-radius:10px;padding:14px 16px;margin:0 0 12px;background:${BRAND.paper}">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
       <strong style="font-size:14px;color:${BRAND.ink}">${esc(fam.famille)}</strong>
       <span style="font-size:12px;font-weight:600;color:${color}">Exposition ${esc(fam.exposition)}${part}</span>
     </div>
     <div style="margin:8px 0 4px">${natures}</div>
-    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${esc(fam.explication)}</p>
-    ${transpo}
+    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${escWithNotes(
+      fam.explication,
+      index,
+    )}</p>
   </div>`;
 }
 
@@ -199,20 +292,60 @@ function renderRecapTable(familles: ReportFamille[]): string {
   </div>`;
 }
 
-function renderSection(section: ReportSectionOutput): string {
-  const num = SECTION_NUM_BY_ID.get(section.id);
-  const prefix = num !== undefined ? `§${num} · ` : '';
+// --- §8bis : la prise de parole de MIRA ------------------------------------
+
+/**
+ * Encart §8bis « Comment utiliser ce rapport ». Visuellement encadré et distinct du
+ * corps analytique : c'est une prise de parole de MIRA, pas une analyse. Le
+ * « contactez-nous ! » de clôture est un lien.
+ */
+function renderEncadre(section: ReportSectionOutput): string {
+  const paragraphes = section.contenu
+    .flatMap((b) => b.paragraphes)
+    .filter((p) => p.trim() !== '')
+    .map((p) => {
+      const isCta = p.trim() === COMMENT_UTILISER_CTA;
+      const html = isCta
+        ? esc(p).replace(
+            esc('contactez-nous !'),
+            `<a href="${CONTACT_URL}" style="color:${BRAND.violet};font-weight:600;text-decoration:underline">contactez-nous !</a>`,
+          )
+        : esc(p);
+      return `<p style="margin:0 0 10px;line-height:1.6;color:${BRAND.ink}${
+        isCta ? ';font-weight:500' : ''
+      }">${html}</p>`;
+    })
+    .join('');
+  return `<section style="margin:0 0 26px;page-break-inside:avoid">
+    <div style="border:1px solid ${BRAND.violet};border-radius:14px;padding:18px 20px;background:${BRAND.bgSoft}">
+      <h2 style="font-family:var(--serif);font-size:18px;font-weight:500;color:${BRAND.violet};margin:0 0 12px">${esc(
+        section.titre,
+      )}</h2>
+      ${paragraphes}
+    </div>
+  </section>`;
+}
+
+// --- Sections --------------------------------------------------------------
+
+function renderSection(section: ReportSectionOutput, index: CitationIndex): string {
+  if (section.id === 'comment-utiliser') return renderEncadre(section);
+
+  const label = SECTION_LABEL_BY_ID.get(section.id);
+  const prefix = label !== undefined ? `§${label} · ` : '';
   const hasFamilles = section.familles && section.familles.length > 0;
   const recap = hasFamilles ? renderRecapTable(section.familles!) : '';
   const familles = hasFamilles
-    ? `<div style="margin-top:14px">${section.familles!.map(renderFamille).join('')}</div>`
+    ? `<div style="margin-top:14px">${section.familles!.map((f) => renderFamille(f, index)).join('')}</div>`
     : '';
+  const encart = section.encart ? renderEncart(section.encart, index) : '';
   return `<section style="margin:0 0 26px;page-break-inside:avoid">
     <h2 style="font-family:var(--serif);font-size:19px;font-weight:500;color:${BRAND.violet};margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid ${BRAND.lineSoft}">
       <span style="font-size:13px;color:${BRAND.ink3};font-family:var(--sans)">${prefix}</span>${esc(section.titre)}
     </h2>
+    ${encart}
     ${recap}
-    ${section.contenu.map(renderBloc).join('')}
+    ${section.contenu.map((b) => renderBloc(b, index)).join('')}
     ${familles}
   </section>`;
 }
@@ -269,35 +402,41 @@ function renderIdentity(ctx: ReportRenderContext): string {
 }
 
 /**
- * Section « Sources » allégée (refonte CEO B5) : on ne conserve que les titres des
- * documents mobilisés (organisation + année), dédupliqués, sans l'appareil de
- * références détaillé qui prenait plusieurs pages.
+ * Section « Sources de référence », construite intégralement par le code à partir
+ * des marqueurs du texte. Regroupement par section dans l'ordre d'apparition,
+ * numérotation continue sur tout le rapport. Une entrée donne l'organisation,
+ * l'année, la page, la formulation complète, le périmètre, et le cas échéant le
+ * caractère de projection, la nature commerciale de la source et la recréditation
+ * d'une donnée secondaire.
  */
-function renderSources(report: PreRapportOutput): string {
-  const citedIds = new Set<string>();
-  for (const section of report.sections) {
-    for (const id of section.sources_citees) citedIds.add(id);
-  }
-  const seen = new Set<string>();
-  const titres: string[] = [];
-  [...citedIds]
-    .map((id) => STAT_BY_ID.get(id))
-    .filter((s): s is StatEntry => Boolean(s))
-    .sort((a, b) => a.source.org.localeCompare(b.source.org) || a.source.year - b.source.year)
-    .forEach((s) => {
-      const titre = `${s.source.org}, ${s.source.year}`;
-      if (!seen.has(titre)) {
-        seen.add(titre);
-        titres.push(titre);
-      }
-    });
-  if (titres.length === 0) return '';
-  const items = titres
-    .map((t) => `<li style="margin:0 0 5px;line-height:1.5;color:${BRAND.ink2}">${esc(t)}</li>`)
+function renderReferences(index: CitationIndex): string {
+  if (index.groups.length === 0) return '';
+  const groups = index.groups
+    .map((g) => {
+      const label = SECTION_LABEL_BY_ID.get(g.sectionId);
+      const titre = label !== undefined ? `§${label} · ${g.sectionTitle}` : g.sectionTitle;
+      const items = g.notes
+        .map(
+          (note) => `<li style="margin:0 0 6px;line-height:1.5;color:${BRAND.ink2}">
+            <span style="font-weight:600;color:${BRAND.violet}">${note.n}.</span> ${esc(
+              renderNoteText(note.entry),
+            )}
+          </li>`,
+        )
+        .join('');
+      return `<div style="margin:0 0 12px">
+        <h3 style="font-size:11.5px;font-weight:600;color:${BRAND.ink3};text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">${esc(
+          titre,
+        )}</h3>
+        <ul style="margin:0;padding:0;list-style:none;font-size:11.5px">${items}</ul>
+      </div>`;
+    })
     .join('');
-  return `<section style="margin:0 0 26px;page-break-inside:avoid">
-    <h2 style="font-family:var(--serif);font-size:19px;font-weight:500;color:${BRAND.violet};margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid ${BRAND.lineSoft}">Sources mobilisées</h2>
-    <ul style="margin:0;padding:0 0 0 18px;font-size:12.5px">${items}</ul>
+  return `<section style="margin:0 0 26px">
+    <h2 style="font-family:var(--serif);font-size:19px;font-weight:500;color:${BRAND.violet};margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid ${BRAND.lineSoft}">${esc(
+      SOURCES_SECTION_TITLE,
+    )}</h2>
+    ${groups}
   </section>`;
 }
 
@@ -332,10 +471,13 @@ function renderClosing(): string {
  * (styles inline + `<link>` Google Fonts) et destiné à `htmlToPdf`.
  */
 export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderContext): string {
+  // La numérotation des notes suit l'ordre d'apparition dans le document : on la
+  // calcule une fois, puis chaque marqueur devient un appel de note.
+  const index = buildCitationIndex(report);
   const cover = renderCover(ctx);
   const identity = renderIdentity(ctx);
-  const sections = report.sections.map(renderSection).join('');
-  const sources = renderSources(report);
+  const sections = report.sections.map((s) => renderSection(s, index)).join('');
+  const references = renderReferences(index);
   const closing = renderClosing();
   const watermark = renderWatermark();
 
@@ -375,7 +517,7 @@ export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderCont
     ${cover}
     ${identity}
     ${sections}
-    ${sources}
+    ${references}
     ${closing}
   </div>
 </body>

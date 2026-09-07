@@ -1,5 +1,14 @@
 # MIRA — Pré-rapport freemium : structure du rapport & contenu (Tranche 3)
 
+> ⚠️ **Partiellement dépassé.** La refonte des prompts (proposition de Cyril, compléments de
+> Caroline) a modifié le déroulé du rapport : §1 est devenue la **synthèse exécutive** (un encart
+> rédigé au second appel), un encart **§8bis** « Comment utiliser ce rapport » porte désormais les
+> précautions de lecture et le pont vers le payant, et la caractérisation §3 ne porte plus ni
+> `confiance` ni `transposable_france`. La référence à jour est
+> [reference-prompts-mira.md](reference-prompts-mira.md) (les prompts) et
+> [reference-pipeline-prerapport.md](reference-pipeline-prerapport.md) (le pipeline). Ce document
+> reste l'archive du *pourquoi* de la Tranche 3.
+>
 > Livrable de la **Tranche 3** du [plan technique](freemium-plan-technique.md), **réaligné sur le
 > blueprint moteur validé par la CEO** (Caroline, 22/06/2026 — `docs/MIRA_FREEMIUM REPORT.docx`,
 > confidentiel, hors git). Voir aussi le [cadrage produit](freemium-pre-rapport-decisions.md).

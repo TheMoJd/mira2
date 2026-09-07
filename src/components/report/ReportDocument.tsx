@@ -14,13 +14,29 @@
  * partent jamais dans le bundle client. Seules les données pures (`statbank`,
  * `reportSections`, RGPD, copie de marque) sont importées au runtime.
  */
-import type { CSSProperties } from 'react';
-import type { PreRapportOutput, ReportSectionOutput, ReportBloc, ReportFamille } from '../../data/reportSchema';
+import type { CSSProperties, ReactNode } from 'react';
+import type {
+  PreRapportOutput,
+  ReportSectionOutput,
+  ReportBloc,
+  ReportFamille,
+  ReportEncart,
+} from '../../data/reportSchema';
 import type { ReportRenderContext } from '../../data/reportHtml';
 import { SLOGAN, VALUE_PROP } from '../../data/reportHtml';
-import { reportSections } from '../../data/rapportStructure';
-import { statbank } from '../../data/statbank';
-import type { StatEntry } from '../../data/statbank';
+import {
+  reportSections,
+  SOURCES_SECTION_TITLE,
+  CONTACT_URL,
+  COMMENT_UTILISER_CTA,
+} from '../../data/rapportStructure';
+import type { CitationIndex } from '../../data/reportCitations';
+import {
+  buildCitationIndex,
+  tokenizeCitations,
+  markersIn,
+  renderNoteText,
+} from '../../data/reportCitations';
 import { RGPD_PDF_FOOTER } from '../../data/rgpd';
 
 interface ReportDocumentProps {
@@ -28,8 +44,31 @@ interface ReportDocumentProps {
   context: ReportRenderContext;
 }
 
-const SECTION_NUM_BY_ID = new Map(reportSections.map((s) => [s.id, s.num]));
-const STAT_BY_ID = new Map(statbank.map((s) => [s.id, s]));
+const SECTION_LABEL_BY_ID = new Map(reportSections.map((s) => [s.id, s.numLabel]));
+
+/** Appel de note en exposant. Un id inconnu de la stat-bank n'affiche rien. */
+function NoteCall({ n }: { n: number | undefined }) {
+  if (n === undefined) return null;
+  return <sup style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--violet)', lineHeight: 0 }}>{n}</sup>;
+}
+
+/**
+ * Prose du modèle avec ses marqueurs `[[id]]` remplacés par des appels de note
+ * numérotés (pendant React de `escWithNotes` dans `reportHtml.ts`).
+ */
+function Prose({ text, index }: { text: string; index: CitationIndex }): ReactNode {
+  return (
+    <>
+      {tokenizeCitations(text).map((t, i) =>
+        t.type === 'text' ? (
+          <span key={i}>{t.value}</span>
+        ) : (
+          <NoteCall key={i} n={index.numberById.get(t.id)} />
+        ),
+      )}
+    </>
+  );
+}
 
 /** Couleur d'un niveau d'exposition (§3). */
 function expositionColor(level: ReportFamille['exposition']): string {
@@ -116,18 +155,85 @@ function Identity({ context: c }: { context: ReportRenderContext }) {
   );
 }
 
-function Bloc({ bloc }: { bloc: ReportBloc }) {
+function Bloc({ bloc, index }: { bloc: ReportBloc; index: CitationIndex }) {
   return (
     <>
       {bloc.intertitre && (
-        <h3 style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--violet-700)', margin: '18px 0 6px' }}>{bloc.intertitre}</h3>
+        <h3 style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--violet-700)', margin: '18px 0 6px' }}>
+          <Prose text={bloc.intertitre} index={index} />
+        </h3>
       )}
-      {bloc.paragraphes.map((p, i) => (
-        <p key={i} style={{ margin: '0 0 10px', lineHeight: 1.65, color: 'var(--ink)', fontSize: 15 }}>
-          {p}
-        </p>
-      ))}
+      {bloc.paragraphes
+        .filter((p) => p.trim() !== '')
+        .map((p, i) => (
+          <p key={i} style={{ margin: '0 0 10px', lineHeight: 1.65, color: 'var(--ink)', fontSize: 15 }}>
+            <Prose text={p} index={index} />
+          </p>
+        ))}
     </>
+  );
+}
+
+/**
+ * Encart de synthèse exécutive §1 : chapeau, chiffre-signal isolé, points clés,
+ * puis les deux lignes figées injectées par le code (calibrage et périmètre).
+ */
+function Encart({ encart, index }: { encart: ReportEncart; index: CitationIndex }) {
+  const petite: CSSProperties = { margin: '6px 0 0', fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' };
+  return (
+    <div
+      style={{
+        border: '1px solid var(--line)',
+        borderTop: '4px solid var(--violet)',
+        borderRadius: 14,
+        padding: '18px 20px',
+        background: 'var(--bg-soft)',
+        margin: '0 0 16px',
+      }}
+    >
+      <p style={{ margin: '0 0 14px', fontSize: 15, lineHeight: 1.6, color: 'var(--ink)' }}>
+        <Prose text={encart.chapeau} index={index} />
+      </p>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          flexWrap: 'wrap',
+          gap: 14,
+          padding: '14px 16px',
+          margin: '0 0 12px',
+          background: 'var(--paper)',
+          borderRadius: 10,
+          borderLeft: '4px solid var(--violet)',
+        }}
+      >
+        <span style={{ ...serif, fontSize: 'clamp(28px,6vw,34px)', fontWeight: 500, color: 'var(--violet)', lineHeight: 1 }}>
+          {encart.chiffre_signal.valeur}
+        </span>
+        <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--ink)' }}>
+          <Prose text={encart.chiffre_signal.phrase} index={index} />
+          {/* Marqueur déjà dans la phrase (format du prompt) : ne pas doubler l'appel de note. */}
+          {markersIn(encart.chiffre_signal.phrase).includes(encart.chiffre_signal.source_id) ? null : (
+            <NoteCall n={index.numberById.get(encart.chiffre_signal.source_id)} />
+          )}
+        </span>
+      </div>
+      {encart.points_cles.map((pt, i) => (
+        <div key={i} style={{ padding: '10px 0', borderTop: '1px solid var(--line-soft)' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--violet-700)', margin: '0 0 3px' }}>
+            <Prose text={pt.titre} index={index} />
+          </div>
+          <div style={{ fontSize: 13.5, lineHeight: 1.55, color: 'var(--ink)' }}>
+            <Prose text={pt.texte} index={index} />
+            {markersIn(pt.texte).includes(pt.source_id) ? null : (
+              <NoteCall n={index.numberById.get(pt.source_id)} />
+            )}
+          </div>
+        </div>
+      ))}
+      <p style={{ ...petite, marginTop: 14 }}>{encart.calibrage_court}</p>
+      <p style={petite}>{encart.perimetre}</p>
+    </div>
   );
 }
 
@@ -170,7 +276,7 @@ function RecapTable({ familles }: { familles: ReportFamille[] }) {
   );
 }
 
-function FamilleCard({ fam }: { fam: ReportFamille }) {
+function FamilleCard({ fam, index }: { fam: ReportFamille; index: CitationIndex }) {
   const color = expositionColor(fam.exposition);
   return (
     <div style={{ border: '1px solid var(--line)', borderLeft: `4px solid ${color}`, borderRadius: 10, padding: '14px 16px', margin: '0 0 12px', background: 'var(--paper)' }}>
@@ -188,36 +294,66 @@ function FamilleCard({ fam }: { fam: ReportFamille }) {
           </span>
         ))}
       </div>
-      <p style={{ margin: '6px 0 0', lineHeight: 1.55, color: 'var(--ink)', fontSize: 14.5 }}>{fam.explication}</p>
-      <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 6 }}>Confiance : {fam.confiance}</div>
-      {!fam.transposable_france && (
-        <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 6, fontStyle: 'italic' }}>
-          Donnée non directement transposable à une PME française.
-        </div>
-      )}
+      <p style={{ margin: '6px 0 0', lineHeight: 1.55, color: 'var(--ink)', fontSize: 14.5 }}>
+        <Prose text={fam.explication} index={index} />
+      </p>
     </div>
   );
 }
 
-function Section({ section }: { section: ReportSectionOutput }) {
-  const num = SECTION_NUM_BY_ID.get(section.id);
+/**
+ * Encart §8bis « Comment utiliser ce rapport » : prise de parole de MIRA,
+ * visuellement encadrée et distincte du corps analytique. Le « contactez-nous ! »
+ * de clôture est un lien.
+ */
+function Encadre({ section }: { section: ReportSectionOutput }) {
+  const paragraphes = section.contenu.flatMap((b) => b.paragraphes).filter((p) => p.trim() !== '');
+  return (
+    <section style={{ margin: '0 0 28px' }}>
+      <div style={{ border: '1px solid var(--violet)', borderRadius: 14, padding: '18px 20px', background: 'var(--bg-soft)' }}>
+        <h2 style={{ ...serif, fontSize: 'clamp(17px,3.4vw,19px)', fontWeight: 500, color: 'var(--violet)', margin: '0 0 12px' }}>
+          {section.titre}
+        </h2>
+        {paragraphes.map((p, i) =>
+          p.trim() === COMMENT_UTILISER_CTA ? (
+            <p key={i} style={{ margin: '0 0 10px', lineHeight: 1.65, color: 'var(--ink)', fontSize: 15, fontWeight: 500 }}>
+              {p.replace('contactez-nous !', '')}
+              <a href={CONTACT_URL} style={{ color: 'var(--violet)', fontWeight: 600 }}>
+                contactez-nous !
+              </a>
+            </p>
+          ) : (
+            <p key={i} style={{ margin: '0 0 10px', lineHeight: 1.65, color: 'var(--ink)', fontSize: 15 }}>
+              {p}
+            </p>
+          ),
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Section({ section, index }: { section: ReportSectionOutput; index: CitationIndex }) {
+  if (section.id === 'comment-utiliser') return <Encadre section={section} />;
+  const label = SECTION_LABEL_BY_ID.get(section.id);
   const hasFamilles = section.familles && section.familles.length > 0;
   return (
     <section style={{ margin: '0 0 28px' }}>
       <h2 style={sectionTitle}>
-        {num !== undefined && (
-          <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--sans, sans-serif)' }}>§{num} · </span>
+        {label !== undefined && (
+          <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--sans, sans-serif)' }}>§{label} · </span>
         )}
         {section.titre}
       </h2>
+      {section.encart && <Encart encart={section.encart} index={index} />}
       {hasFamilles && <RecapTable familles={section.familles!} />}
       {section.contenu.map((b, i) => (
-        <Bloc key={i} bloc={b} />
+        <Bloc key={i} bloc={b} index={index} />
       ))}
       {hasFamilles && (
         <div style={{ marginTop: 14 }}>
           {section.familles!.map((f, i) => (
-            <FamilleCard key={i} fam={f} />
+            <FamilleCard key={i} fam={f} index={index} />
           ))}
         </div>
       )}
@@ -226,36 +362,42 @@ function Section({ section }: { section: ReportSectionOutput }) {
 }
 
 /**
- * Section « Sources » allégée (refonte CEO B5) : titres des documents mobilisés
- * (organisation + année), dédupliqués, sans l'appareil de références détaillé.
+ * Section « Sources de référence », construite par le code à partir des marqueurs
+ * du texte : regroupement par section dans l'ordre d'apparition, numérotation
+ * continue sur tout le rapport.
  */
-function Sources({ report }: { report: PreRapportOutput }) {
-  const citedIds = new Set<string>();
-  for (const s of report.sections) for (const id of s.sources_citees) citedIds.add(id);
-  const seen = new Set<string>();
-  const titres: string[] = [];
-  [...citedIds]
-    .map((id) => STAT_BY_ID.get(id))
-    .filter((s): s is StatEntry => Boolean(s))
-    .sort((a, b) => a.source.org.localeCompare(b.source.org) || a.source.year - b.source.year)
-    .forEach((s) => {
-      const titre = `${s.source.org}, ${s.source.year}`;
-      if (!seen.has(titre)) {
-        seen.add(titre);
-        titres.push(titre);
-      }
-    });
-  if (titres.length === 0) return null;
+function References({ index }: { index: CitationIndex }) {
+  if (index.groups.length === 0) return null;
   return (
     <section style={{ margin: '0 0 28px' }}>
-      <h2 style={sectionTitle}>Sources mobilisées</h2>
-      <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 13 }}>
-        {titres.map((t) => (
-          <li key={t} style={{ margin: '0 0 5px', lineHeight: 1.5, color: 'var(--ink-2)' }}>
-            {t}
-          </li>
-        ))}
-      </ul>
+      <h2 style={sectionTitle}>{SOURCES_SECTION_TITLE}</h2>
+      {index.groups.map((g) => {
+        const label = SECTION_LABEL_BY_ID.get(g.sectionId);
+        return (
+          <div key={g.sectionId} style={{ margin: '0 0 14px' }}>
+            <h3
+              style={{
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: 'var(--ink-3)',
+                textTransform: 'uppercase',
+                letterSpacing: '.04em',
+                margin: '0 0 6px',
+              }}
+            >
+              {label !== undefined ? `§${label} · ${g.sectionTitle}` : g.sectionTitle}
+            </h3>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: 12.5 }}>
+              {g.notes.map((note) => (
+                <li key={note.id} style={{ margin: '0 0 6px', lineHeight: 1.5, color: 'var(--ink-2)' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--violet)' }}>{note.n}. </span>
+                  {renderNoteText(note.entry)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </section>
   );
 }
@@ -274,14 +416,16 @@ function Closing() {
 }
 
 export default function ReportDocument({ report, context }: ReportDocumentProps) {
+  // La numérotation des notes suit l'ordre d'apparition dans le document.
+  const index = buildCitationIndex(report);
   return (
     <article style={{ maxWidth: 760, margin: '0 auto', padding: 'clamp(20px,4vw,40px) clamp(16px,4vw,28px)', overflowWrap: 'anywhere' }}>
       <Cover />
       <Identity context={context} />
       {report.sections.map((s) => (
-        <Section key={s.id} section={s} />
+        <Section key={s.id} section={s} index={index} />
       ))}
-      <Sources report={report} />
+      <References index={index} />
       <Closing />
       <p style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid var(--line-soft)', fontSize: 11.5, lineHeight: 1.5, color: 'var(--ink-3)' }}>
         {RGPD_PDF_FOOTER}
