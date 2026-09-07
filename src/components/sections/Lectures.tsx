@@ -63,10 +63,10 @@ function LecturePreview({ which }: { which: number }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 22 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--violet)', display: 'grid', placeItems: 'center', fontFamily: 'var(--serif)', fontSize: 22, color: '#fff' }}>LM</div>
+        <div className="tnum" style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--violet)', display: 'grid', placeItems: 'center', fontFamily: 'var(--mono)', fontSize: 19, color: '#fff' }}>78</div>
         <div>
-          <div style={{ fontSize: 17, fontWeight: 600, color: '#fff' }}>Léa Martin</div>
-          <div style={{ fontSize: 13, color: 'var(--dk-mut)' }}>Chargée de support client · exposition 78/100</div>
+          <div style={{ fontSize: 17, fontWeight: 600, color: '#fff' }}>Support client</div>
+          <div style={{ fontSize: 13, color: 'var(--dk-mut)' }}>Famille de métiers · exposition 78/100</div>
         </div>
       </div>
       <div style={{ fontSize: 13, color: 'var(--dk-mut)', marginBottom: 14, fontFamily: 'var(--mono)' }}>COMPÉTENCES À RENFORCER</div>
@@ -97,7 +97,7 @@ export default function Lectures() {
   return (
     <section id="lectures" style={{ padding: '110px 0' }}>
       <div className="wrap">
-        <Head kicker="Feuille de route" title="La feuille de route MIRA, 3 niveaux opérationnels" sub="Chaque acteur de l'organisation reçoit une restitution calibrée selon le besoin, de la vision stratégique consolidée à la fiche individuelle." />
+        <Head kicker="Feuille de route" title="La feuille de route MIRA, 3 niveaux opérationnels" sub="Chaque acteur de l'organisation reçoit une restitution calibrée selon le besoin, de la vision stratégique consolidée à la fiche métier." />
         <div className="lect-grid" style={{ display: 'grid', gridTemplateColumns: '0.85fr 1.15fr', gap: 40, alignItems: 'stretch' }}>
           {/* tabs */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
