@@ -441,7 +441,7 @@ jamais validées : elles ne viennent pas du modèle.
 | V2 | Chaque `source_id` de `chiffre_signal` et de `points_cles` figure dans `sources_citees` de la §1 | §1 | Bloquant |
 | V3 | Nombre de marqueurs dans l'encart entre 3 et 5, chiffre-signal compris | §1 | Bloquant |
 | V4 | Motif de citation dans le texte : nom d'organisation suivi d'une année entre parenthèses, ou année seule entre parenthèses. Expression régulière | Toutes | Bloquant |
-| V5 | Nom d'organisation du socle n'importe où dans le texte (liste fermée : OIT, Organisation internationale du travail, World Economic Forum, WEF, Stanford, MIT, OCDE, CIANum, Indeed, PwC, McKinsey, Parlons RH, CEGOS, Neobrain, Sopra Steria, France Stratégie, DARES, Centre Inffo, Crédoc, IDC, Cegid, Epoch AI) | Toutes sauf §0 | Avertissement |
+| V5 | Nom d'organisation du socle n'importe où dans le texte (liste fermée : OIT, Organisation internationale du travail, World Economic Forum, WEF, Stanford, MIT, OCDE, CIANum, Indeed, PwC, McKinsey, Parlons RH, CEGOS, Neobrain, Sopra Steria, France Stratégie, DARES, Centre Inffo, Crédoc, IDC, Cegid, Epoch AI). **Exemption** : « OCDE » employé comme périmètre géographique (« Dans les pays de l'OCDE, … »), que la règle 3 exige justement de nommer dans la phrase. L'emploi en crédit de source (« selon l'OCDE ») reste signalé | Toutes sauf §0 | Avertissement |
 | V6 | Toute phrase contenant un pourcentage (`\d+(,\d+)?\s?%`) ou un nombre statistique (nombre suivi de millions, milliers, milliards, points, fois, postes, emplois, heures, euros) contient au moins un marqueur `[[id]]`. Exclusions : années 19xx et 20xx, codes ISCO et NAF, numéros de section, §0 entier | Toutes sauf §0 | Bloquant |
 | V7 | Chaque marqueur `[[id]]` du texte figure dans la liste autorisée de la section et dans `sources_citees`, et réciproquement | Toutes | Bloquant |
 | V8 | Un `id` ne figure dans les `sources_citees` que d'une seule section parmi §2 à §8 | §2 à §8 | Avertissement |
@@ -457,3 +457,17 @@ plus rien) :
   exclus : l'audit `reports.sources` décrit alors exactement ce que le lecteur voit en note.
 - `enforceSectionGrid` retire toute citation hors de la grille de sa section, et réduit §1 à la
   liste héritée.
+
+### Le contrat est-il satisfaisable ?
+
+Douze contrôles sévères, ça peut être *impossible* à satisfaire, et le code ne le dirait pas :
+il marquerait chaque rapport pour relecture, indéfiniment, et l'équipe apprendrait à ignorer le
+signal. `src/data/__fixtures__/rapportConforme.ts` est la preuve du contraire : un rapport de
+référence **écrit à la main**, sur données réelles (un réseau coopératif de distribution bio,
+trois familles déclarées dont deux que le socle ne documente pas), qui passe les douze contrôles
+avec **zéro échec bloquant et zéro avertissement**. `reportConformance.test.ts` le verrouille et
+rend au passage la chaîne complète : assemblage, numérotation des notes, encart §1, références.
+
+Ce n'est pas un échantillon généré : les échantillons issus de vrais appels OpenAI vivent dans
+[`docs/samples/`](samples/README.md). C'est une cible de conformité, et la description lisible de
+ce que la sortie du modèle doit devenir.

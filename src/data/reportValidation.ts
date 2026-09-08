@@ -167,6 +167,22 @@ const ORG_RE = SOCLE_ORG_NAMES.map((o) => ({
 }));
 
 /**
+ * « OCDE » est le seul nom de la liste fermée qui désigne aussi un **périmètre
+ * géographique**, et la règle 3 exige justement de nommer le périmètre dans la
+ * phrase (« Dans les pays de l'OCDE, 22 % … »). Sans cette exemption, V5 crierait
+ * sur chaque rapport conforme, et une alerte qui crie toujours n'alerte plus.
+ * Reste interdit l'emploi en crédit de source (« selon l'OCDE »), que V4 attrape
+ * dès qu'une année l'accompagne.
+ */
+const OCDE_PERIMETRE_RE =
+  /(?:pays|États|Etats|zone|moyenne|entreprises)\s+(?:membres\s+)?(?:de\s+l['’]|d['’]|)OCDE|dans\s+l['’]OCDE/iu;
+
+/** L'occurrence d'un nom d'organisation est-elle un périmètre légitime ? */
+function isPerimetre(needle: string, text: string): boolean {
+  return needle === 'OCDE' && OCDE_PERIMETRE_RE.test(text);
+}
+
+/**
  * Motif de citation dans le texte (V4) : une parenthèse qui se referme sur une
  * année, éventuellement précédée d'un nom propre suivi d'une virgule.
  * Attrape « (2025) » et « (World Economic Forum, 2025, p.5) », pas « (d'ici 2030) ».
@@ -333,7 +349,7 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
       // --- V5 : nom d'organisation du socle (avertissement, §0 exclu) ---
       if (section.id !== 'perimetre') {
         for (const { needle, re } of ORG_RE) {
-          if (re.test(text)) {
+          if (re.test(text) && !isPerimetre(needle, text)) {
             add('V5', 'avertissement', `nom d'organisation dans le texte : « ${needle} ».`);
           }
         }

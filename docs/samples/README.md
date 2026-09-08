@@ -6,9 +6,16 @@ Chaque rapport est rendu en HTML (ouvrir dans un navigateur, imprimable en PDF) 
 
 > ⚠️ **Ces échantillons sont antérieurs à la refonte des prompts** (synthèse exécutive §1,
 > marqueurs `[[id]]` et sources de référence, encart §8bis, caractérisation §3 sans `confiance`
-> ni `transposable_france`). Ils ne sont plus conformes au contrat de sortie actuel : les
-> régénérer avec `npx tsx scripts/generate-samples.ts` (un vrai appel OpenAI par entreprise,
-> deux appels par rapport) avant de s'en servir comme référence.
+> ni `transposable_france`). Ils ne sont plus conformes au contrat de sortie actuel : `parseReport`
+> les rejette, et `SAMPLES_REUSE=1` échoue donc sur eux. Les régénérer avec
+> `npx tsx scripts/generate-samples.ts` (deux vrais appels OpenAI par entreprise, plus les rejeux
+> éventuels) avant de s'en servir comme référence.
+>
+> En attendant, la cible de conformité est
+> [`src/data/__fixtures__/rapportConforme.ts`](../../src/data/__fixtures__/rapportConforme.ts) :
+> un rapport de référence **écrit à la main**, qui passe les douze contrôles V1 → V12 sans un seul
+> échec ni avertissement, et que `reportConformance.test.ts` rend de bout en bout. Ce n'est pas un
+> échantillon généré, c'est ce à quoi la sortie du modèle doit ressembler.
 
 ## Récapitulatif
 
