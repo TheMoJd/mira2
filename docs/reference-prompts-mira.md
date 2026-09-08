@@ -428,7 +428,10 @@ un `source_id` par point clé, le `texte` contient le marqueur `[[id]]`. `calibr
 ## Validations dans le code
 
 La liste autorisée est une consigne, et une consigne peut être mal suivie. Après la génération, le
-code repasse derrière ([`src/data/reportValidation.ts`](../src/data/reportValidation.ts)). Chaque
+code repasse derrière ([`src/data/reportValidation.ts`](../src/data/reportValidation.ts)), et
+l'orchestration des rejeux vit dans
+[`src/data/reportGeneration.ts`](../src/data/reportGeneration.ts), partagée par la function de
+production et le script d'échantillons pour que les deux produisent le même rapport. Chaque
 validation **bloquante** en échec fait rejouer la section concernée. Plafond : deux rejeux par
 section, puis le rapport part quand même (il reste lisible et sourcé) mais il est marqué pour
 relecture humaine (`reports.needs_review`, détail dans `reports.validation_findings`). Les

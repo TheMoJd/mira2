@@ -11,17 +11,11 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import OpenAI from 'openai';
-import { SYSTEM_PROMPT, buildUserMessage, buildSyntheseMessage } from '../src/data/reportPrompt';
 import type { GenerationContext } from '../src/data/reportPrompt';
-import {
-  RESPONSE_FORMAT_CORPS,
-  RESPONSE_FORMAT_SYNTHESE,
-  parseCorps,
-  parseSynthese,
-  parseReport,
-  assembleReport,
-} from '../src/data/reportSchema';
+import { parseReport } from '../src/data/reportSchema';
 import type { PreRapportOutput } from '../src/data/reportSchema';
+import { generateReport } from '../src/data/reportGeneration';
+import type { AskModel } from '../src/data/reportGeneration';
 import { renderReportHtml } from '../src/data/reportHtml';
 import type { ReportRenderContext } from '../src/data/reportHtml';
 import { famillesMetiers } from '../src/data/famillesMetiers';
@@ -191,22 +185,22 @@ async function main() {
     // existant, sans rappeler OpenAI (SAMPLES_REUSE=1). Sinon, vraie génération.
     const existing = `${OUT_DIR}/${c.slug}.report.json`;
     let report: PreRapportOutput;
+    let findings: ReturnType<typeof blockingFindings> = [];
     if (process.env.SAMPLES_REUSE && existsSync(existing)) {
       // `parseReport` (et non un JSON.parse aveugle) : un échantillon d'une version
       // antérieure du contrat est rejeté avec un message clair, pas rendu de travers.
       report = parseReport(readFileSync(existing, 'utf8'));
+      findings = validateReport(report);
       console.log('  [reuse] report.json existant réutilisé (pas d’appel OpenAI)');
     } else {
-      // Deux appels, comme en production : le corps, puis la synthèse exécutive §1
-      // à partir de la liste héritée (union des `sources_citees` de §2 à §7).
-      const ask = async (
-        user: string,
-        format: typeof RESPONSE_FORMAT_CORPS | typeof RESPONSE_FORMAT_SYNTHESE,
-      ): Promise<string> => {
+      // Exactement l'orchestration de production : deux appels, contrôles V1 → V12,
+      // rejeu des sections en échec. Un échantillon doit montrer ce que reçoit un
+      // client, rejeux compris.
+      const ask: AskModel = async (system, user, format) => {
         const completion = await openai.chat.completions.create({
           model,
           messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'system', content: system },
             { role: 'user', content: user },
           ],
           response_format: format,
@@ -215,11 +209,12 @@ async function main() {
         if (!raw) throw new Error(`Réponse OpenAI vide pour ${c.nom}`);
         return raw;
       };
-      const corps = parseCorps(await ask(buildUserMessage(ctx), RESPONSE_FORMAT_CORPS));
-      const synthese = parseSynthese(
-        await ask(buildSyntheseMessage(ctx, corps), RESPONSE_FORMAT_SYNTHESE),
-      );
-      report = assembleReport(corps, synthese);
+      const generated = await generateReport(ask, ctx, {
+        onReplay: (sectionId, attempt) => console.log(`  [rejeu ${attempt}] §${sectionId}`),
+        onReplayError: (sectionId, err) => console.log(`  [rejeu §${sectionId} échoué] ${err}`),
+      });
+      report = generated.report;
+      findings = generated.findings;
     }
     // Garde-fou grille : retire les citations hors section autorisée (défense en profondeur).
     enforceSectionGrid(report);
@@ -239,7 +234,6 @@ async function main() {
     writeFileSync(`${OUT_DIR}/${c.slug}.html`, renderReportHtml(report, renderCtx), 'utf8');
 
     const a = audit(report);
-    const findings = validateReport(report);
     const bloquants = blockingFindings(findings);
     console.log(
       `  citations=${a.total} inventées=${a.invented.length} hors-grille=${a.outOfGrid.length} contrôles-bloquants=${bloquants.length}`,
