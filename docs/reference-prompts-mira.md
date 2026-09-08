@@ -220,19 +220,19 @@ Une ligne de statistique se lit ainsi :
 Tu remplis chaque section ci-dessous. Pour les sections avec statistiques, tu ne peux citer QUE les entrées listées (référence par leur `id`).
 
 ### §0. Périmètre (id: perimetre)
-Intention : Carte d'identité du rapport. Le lecteur sait en dix secondes de quoi on parle et de quoi on ne parle pas.
-Consigne : Restituer le périmètre à partir des inputs normalisés : entreprise, secteur NAF, tranche d'effectif, familles de métiers analysées (ISCO), date du rapport. Le socle de sources est nommé en une ligne, sans chiffre : « socle public de rapports de référence internationaux et français, daté 2023-2026 ». Cinq à sept lignes courtes. Aucune statistique, aucun commentaire.
+Intention : Carte d’identité du rapport. Le lecteur sait en dix secondes de quoi on parle et de quoi on ne parle pas.
+Consigne : Restituer le périmètre à partir des inputs normalisés : entreprise, secteur NAF, tranche d’effectif, familles de métiers analysées (ISCO), date du rapport. Le socle de sources est nommé en une ligne, sans chiffre : « socle public de rapports de référence internationaux et français, daté 2023-2026 ». Cinq à sept lignes courtes. Aucune statistique, aucun commentaire.
 Cette section ne cite pas de statistique.
 
 ### §2. Le contexte en bref (id: contexte)
-Intention : Où en est l'IA, sans survendre : capacités réelles, rythme de diffusion, usage déjà installé. Cadre la suite en trois constats.
-Consigne : Trois constats maximum, chacun sous un intertitre-constat, chacun porté par une statistique choisie selon la règle de proximité (la couche France d'abord quand elle existe). Angle : les capacités actuelles ont des limites mesurées, la diffusion est rapide, l'usage individuel précède le cadre collectif. Définir le mot « exposition » en une phrase dans cette section. Pas de panorama, pas d'historique de l'IA.
+Intention : Où en est l’IA, sans survendre : capacités réelles, rythme de diffusion, usage déjà installé. Cadre la suite en trois constats.
+Consigne : Trois constats maximum, chacun sous un intertitre-constat, chacun porté par une statistique choisie selon la règle de proximité (la couche France d’abord quand elle existe). Angle : les capacités actuelles ont des limites mesurées, la diffusion est rapide, l’usage individuel précède le cadre collectif. Définir le mot « exposition » en une phrase dans cette section. Pas de panorama, pas d’historique de l’IA.
 Statistiques autorisées dans cette section :
   [liste injectée par le code]
 
 ### §3. Vos familles de métiers face à l'IA (id: familles-metiers)
-Intention : Le cœur du rapport. Pour chaque famille déclarée : intensité d'exposition, nature de l'impact, part de tâches concernée quand une source la donne, et ce que cela change dans les tâches.
-Consigne : Une introduction de deux phrases qui nomme les familles et dit laquelle est la plus exposée d'après les sources. Puis, pour CHAQUE famille déclarée, une caractérisation (exposition, natures, part de tâches quand une source la donne) et une explication de deux à quatre phrases dont la première est le constat. Chaque explication porte au moins une statistique, choisie selon la règle de proximité, suivie de son marqueur. Quand la famille dispose d'une source directe (rattachement ci-dessous), tu la cites en priorité. Quand elle n'en a aucune, tu cites la statistique générale la plus proche en nommant son périmètre (« À l'échelle mondiale, … »), et tu écris en une phrase que le socle public ne documente pas précisément cette famille : exposition « à confirmer ». Toujours distinguer exposition et suppression. Jamais de score propriétaire ni de chiffre par métier hors liste autorisée.
+Intention : Le cœur du rapport. Pour chaque famille déclarée : intensité d’exposition, nature de l’impact, part de tâches concernée quand une source la donne, et ce que cela change dans les tâches.
+Consigne : Une introduction de deux phrases qui nomme les familles et dit laquelle est la plus exposée d’après les sources. Puis, pour CHAQUE famille déclarée, une caractérisation (exposition, natures, part de tâches quand une source la donne) et une explication de deux à quatre phrases dont la première est le constat. Chaque explication porte au moins une statistique, choisie selon la règle de proximité, suivie de son marqueur. Quand la famille dispose d’une source directe (rattachement ci-dessous), tu la cites en priorité. Quand elle n’en a aucune, tu cites la statistique générale la plus proche en nommant son périmètre (« À l’échelle mondiale, … »), et tu écris en une phrase que le socle public ne documente pas précisément cette famille : exposition « à confirmer ». Toujours distinguer exposition et suppression. Jamais de score propriétaire ni de chiffre par métier hors liste autorisée.
 Statistiques autorisées dans cette section :
   [liste injectée par le code]
 Rattachement par famille déclarée. Quand une famille dispose d'une source DIRECTE ci-dessous, tu l'utilises en priorité pour caractériser CETTE famille et tu la reportes dans `sources_citees`, sauf si elle est manifestement hors sujet. Les statistiques générales autorisées plus haut viennent en complément, pas en remplacement.
@@ -241,31 +241,31 @@ Rattachement par famille déclarée. Quand une famille dispose d'une source DIRE
 
 ### §4. Compétences : ce qui monte, ce qui décline (id: competences)
 Intention : Pour les métiers déclarés, ce qui se renforce et ce qui recule côté compétences. Le lecteur RH y trouve la matière de ses entretiens professionnels.
-Consigne : Un paragraphe d'ouverture sous intertitre-constat, porté par une ou deux statistiques (rythme de transformation des compétences, besoin de formation), périmètre nommé. Puis deux listes courtes de trois à cinq items : compétences qui montent, compétences qui reculent, rattachées aux familles déclarées, en termes concrets (une tâche, un savoir-faire), sans chiffre. Une phrase de traduction pour clore : ce que cela change dans l'employabilité, pas ce qu'il faudrait former. La nature commerciale de certaines sources ne s'écrit pas dans le texte : elle figure dans la section « Sources de référence ».
+Consigne : Un paragraphe d’ouverture sous intertitre-constat, porté par une ou deux statistiques (rythme de transformation des compétences, besoin de formation), périmètre nommé. Puis deux listes courtes de trois à cinq items : compétences qui montent, compétences qui reculent, rattachées aux familles déclarées, en termes concrets (une tâche, un savoir-faire), sans chiffre. Une phrase de traduction pour clore : ce que cela change dans l’employabilité, pas ce qu’il faudrait former. La nature commerciale de certaines sources ne s’écrit pas dans le texte : elle figure dans la section « Sources de référence ».
 Statistiques autorisées dans cette section :
   [liste injectée par le code]
 
 ### §5. Comment le travail se réorganise (id: reorganisation)
-Intention : L'IA comme réorganisation du travail : collaboration humain-IA, agents, productivité. Replace la question au niveau de l'organisation, pas de l'outil.
-Consigne : Deux constats sous intertitres. Le premier sur la collaboration humain-IA : gains mesurés, périmètre et cadre nommés (« dans une étude expérimentale, … »), jamais présentés comme acquis pour le lecteur. Le second sur ce que cela déplace dans l'organisation des familles déclarées : qui fait quoi, quelles tâches passent de l'exécution au contrôle. Aucune promesse de gain pour l'entreprise.
+Intention : L’IA comme réorganisation du travail : collaboration humain-IA, agents, productivité. Replace la question au niveau de l’organisation, pas de l’outil.
+Consigne : Deux constats sous intertitres. Le premier sur la collaboration humain-IA : gains mesurés, périmètre et cadre nommés (« dans une étude expérimentale, … »), jamais présentés comme acquis pour le lecteur. Le second sur ce que cela déplace dans l’organisation des familles déclarées : qui fait quoi, quelles tâches passent de l’exécution au contrôle. Aucune promesse de gain pour l’entreprise.
 Statistiques autorisées dans cette section :
   [liste injectée par le code]
 
 ### §6. Le facteur humain (id: facteur-humain)
-Intention : Qui est le plus exposé (diplôme, genre, âge, type d'emploi) et ce que cela pose comme question d'équité et d'accompagnement. Ancre la dimension humaine.
-Consigne : Deux à trois constats sous intertitres, chacun porté par une statistique de périmètre nommé. Cadrer comme une question d'équité et d'accompagnement, jamais comme une fatalité ni comme un tri à opérer. Relier à la population des familles déclarées quand une source le permet, sans rien affirmer sur les salariés de l'entreprise. Si la relation entre exposition et croissance de l'emploi a déjà été chiffrée plus haut, la rappeler en mots, sans redonner le chiffre.
+Intention : Qui est le plus exposé (diplôme, genre, âge, type d’emploi) et ce que cela pose comme question d’équité et d’accompagnement. Ancre la dimension humaine.
+Consigne : Deux à trois constats sous intertitres, chacun porté par une statistique de périmètre nommé. Cadrer comme une question d’équité et d’accompagnement, jamais comme une fatalité ni comme un tri à opérer. Relier à la population des familles déclarées quand une source le permet, sans rien affirmer sur les salariés de l’entreprise. Si la relation entre exposition et croissance de l’emploi a déjà été chiffrée plus haut, la rappeler en mots, sans redonner le chiffre.
 Statistiques autorisées dans cette section :
   [liste injectée par le code]
 
 ### §7. Votre secteur en repère (id: repere-sectoriel)
-Intention : La section où le lecteur se reconnaît. Où se situe son secteur sur l'adoption et la transformation, d'après les sources, jamais d'après une auto-évaluation.
-Consigne : Trois constats sous intertitres qui nomment le secteur déclaré. Tu privilégies systématiquement les statistiques de périmètre France et celles portant sur un type d'activité ou de clientèle proche du secteur déclaré. Quand aucune donnée ne porte sur le secteur du lecteur, tu cites la donnée française la plus proche en nommant son périmètre, et tu dis en une phrase que le socle public ne documente pas ce secteur en tant que tel. Tu ne présentes jamais une donnée mondiale ou américaine comme si elle décrivait son secteur. Un des constats porte sur la taille d'entreprise quand une source le permet. Repère sourcé, jamais auto-évaluation de l'entreprise.
+Intention : La section où le lecteur se reconnaît. Où se situe son secteur sur l’adoption et la transformation, d’après les sources, jamais d’après une auto-évaluation.
+Consigne : Trois constats sous intertitres qui nomment le secteur déclaré. Tu privilégies systématiquement les statistiques de périmètre France et celles portant sur un type d’activité ou de clientèle proche du secteur déclaré. Quand aucune donnée ne porte sur le secteur du lecteur, tu cites la donnée française la plus proche en nommant son périmètre, et tu dis en une phrase que le socle public ne documente pas ce secteur en tant que tel. Tu ne présentes jamais une donnée mondiale ou américaine comme si elle décrivait son secteur. Un des constats porte sur la taille d’entreprise quand une source le permet. Repère sourcé, jamais auto-évaluation de l’entreprise.
 Statistiques autorisées dans cette section :
   [liste injectée par le code]
 
 ### §8. Lecture stratégique : les questions que cela pose (id: lecture-strategique)
 Intention : Clôture analytique. Ce que les constats du rapport posent comme questions au dirigeant et au DRH de cette entreprise. Ouvre la réflexion, ne la conclut pas.
-Consigne : Un paragraphe de deux à trois phrases qui relie les constats du rapport aux familles et au secteur déclarés, sans chiffre nouveau (rappels en mots seulement). Puis trois à cinq questions à se poser, chacune rattachée à un constat du corps et formulée pour comprendre sa propre situation (« Quelle part du temps de vos équipes comptables est aujourd'hui consacrée à des tâches de saisie et de contrôle ? »), jamais pour prescrire (« Avez-vous prévu de former vos équipes ? »). Au moins une question pour le dirigeant, une pour les RH. Aucune donnée interne supposée, aucun chiffrage, aucune recommandation. Le pont vers l'offre approfondie n'est pas dans cette section : il est porté par l'encart §8bis, injecté par le code.
+Consigne : Un paragraphe de deux à trois phrases qui relie les constats du rapport aux familles et au secteur déclarés, sans chiffre nouveau (rappels en mots seulement). Puis trois à cinq questions à se poser, chacune rattachée à un constat du corps et formulée pour comprendre sa propre situation (« Quelle part du temps de vos équipes comptables est aujourd’hui consacrée à des tâches de saisie et de contrôle ? »), jamais pour prescrire (« Avez-vous prévu de former vos équipes ? »). Au moins une question pour le dirigeant, une pour les RH. Aucune donnée interne supposée, aucun chiffrage, aucune recommandation. Le pont vers l’offre approfondie n’est pas dans cette section : il est porté par l’encart §8bis, injecté par le code.
 Cette section ne cite pas de statistique.
 ```
 
@@ -277,8 +277,8 @@ sourcé dans le corps. Assemblé par `buildSyntheseMessage(ctx, corps)`.
 
 ```text
 ### §1. Synthèse exécutive (id: synthese-executive)
-Intention : La vitrine. Un dirigeant qui ne lit que cette page repart avec trois ou quatre chiffres en tête, dont un qu'il retiendra vraiment.
-Consigne : Encart de format fixe (chapeau, chiffre-signal, trois à quatre points clés par axe, deux lignes injectées par le code), selon le prompt système. Uniquement des statistiques de la liste héritée ci-dessous, construite par le code à partir de ce que tu as effectivement cité en §2 à §7. Chiffre-signal : le plus proche des familles déclarées. Trois à cinq chiffres au total. 280 à 360 mots. Au moins un point clé pour le dirigeant, un pour les RH. Aucun vocabulaire de décision, aucun nom d'organisation, aucune année.
+Intention : La vitrine. Un dirigeant qui ne lit que cette page repart avec trois ou quatre chiffres en tête, dont un qu’il retiendra vraiment.
+Consigne : Encart de format fixe (chapeau, chiffre-signal, trois à quatre points clés par axe, deux lignes injectées par le code), selon le prompt système. Uniquement des statistiques de la liste héritée ci-dessous, construite par le code à partir de ce que tu as effectivement cité en §2 à §7. Chiffre-signal : le plus proche des familles déclarées. Trois à cinq chiffres au total. 280 à 360 mots. Au moins un point clé pour le dirigeant, un pour les RH. Aucun vocabulaire de décision, aucun nom d’organisation, aucune année.
 Liste héritée (seules statistiques autorisées dans cette section) :
   [union des sources_citees de §2 à §7, au format des lignes de statistiques, construite par le code]
 Rappel du corps déjà rédigé :
@@ -319,7 +319,7 @@ Le modèle ne les voit pas, ne les rédige pas, ne les reformule pas. Ils vivent
 
 ### Ligne de périmètre (page 1, sous la ligne de calibrage)
 
-> Ce pré-rapport applique l'état de l'art public aux familles de métiers que vous avez déclarées. Il aide à comprendre une évolution et les besoins qu'elle fait naître. Il ne constitue pas un audit de votre organisation, ne porte sur aucun salarié en particulier et n'a pas vocation à fonder une décision individuelle.
+> Ce pré-rapport applique l’état de l’art public aux familles de métiers que vous avez déclarées. Il aide à comprendre une évolution et les besoins qu’elle fait naître. Il ne constitue pas un audit de votre organisation, ne porte sur aucun salarié en particulier et n’a pas vocation à fonder une décision individuelle.
 
 ### §8bis. Comment utiliser ce rapport (id: comment-utiliser)
 
@@ -332,23 +332,23 @@ vers https://mira-audit.fr/contact.
 >
 > Les statistiques de ce rapport sont issues de plusieurs rapports de référence publics. Elles décrivent des tendances observées sur des populations larges : un pays, un secteur, une famille de métiers. Elles ne mesurent ni une entreprise en particulier ni la vôtre.
 >
-> Concrètement, cela se traduit par trois points d'attention.
+> Concrètement, cela se traduit par trois points d’attention.
 >
-> Un chiffre d'exposition ne dit pas combien de vos postes sont concernés. Il dit quelle part des tâches d'une famille de métiers, à l'échelle où la source l'a observée, présente des caractéristiques que l'IA sait aujourd'hui traiter.
+> Un chiffre d’exposition ne dit pas combien de vos postes sont concernés. Il dit quelle part des tâches d’une famille de métiers, à l’échelle où la source l’a observée, présente des caractéristiques que l’IA sait aujourd’hui traiter.
 >
 > Un chiffre de transformation ne dit pas à quelle vitesse cela se produira chez vous. Le rythme réel dépend de votre organisation, de vos outils, de vos clients, de vos équipes et de la conduite du changement que vous opérez.
 >
-> Un chiffre national ne dit pas ce qui se passe dans votre bassin d'emploi, votre taille d'entreprise ou votre métier précis. Il donne un ordre de grandeur, une tendance.
+> Un chiffre national ne dit pas ce qui se passe dans votre bassin d’emploi, votre taille d’entreprise ou votre métier précis. Il donne un ordre de grandeur, une tendance.
 >
-> Passer de l'ordre de grandeur à la mesure suppose de croiser ces références publiques avec vos propres données : vos fiches de poste réelles, la répartition effective des tâches, vos projets, vos compétences disponibles. C'est le travail que réalise un MIRA-audit, et c'est ce qui permet de passer d'une tendance de marché à une cartographie de vos métiers, chiffrée et justifiée ligne à ligne.
+> Passer de l’ordre de grandeur à la mesure suppose de croiser ces références publiques avec vos propres données : vos fiches de poste réelles, la répartition effective des tâches, vos projets, vos compétences disponibles. C’est le travail que réalise un MIRA-audit, et c’est ce qui permet de passer d’une tendance de marché à une cartographie de vos métiers, chiffrée et justifiée ligne à ligne.
 >
-> Pour disposer d'une cartographie fine, dynamique et actionnable, contactez-nous !
+> Pour disposer d’une cartographie fine, dynamique et actionnable, contactez-nous !
 
 ### §9. Méthode et socle de sources (id: sources-methode)
 
-> Ce pré-rapport applique l'état de l'art public à vos familles de métiers à partir d'un socle de rapports de référence internationaux (OIT, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC, McKinsey), complété d'une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie / DARES).
+> Ce pré-rapport applique l’état de l’art public à vos familles de métiers à partir d’un socle de rapports de référence internationaux (OIT, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC, McKinsey), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie / DARES).
 >
-> Points de méthode. Chaque chiffre du rapport renvoie par un appel de note à la section « Sources de référence », qui donne son organisation, son année, sa page, son périmètre, son horizon et la nature de la source (recherche ou commerciale). Le périmètre de chaque chiffre est nommé dans la phrase qui le porte. On distingue exposition et suppression : l'augmentation domine. Le rattachement des métiers déclarés à la classification ISCO affiche un niveau de confiance corrigeable. Socle daté 2023-2026, versionné.
+> Points de méthode. Chaque chiffre du rapport renvoie par un appel de note à la section « Sources de référence », qui donne son organisation, son année, sa page, son périmètre, son horizon et la nature de la source (recherche ou commerciale). Le périmètre de chaque chiffre est nommé dans la phrase qui le porte. On distingue exposition et suppression : l’augmentation domine. Le rattachement des métiers déclarés à la classification ISCO affiche un niveau de confiance corrigeable. Socle daté 2023-2026, versionné.
 
 ### Section « Sources de référence »
 
