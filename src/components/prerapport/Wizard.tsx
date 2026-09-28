@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { emptyPreRapportForm } from '../../types/prerapport';
 import type { PreRapportForm, PreRapportErrors } from '../../types/prerapport';
 import { STEP_COUNT, MAX_IDENTITY_LEN, validateStep } from './validation';
 import { submitPreRapport } from './submit';
+import { revealTop } from '../../lib/scroll';
 import WizardButton from './WizardButton';
 import TextField from './fields/TextField';
 import TextArea from './fields/TextArea';
@@ -17,6 +18,10 @@ import Checkbox from './fields/Checkbox';
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 type View = 'intro' | 'form' | 'success';
+
+/** Autofocus réservé aux pointeurs fins (souris) : sur écran tactile, il ouvrirait
+ *  le clavier dès l'arrivée sur l'étape et masquerait le titre et les boutons. */
+const AUTO_FOCUS = typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches;
 
 const stepVariants = {
   enter: (dir: number) => ({ opacity: 0, x: dir * 28 }),
@@ -46,6 +51,14 @@ export default function Wizard() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Honeypot anti-bot : champ caché, jamais rempli par un humain.
   const [honeypot, setHoneypot] = useState('');
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Changement d'étape (ou passage au succès) : si le haut de la carte est sorti de
+  // l'écran, on le ramène sous le header. Sinon l'étape suivante s'afficherait au
+  // milieu (ex. liste des familles après « Continuer » en bas de l'étape 2).
+  useEffect(() => {
+    if (cardRef.current) revealTop(cardRef.current);
+  }, [step, view]);
 
   const set = <K extends keyof PreRapportForm>(key: K, value: PreRapportForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -102,7 +115,7 @@ export default function Wizard() {
               onChange={(v) => set('secteurActivite', v)}
               error={errors.secteurActivite}
               rows={4}
-              autoFocus
+              autoFocus={AUTO_FOCUS}
             />
             <TextField
               label={f.siret.label}
@@ -126,7 +139,7 @@ export default function Wizard() {
               onChange={(v) => set('produitsServices', v)}
               error={errors.produitsServices}
               rows={4}
-              autoFocus
+              autoFocus={AUTO_FOCUS}
             />
             <TextArea
               label={f.clients.label}
@@ -164,7 +177,7 @@ export default function Wizard() {
               type="url"
               inputMode="url"
               optional
-              autoFocus
+              autoFocus={AUTO_FOCUS}
             />
             <FileField
               label={f.plaquette.label}
@@ -186,7 +199,7 @@ export default function Wizard() {
                 error={errors.prenom}
                 autoComplete="given-name"
                 maxLength={MAX_IDENTITY_LEN}
-                autoFocus
+                autoFocus={AUTO_FOCUS}
               />
               <TextField
                 label={f.nom.label}
@@ -250,7 +263,7 @@ export default function Wizard() {
   const pct = ((step + 1) / STEP_COUNT) * 100;
 
   return (
-    <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 'var(--r-xl)', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+    <div ref={cardRef} style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 'var(--r-xl)', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
       {view === 'form' && (
         <div style={{ padding: '20px clamp(26px,4.5vw,48px) 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
@@ -303,7 +316,7 @@ export default function Wizard() {
               </p>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 34 }}>
+            <div className="pr-actions" style={{ marginTop: 34 }}>
               {step > 0 ? (
                 <WizardButton variant="ghost" onClick={goPrev}>← Retour</WizardButton>
               ) : (
