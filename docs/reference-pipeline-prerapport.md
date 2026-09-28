@@ -152,7 +152,7 @@ le diagnostic terminé** (le fichier porte le même avertissement).
 | [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche, categorieEntreprise, anneeCreation, localisation, actif }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Tous les champs sont best-effort (souvent partiels). Retourne `{}` en cas d'échec. |
 | | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
 | [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
-| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
+| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Copie cachée à `REPORT_BCC_EMAIL` si définie (liste à virgules, même pièce jointe). Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
 | | `notifyFailure({leadId, error})` | Email de repli ops (no-op loggé si `OPS_EMAIL`/Resend absents). |
 
 ---
@@ -173,7 +173,7 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 | [`reportValidation.ts`](../src/data/reportValidation.ts) | Les **contrôles V1 → V12** repassés derrière le modèle (voir [reference-prompts-mira.md § Validations](reference-prompts-mira.md#validations-dans-le-code)). Un échec bloquant fait rejouer la section. | `validateReport(report)`, `blockingFindings`, `sectionsToReplay`, `findingsBrief`, `syncSourcesCitees`, `SOCLE_ORG_NAMES`, `MOTS_CREUX`, `VOCABULAIRE_DECISION`. |
 | [`reportSanitize.ts`](../src/data/reportSanitize.ts) | Verrou de style sur la prose LLM : tirets cadratins/demi-cadratins et points-virgules → virgules (plages numériques « 2025-2030 » et signes moins « -5 % » préservés). Appliqué par `parseCorps`/`parseSynthese` avant assemblage, persistance et rendu PDF. | `sanitizeProse`, `sanitizeReportProse`. |
 | [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → §0 → encart de synthèse §1 → §2 à §8 avec tableau récapitulatif « En un coup d'œil » en §3 → encart §8bis → méthode §9 → « Sources de référence » (notes numérotées, groupées par section) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). Un filigrane « MIRA AUDIT » (élément `position:fixed`, opacité 5 %) est répété sur chaque page du PDF. | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
-| [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~28 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
+| [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~29 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
 | [`rgpd.ts`](../src/data/rgpd.ts) | Mentions RGPD factuelles (pied de la page de fin du PDF + bas de l'email). Pas d'affirmation de conformité ; la mention d'information juridique complète reste à intégrer après validation métier/juridique. | `RGPD_PDF_FOOTER`, `RGPD_EMAIL_NOTICE`, `EMAIL_SENDER_NAME`. |
 
 ### Sources de la stat-bank
@@ -282,6 +282,7 @@ en production. Voir [`.env.example`](../.env.example).
 | `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). Format « Nom <adresse> » ou adresse seule. |
 | `RESEND_REPLY_TO` | optionnel | email | Boîte qui reçoit les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
 | `OPS_EMAIL` | optionnel | email | Destinataire des alertes d'échec (`notifyFailure`). |
+| `REPORT_BCC_EMAIL` | optionnel | email | Copie cachée (CCI) de chaque rapport envoyé au prospect, PDF compris. Une ou plusieurs adresses séparées par des virgules. Vide ou absent → pas de CCI. |
 | `CHROME_EXECUTABLE_PATH` | dev local | pdf | Chemin vers Chrome/Edge local (le binaire `@sparticuz/chromium` est Linux). |
 | `URL` | fourni par Netlify | submit | Base URL pour déclencher la background function. |
 

@@ -1,0 +1,71 @@
+/**
+ * Tests de `sendReportEmail` : copie cachée équipe (`REPORT_BCC_EMAIL`).
+ *
+ * Resend est mocké : aucun email ne part, on inspecte seulement le payload que la
+ * function aurait envoyé. Adresses en `.test` (domaine réservé, jamais routable).
+ */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { sendReportEmail, parseRecipients } from './email';
+
+const h = vi.hoisted(() => ({ sent: [] as Array<Record<string, unknown>> }));
+
+vi.mock('resend', () => ({
+  Resend: class {
+    emails = {
+      send: async (payload: Record<string, unknown>) => {
+        h.sent.push(payload);
+        return { data: { id: 'email-test' }, error: null };
+      },
+    };
+  },
+}));
+
+const PDF = Buffer.from('%PDF-test');
+
+describe('sendReportEmail — copie cachée équipe', () => {
+  beforeEach(() => {
+    h.sent = [];
+    vi.stubEnv('RESEND_API_KEY', 're_test');
+    vi.stubEnv('RESEND_FROM', 'rapport@mira.test');
+    vi.stubEnv('RESEND_REPLY_TO', '');
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('ajoute la CCI (liste à virgules) avec la même pièce jointe', async () => {
+    vi.stubEnv('REPORT_BCC_EMAIL', ' equipe-a@mira.test , equipe-b@mira.test ');
+    const result = await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
+
+    expect(result).toBe('sent');
+    expect(h.sent).toHaveLength(1); // un seul envoi : la CCI voyage avec l'email du prospect
+    const payload = h.sent[0];
+    expect(payload.to).toEqual(['prospect@client.test']);
+    expect(payload.bcc).toEqual(['equipe-a@mira.test', 'equipe-b@mira.test']);
+    expect(payload.attachments).toEqual([
+      { filename: 'prerapport-mira.pdf', content: PDF.toString('base64') },
+    ]);
+  });
+
+  it('aucune CCI quand la variable est vide ou absente', async () => {
+    vi.stubEnv('REPORT_BCC_EMAIL', '');
+    await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
+    vi.stubEnv('REPORT_BCC_EMAIL', ' , ');
+    await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
+
+    expect(h.sent).toHaveLength(2);
+    for (const payload of h.sent) expect(payload).not.toHaveProperty('bcc');
+  });
+
+  it('le prospect est informé de la transmission à l’équipe (mention RGPD)', async () => {
+    await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
+    expect(String(h.sent[0].html)).toContain('Une copie en est transmise à l\'équipe MIRA');
+  });
+});
+
+describe('parseRecipients', () => {
+  it('découpe, nettoie et ignore les entrées vides', () => {
+    expect(parseRecipients('a@x.test,, b@y.test ,')).toEqual(['a@x.test', 'b@y.test']);
+    expect(parseRecipients(undefined)).toEqual([]);
+  });
+});
