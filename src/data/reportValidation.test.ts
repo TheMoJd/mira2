@@ -142,7 +142,7 @@ describe('V7 — marqueurs, liste autorisée et sources_citees se recoupent', ()
   });
 
   it('refuse une statistique hors de la liste autorisée de la section', () => {
-    // WEF (S06) n'est pas dans la grille de §2 (S02, S07, S08, S15, FR1, FR2).
+    // WEF (S06) n'est pas dans la grille de §2 (S02, S07, S08, S15, S16, S17, FR1, FR2).
     const findings = validateReport(reportWith(contexte([`a [[${WEF}]]`], [WEF])));
     expect(findings.some((f) => f.code === 'V7' && f.message.includes('hors de la liste'))).toBe(true);
   });

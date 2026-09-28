@@ -179,6 +179,7 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 ### Sources de la stat-bank
 
 - **Socle des 11 sources** (`inSocle: true`) : `S01` ILO · `S02` Stanford AI Index 2026 · `S04` MIT Collaborating with AI Agents · `S05` OCDE Inclusive transformation · `S06` WEF Future of Jobs 2025 · `S07` CIANum · `S08` OCDE Capability · `S10` Indeed · `S12` PwC · `S13` MIT Iceberg · `S14` OCDE Workers most affected.
+- **Ajouts au socle** (`inSocle: true`) : `S15` McKinsey Jobs lost, jobs gained (2017) · `S16` ETF / groupe inter-agences IAG, Changing landscape of skills in the age of AI (2026, surtout des chiffres Cedefop/JRC/OCDE recrédités) · `S17` OCDE Agentic AI in organisations (2026, qualitatif, 25 organisations).
 - **Couche France** (`inSocle: false`) : `FR1` Parlons RH 2025 · `FR2` Parlons RH 2026 · `FR3` CEGOS 2025 · `FR4` Neobrain × Sopra Steria.
 
 Chaque `StatEntry` porte : `id`, `value`, `unit`, `claim` (FR citable), `verbatim` (audit),
@@ -192,12 +193,12 @@ l'éditeur est portée par la section « Sources de référence », jamais par l
 |---|----|---------|-------|--------------------|
 | 0 | `perimetre` | Carte d'identité du rapport | corps | — |
 | 1 | `synthese-executive` | **Vitrine** : encart (chapeau, chiffre-signal, points clés) | synthèse | liste héritée (§2 → §7) |
-| 2 | `contexte` | État de l'IA | corps | S02, S07, S08, S15, FR1, FR2 |
+| 2 | `contexte` | État de l'IA | corps | S02, S07, S08, S15, S16, S17, FR1, FR2 |
 | 3 | `familles-metiers` | **Cœur** : caractérisation par famille | corps | S01, S06, S10, S12, S13, S14, S15, FR1, FR2 |
-| 4 | `competences` | Compétences montantes/déclinantes | corps | S06, S08, S10, S12 |
-| 5 | `reorganisation` | Collaboration humain-IA | corps | S04, S07, S15 |
+| 4 | `competences` | Compétences montantes/déclinantes | corps | S06, S08, S10, S12, S16, S17 |
+| 5 | `reorganisation` | Collaboration humain-IA | corps | S04, S07, S15, S16, S17 |
 | 6 | `facteur-humain` | Profils exposés, équité | corps | S01, S14, FR5 |
-| 7 | `repere-sectoriel` | Repère sourcé du secteur | corps | S02, S05, S06, FR1–FR5 |
+| 7 | `repere-sectoriel` | Repère sourcé du secteur | corps | S02, S05, S06, S16, FR1–FR5 |
 | 8 | `lecture-strategique` | Les questions que cela pose | corps | — |
 | 8bis | `comment-utiliser` | **Figé** : précautions de lecture + pont vers le payant | code | — |
 | 9 | `sources-methode` | **Figé** : méthode + socle | code | — |
