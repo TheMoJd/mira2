@@ -20,7 +20,7 @@ structure §0→§9 du blueprint. Source de vérité côté code :
   son **code de source** (`S01`…`S14` du socle, `FR1`…`FR4` de la couche France).
 - [`src/data/rapportStructure.ts`](../src/data/rapportStructure.ts) — les 10 blocs §0→§9 + la **grille
   section → sources autorisées** + le vocabulaire contrôlé d'exposition.
-- [`src/data/famillesMetiers.ts`](../src/data/famillesMetiers.ts) — les ~28 familles de métiers (ISCO)
+- [`src/data/famillesMetiers.ts`](../src/data/famillesMetiers.ts) — les ~29 familles de métiers (ISCO)
   du champ guidé Q4.
 
 ---

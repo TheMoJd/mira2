@@ -15,7 +15,7 @@ interface FamilyPickerProps {
 
 /**
  * Sélection guidée des familles de métiers (Q4). Au lieu d'une saisie libre
- * (peu intuitive, ISCO souvent non mappé), on propose les ~28 familles connues
+ * (peu intuitive, ISCO souvent non mappé), on propose les ~29 familles connues
  * regroupées par domaine : un tap (dé)sélectionne. Stocke les **libellés
  * canoniques**, donc `mapFamilles` retrouve toujours les codes ISCO. Un champ
  * « Autre » couvre les cas hors liste.
