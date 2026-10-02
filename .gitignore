@@ -22,6 +22,19 @@ docs/*.docx
 docs/*.doc
 docs/*.key
 docs/article
+# Même règle à la racine (retours CEO et autres notes business déposées hors docs/)
+/*.docx
+/*.doc
+/*.pptx
+/*.pages
+/*.pdf
 examples of reports/
+# Benchmark modèles sur de VRAIS clients (R4) : sorties confidentielles, jamais committées.
+docs/samples/bench/
+
+# Sorties locales des scripts de diagnostic (rejeu de rapport, HTML jetable). Peuvent
+# contenir des données client : jamais committées.
+tmp/
+
 # Local Netlify folder
 .netlify

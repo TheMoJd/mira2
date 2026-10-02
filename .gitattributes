@@ -1,0 +1,21 @@
+# Fins de ligne : LF dans le working tree quel que soit core.autocrlf du poste.
+# Sans cette regle, un poste Windows (autocrlf=true) obtient un checkout CRLF :
+# reportDocs.test.ts ne trouve plus les fences ```text et SYSTEM_PROMPT (template
+# literal) embarque des retours chariot envoyes au modele. Cf. TODO.md Q10.
+* text=auto eol=lf
+
+# Binaires : jamais normalises.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pdf binary
+*.zip binary
+*.docx binary
+*.pptx binary
+*.xlsx binary
