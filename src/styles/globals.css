@@ -157,6 +157,9 @@ button { font-family: inherit; cursor: pointer; }
   padding: 13px 15px;
   outline: none;
   transition: border-color .2s, box-shadow .2s;
+  /* Au focus, le navigateur fait défiler le champ en vue : on garde de la place
+     pour le header fixe (70px) et le libellé au-dessus du champ. */
+  scroll-margin-top: 110px;
 }
 .pr-field::placeholder { color: var(--ink-3); }
 .pr-field:hover:not(:focus) { border-color: var(--violet-300); }
@@ -203,6 +206,7 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 10px 16px;
+  text-align: left; /* libellé sur deux lignes en mobile : aligné comme du texte */
   cursor: pointer;
   transition: border-color .15s, background .15s, color .15s;
 }
@@ -267,9 +271,38 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 }
 .mira-btn-primary:hover { background: var(--violet-700); }
 
+/* Case à cocher : la zone tactile (label) déborde de la case de 20px pour
+   atteindre 44px, sans décaler le visuel. */
+.pr-check-hit {
+  position: relative;
+  flex-shrink: 0;
+  display: block;
+  padding: 12px;
+  margin: -11px -12px -12px;
+  cursor: pointer;
+}
+
+/* Barre d'actions du wizard (Retour / Continuer). */
+.pr-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Tablette et mobile : 16px minimum dans les champs, sinon Safari iOS zoome
+   automatiquement sur le champ au focus. */
+@media (max-width: 1000px) {
+  .pr-field { font-size: 16px; }
+}
+
 @media (max-width: 640px) {
   .pr-audiences { grid-template-columns: 1fr !important; }
   .pr-identity { grid-template-columns: 1fr !important; }
+  /* Actions empilées pleine largeur : l'action principale en haut, sous le
+     dernier champ, et aucun libellé coupé sur deux lignes. */
+  .pr-actions { flex-direction: column-reverse; align-items: stretch; }
+  .pr-actions > span:empty { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -366,6 +399,7 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 .mobile-menu-btn { display: none; }
 .nav-link:hover,
 .nav-login:hover { color: var(--violet) !important; }
+.nav-login { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* Responsive grid overrides */
 @media (max-width: 1000px) {
@@ -386,6 +420,11 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
   .mobile-menu-btn { display: inline-flex; }
   .calc-total { border-left: none !important; padding-left: 0 !important; border-top: 1px solid var(--line); padding-top: 24px; }
   .ticker-grid { grid-template-columns: 1fr 1fr !important; }
+  /* Écrans tactiles (tablette, mobile) : cibles de 44px minimum. Les boutons
+     `small` (38px) et les liens de pied de page (18px) y sont trop petits. */
+  .btn-pill { min-height: 44px; }
+  .footer-links { gap: 0 !important; }
+  .footer-links a { display: flex; align-items: center; min-height: 44px; }
 }
 
 @media (max-width: 640px) {

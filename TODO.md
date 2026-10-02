@@ -275,6 +275,9 @@ vente **24/07** · commercialisation fin août.
   accepté) ; le consentement wizard couvrait déjà le recontact. **Validation juridique
   (Victor) toujours attendue** — minimisation : le téléphone reste optionnel et justifié
   par le suivi commercial.
+  Ajout du 28/09/2026 (validé par Moetez) : consentement wizard et `RGPD_EMAIL_NOTICE`
+  mentionnent la transmission du pré-rapport à l'équipe MIRA (CCI `REPORT_BCC_EMAIL`).
+  À inclure dans la relecture juridique de la mention d'information complète.
 
 ### [~] R3 · Landing : clarifier les deux offres (P0, deadline 10/07) — code fait, copie en attente Caroline
 - **Contrat** : deux parcours lisibles — pré-rapport gratuit automatisé **vs** rapport

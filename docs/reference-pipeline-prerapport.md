@@ -152,7 +152,7 @@ le diagnostic terminé** (le fichier porte le même avertissement).
 | [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche, categorieEntreprise, anneeCreation, localisation, actif }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Tous les champs sont best-effort (souvent partiels). Retourne `{}` en cas d'échec. |
 | | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
 | [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
-| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
+| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Copie cachée à `REPORT_BCC_EMAIL` si définie (liste à virgules, même pièce jointe). Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
 | | `notifyFailure({leadId, error})` | Email de repli ops (no-op loggé si `OPS_EMAIL`/Resend absents). |
 
 ---
@@ -174,12 +174,13 @@ Partagée entre le front et les functions (les functions importent ces modules ;
 | [`reportValidation.ts`](../src/data/reportValidation.ts) | Les **contrôles V1 → V14** repassés derrière le modèle (voir [reference-prompts-mira.md § Validations](reference-prompts-mira.md#validations-dans-le-code)). Un échec bloquant fait rejouer la section. | `validateReport(report)`, `blockingFindings`, `sectionsToReplay`, `findingsBrief`, `syncSourcesCitees`, `budgetOf(spec, nbFamilles)` (bornes de V9, tolérance comprise, lues par le rejeu hors ligne), `SOCLE_ORG_NAMES`, `MOTS_CREUX`, `VOCABULAIRE_DECISION`. |
 | [`reportSanitize.ts`](../src/data/reportSanitize.ts) | Verrou de style sur la prose LLM : tirets cadratins/demi-cadratins et points-virgules → virgules (plages numériques « 2025-2030 » et signes moins « -5 % » préservés). Appliqué par `parseCorps`/`parseSynthese` avant assemblage, persistance et rendu PDF. | `sanitizeProse`, `sanitizeReportProse`. |
 | [`reportHtml.ts`](../src/data/reportHtml.ts) | Gabarit HTML du PDF (fonction pure, sans React). Structure : page de garde brandée (logo, slogan, proposition de valeur) → carte d'identité (page 2) → §0 → encart de synthèse §1 → §2 à §8 avec tableau récapitulatif « En un coup d'œil » en §3 → encart §8bis → méthode §9 → « Sources de référence » (notes numérotées, groupées par section) → page de fin « Transparence et mentions » (génération assistée par IA + mention RGPD). Un filigrane « MIRA AUDIT » (élément `position:fixed`, opacité 5 %) est répété sur chaque page du PDF. | `renderReportHtml(report, ctx)`, `ReportRenderContext`, `SLOGAN`, `VALUE_PROP`. |
-| [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~28 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
+| [`famillesMetiers.ts`](../src/data/famillesMetiers.ts) | ~29 familles de métiers (ISCO-08) du champ guidé Q4. | `famillesMetiers`, `famillesParDomaine`, `famillesByIsco`. |
 | [`rgpd.ts`](../src/data/rgpd.ts) | Mentions RGPD factuelles (pied de la page de fin du PDF + bas de l'email). Pas d'affirmation de conformité ; la mention d'information juridique complète reste à intégrer après validation métier/juridique. | `RGPD_PDF_FOOTER`, `RGPD_EMAIL_NOTICE`, `EMAIL_SENDER_NAME`. |
 
 ### Sources de la stat-bank
 
 - **Socle des 11 sources** (`inSocle: true`) : `S01` ILO · `S02` Stanford AI Index 2026 · `S04` MIT Collaborating with AI Agents · `S05` OCDE Inclusive transformation · `S06` WEF Future of Jobs 2025 · `S07` CIANum · `S08` OCDE Capability · `S10` Indeed · `S12` PwC · `S13` MIT Iceberg · `S14` OCDE Workers most affected.
+- **Ajouts au socle** (`inSocle: true`) : `S15` McKinsey Jobs lost, jobs gained (2017) · `S16` ETF / groupe inter-agences IAG, Changing landscape of skills in the age of AI (2026, surtout des chiffres Cedefop/JRC/OCDE recrédités) · `S17` OCDE Agentic AI in organisations (2026, qualitatif, 25 organisations).
 - **Couche France** (`inSocle: false`) : `FR1` Parlons RH 2025 · `FR2` Parlons RH 2026 · `FR3` CEGOS 2025 · `FR4` Neobrain × Sopra Steria.
 
 Chaque `StatEntry` porte : `id`, `value`, `unit`, `claim` (FR citable), `verbatim` (audit),
@@ -193,12 +194,12 @@ l'éditeur est portée par la section « Sources de référence », jamais par l
 |---|----|---------|-------|--------------------|
 | 0 | `perimetre` | Carte d'identité du rapport | corps | — |
 | 1 | `synthese-executive` | **Vitrine** : encart (chapeau, chiffre-signal, points clés) | synthèse | liste héritée (§2 → §7) |
-| 2 | `contexte` | État de l'IA | corps | S02, S07, S08, S15, FR1, FR2 |
+| 2 | `contexte` | État de l'IA | corps | S02, S07, S08, S15, S16, S17, FR1, FR2 |
 | 3 | `familles-metiers` | **Cœur** : caractérisation par famille | corps | S01, S06, S10, S12, S13, S14, S15, FR1, FR2 |
-| 4 | `competences` | Compétences montantes/déclinantes | corps | S06, S08, S10, S12 |
-| 5 | `reorganisation` | Collaboration humain-IA | corps | S04, S07, S15 |
+| 4 | `competences` | Compétences montantes/déclinantes | corps | S06, S08, S10, S12, S16, S17 |
+| 5 | `reorganisation` | Collaboration humain-IA | corps | S04, S07, S15, S16, S17 |
 | 6 | `facteur-humain` | Profils exposés, équité | corps | S01, S14, FR5 |
-| 7 | `repere-sectoriel` | Repère sourcé du secteur | corps | S02, S05, S06, FR1–FR5 |
+| 7 | `repere-sectoriel` | Repère sourcé du secteur | corps | S02, S05, S06, S16, FR1–FR5 |
 | 8 | `lecture-strategique` | Les questions que cela pose | corps | — |
 | 8bis | `comment-utiliser` | **Figé** : précautions de lecture + pont vers le payant | code | — |
 | 9 | `sources-methode` | **Figé** : méthode + socle | code | — |
@@ -283,6 +284,7 @@ en production. Voir [`.env.example`](../.env.example).
 | `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). Format « Nom <adresse> » ou adresse seule. |
 | `RESEND_REPLY_TO` | optionnel | email | Boîte qui reçoit les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
 | `OPS_EMAIL` | optionnel | email | Destinataire des alertes d'échec (`notifyFailure`). |
+| `REPORT_BCC_EMAIL` | optionnel | email | Copie cachée (CCI) de chaque rapport envoyé au prospect, PDF compris. Une ou plusieurs adresses séparées par des virgules. Vide ou absent → pas de CCI. |
 | `CHROME_EXECUTABLE_PATH` | dev local | pdf | Chemin vers Chrome/Edge local (le binaire `@sparticuz/chromium` est Linux). |
 | `URL` | fourni par Netlify | submit | Base URL pour déclencher la background function. |
 

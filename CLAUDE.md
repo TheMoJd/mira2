@@ -51,8 +51,8 @@ pour contourner un problème de fins de ligne.
   `netlify/functions/` (IO). Référence détaillée : [`docs/reference-pipeline-prerapport.md`](docs/reference-pipeline-prerapport.md).
   - `rapportStructure.ts` — le déroulé §0 → §9 (+ §8bis), intention, consigne, **grille
     `allowedSources`** section → sources, budgets de mots, textes figés injectés par le code.
-  - `statbank.ts` — les **seuls chiffres citables** (87 entrées sourcées, tag `isco` pour le
-    rattachement stat → famille de métiers en §3) ; `famillesMetiers.ts` — les 28 familles
+  - `statbank.ts` — les **seuls chiffres citables** (102 entrées sourcées, tag `isco` pour le
+    rattachement stat → famille de métiers en §3) ; `famillesMetiers.ts` — les 29 familles
     ISCO-08 du champ guidé.
   - `reportPrompt.ts` — `SYSTEM_PROMPT` fixe + messages utilisateur (corps, synthèse, rejeux).
   - `reportSchema.ts` — schémas **zod, source unique** du contrat de sortie : les

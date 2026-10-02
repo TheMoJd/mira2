@@ -60,7 +60,8 @@ export interface StatSource {
   /**
    * Code de source du blueprint moteur (CEO, 22/06/2026).
    * - Socle des 11 sources validé : `S01`…`S14`.
-   * - Couche France complémentaire (hors socle, conservée sur décision Caroline) : `FR1`…`FR4`.
+   * - Ajouts ultérieurs au socle : `S15` McKinsey, `S16` ETF / IAG, `S17` OCDE IA agentique.
+   * - Couche France complémentaire (hors socle, conservée sur décision Caroline) : `FR1`…`FR5`.
    * Sert à la « grille section → sources autorisées » de `rapportStructure.ts`.
    */
   sourceId: string;
@@ -247,6 +248,32 @@ const DARES_2030: StatSource = {
   report: 'France Stratégie / DARES — Les métiers en 2030 (rapport 2022)',
   org: 'France Stratégie / DARES',
   year: 2022,
+};
+const IAG_SKILLS: StatSource = {
+  // Synthèse inter-agences (groupe de travail IAG TVET n°1 : ETF, Cedefop, Eurofound,
+  // Commission européenne, OIT, UNESCO), rédigée par l'ETF, mai 2026. Surtout des
+  // chiffres REPRIS des enquêtes des membres (Cedefop, JRC, OCDE, Lightcast…) :
+  // la plupart des entrées sont `secondaire` et recréditées à leur source d'origine.
+  // Apporte ce que le socle couvre mal : l'usage de l'IA et la littératie IA mesurés
+  // à l'échelle EUROPÉENNE (plus proche du lecteur français qu'une donnée monde/US).
+  sourceId: 'S16',
+  inSocle: true,
+  nature: 'recherche',
+  report: 'ETF (groupe inter-agences IAG) — Changing landscape of skills in the age of AI 2026',
+  org: 'European Training Foundation (ETF), groupe inter-agences IAG',
+  year: 2026,
+};
+const OCDE_AGENTIC: StatSource = {
+  // OECD Artificial Intelligence Papers n°65 (sept. 2026). Étude QUALITATIVE : entretiens
+  // avec 25 organisations déjà engagées dans l'IA agentique (11 pays). Le rapport dit
+  // lui-même qu'il ne contient aucune mesure quantitative et qu'il est illustratif, pas
+  // représentatif : les entrées portent sur des constats de pratique, pas sur des taux.
+  sourceId: 'S17',
+  inSocle: true,
+  nature: 'recherche',
+  report: 'OCDE — Agentic AI in organisations: early insights from practitioner interviews 2026',
+  org: 'OCDE',
+  year: 2026,
 };
 const MCKINSEY_2017: StatSource = {
   // Potentiel d'automatisation TECHNIQUE (robotique + IA), pas exposition à l'IA
@@ -1459,6 +1486,210 @@ export const statbank: StatEntry[] = [
     theme: 'exposition',
     scope: 'monde',
     source: { ...MCKINSEY_2017, page: 'Synthèse' },
+    provenance: 'primaire',
+  },
+
+  // === S16 — ETF / groupe inter-agences IAG, Changing landscape of skills in the age of AI (2026) ===
+  // Usage, réorganisation des tâches et littératie IA mesurés en Europe (§2, §4, §5, §7).
+  {
+    id: 'iag-2026-usage-ia-europe-28',
+    value: 28,
+    unit: '%',
+    claim:
+      'En Europe, environ 28 % des salariés adultes utilisent déjà l’IA sur leur lieu de travail, et l’usage est plus répandu en France, en Belgique, en Allemagne et au Luxembourg que dans le sud de l’Europe.',
+    verbatim:
+      'about 28% of European adult workers are already using AI at their workplace (Cedefop, 2025) … AI use is more common in some western European countries (Belgium, Germany, France, Luxembourg) than in southern European countries',
+    theme: 'adoption',
+    scope: 'europe',
+    source: { ...IAG_SKILLS, page: 'p.10', originalSource: 'Cedefop, 2025 (enquête 2024, 11 pays de l’UE)' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-management-algorithmique-79',
+    value: 79,
+    unit: '%',
+    claim:
+      'En France, en Allemagne, en Italie et en Espagne, 79 % des employeurs en moyenne ont adopté au moins un outil qui donne des consignes aux salariés, suit ou évalue leur travail par algorithme (90 % aux États-Unis).',
+    verbatim:
+      'AM in workplaces is particularly prevalent in the US, where 90% of employers have adopted at least one tool to instruct, monitor or evaluate workers. Adoption is slightly lower in the European countries surveyed (France, Germany, Italy and Spain, with an average adoption of 79%)',
+    theme: 'gouvernance',
+    scope: 'europe',
+    source: { ...IAG_SKILLS, page: 'p.11', originalSource: 'OCDE, 2025 (enquête auprès de plus de 6 000 managers)' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-algorithmes-flux-travail-24',
+    value: 24,
+    unit: '%',
+    claim:
+      'Pour 24 % des travailleurs de l’Union européenne, ce sont des algorithmes qui déterminent le déroulé du travail ou l’ordre de priorité des tâches.',
+    verbatim:
+      'The AIM-WORK survey found that algorithms determine the workflow or task prioritisation at work for 24% of EU workers (JRC, 2025a).',
+    theme: 'rh',
+    scope: 'europe',
+    source: { ...IAG_SKILLS, page: 'p.11', originalSource: 'JRC, enquête AIM-WORK 2024-2025' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-taches-reorganisees-67',
+    value: 67,
+    unit: '%',
+    claim:
+      'En Europe, après l’adoption de l’IA, environ un tiers des salariés ne réalisent plus certaines tâches, 4 sur 10 en réalisent de nouvelles et 67 % effectuent certaines tâches plus vite : l’IA recompose le contenu du travail.',
+    verbatim:
+      'about one-third of European workers who participated in the survey no longer do some tasks after the adoption of AI as part of their main job, while about 4 in 10 workers now do some new or different tasks. Moreover, 67% of workers do some tasks faster than before (Cedefop, 2025).',
+    theme: 'productivite',
+    scope: 'europe',
+    source: { ...IAG_SKILLS, page: 'p.12', originalSource: 'Cedefop, 2025' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-employeurs-taches-automatisees-72',
+    value: 72,
+    unit: '%',
+    claim:
+      'Dans la finance et l’industrie manufacturière, 66 % et 72 % des employeurs indiquent que l’IA a automatisé des tâches autrefois réalisées par des salariés, et environ la moitié qu’elle a créé des tâches nouvelles.',
+    verbatim:
+      '66% and 72% of employers in finance and manufacturing, respectively, report that AI had automated tasks previously done by workers, while around half of employers in each sector reported that AI had created tasks that were not previously done by workers (OECD, 2023c).',
+    theme: 'emploi',
+    scope: 'ocde',
+    source: { ...IAG_SKILLS, page: 'p.12', originalSource: 'OCDE, 2023 (études de cas dans 8 pays)' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-taches-humaines-13',
+    value: 13,
+    unit: '%',
+    claim:
+      'Les tâches qui reposent sur l’empathie, la créativité, le leadership et la curiosité n’ont qu’un potentiel de transformation par l’IA de 13 %, car elles dépendent du jugement humain, du contexte et de l’expérience vécue.',
+    verbatim:
+      'Tasks tied to empathy, creativity, leadership and curiosity have just a 13% potential for AI transformation since they depend on human … judgement, context and lived experience (WEF, 2025b).',
+    theme: 'competences',
+    scope: 'monde',
+    source: { ...IAG_SKILLS, page: 'p.23', originalSource: 'World Economic Forum, 2025' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-offres-ia-hors-it-51',
+    value: 51,
+    unit: '%',
+    claim:
+      'En 2024, 51 % des offres d’emploi liées à l’IA concernaient des postes hors informatique (39 % en 2019), et les ressources humaines figurent parmi les cinq domaines où la demande de compétences IA a crû le plus vite.',
+    verbatim:
+      'as large as 51% of AI-related job postings were found outside IT and Computer Science in 2024, compared to 39% in 2019. The Lightcast report points to five sectors where demand for AI skills grew fastest from 2023 to 2024: HR, Marketing & PR, Finance, Education & Training, and Science & Research.',
+    theme: 'competences',
+    scope: 'monde',
+    source: { ...IAG_SKILLS, page: 'p.31', originalSource: 'Lightcast, 2025' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-competences-ia-base-29-22',
+    value: 29,
+    unit: '%',
+    claim:
+      'En Europe, les compétences IA de base sont demandées dans 29 % des offres d’emploi qui citent l’IA, mais n’apparaissent que dans 22 % des CV : le déficit touche aussi le premier niveau, pas seulement les experts.',
+    verbatim:
+      'Basic AI skills are sought in 29% of vacancies but appear only in 22% of CVs on average. Similarly, advanced AI skills are required in 24% of vacancies but appear only in 15% of CVs.',
+    theme: 'competences',
+    scope: 'europe',
+    source: { ...IAG_SKILLS, page: 'p.33', originalSource: 'Pal et al., 2025' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-litteratie-ia-faible-40-60',
+    value: 40,
+    unit: '%',
+    claim:
+      'En Europe, entre 40 % et 60 % des salariés adultes n’ont qu’une compréhension limitée des différentes dimensions de la littératie IA (reconnaître une IA et ses limites, interpréter ses résultats, en mesurer les enjeux éthiques).',
+    verbatim:
+      'The findings of the survey show the low AI literacy in the European adult workforce, with between 40-60% of adult workers surveyed possessing a relatively limited understanding of the diverse pillars of AI literacy (Cedefop, 2025).',
+    theme: 'competences',
+    scope: 'europe',
+    source: { ...IAG_SKILLS, page: 'p.42', originalSource: 'Cedefop, 2025' },
+    provenance: 'secondaire',
+  },
+  {
+    id: 'iag-2026-formation-ia-salaries-15',
+    value: 15,
+    unit: '%',
+    claim:
+      'En Europe, seuls 15 % environ des salariés ont suivi en 2023-2024 une formation visant à améliorer leur usage de l’IA.',
+    verbatim:
+      'between 2023-24 only about 15% of employees participated in education or training activities aimed at further improving their knowledge and skills in using AI technology (ibid., 2025).',
+    theme: 'formation',
+    scope: 'europe',
+    source: { ...IAG_SKILLS, page: 'p.42-43', originalSource: 'Cedefop, 2025' },
+    provenance: 'secondaire',
+  },
+  {
+    // Seule entrée `primaire` de S16 : c'est la synthèse propre du rapport (résumé
+    // exécutif), qui agrège plusieurs études selon leurs définitions.
+    id: 'iag-2026-main-oeuvre-ia-0-3-5',
+    value: 5,
+    unit: '%',
+    claim:
+      'Les métiers qui conçoivent ou utilisent professionnellement l’IA à un niveau technique ne représentent qu’entre 0,3 % et 5 % de l’emploi total selon les études, une part faible mais en croissance rapide.',
+    verbatim:
+      'the share of the AI workforce ranges from as little as 0.3% to as much as 5% of total employment, with variations across countries and over time. Nevertheless, the demand for AI-related skills has increased rapidly over the past decade',
+    theme: 'emploi',
+    scope: 'monde',
+    source: { ...IAG_SKILLS, page: 'p.6' },
+    provenance: 'primaire',
+  },
+
+  // === S17 — OCDE, Agentic AI in organisations (2026) : constats qualitatifs (25 organisations) ===
+  // Le chiffre porté est la taille de l'échantillon : ces constats décrivent des
+  // pratiques d'organisations pionnières, jamais une tendance mesurée (§2, §4, §5).
+  {
+    id: 'ocde-2026-agentique-autonomie-bornee-25',
+    value: 25,
+    unit: '',
+    claim:
+      'Parmi 25 organisations pionnières de l’IA agentique interrogées dans 11 pays, aucune ne déploie d’agents à autonomie illimitée : l’exécution autonome reste cantonnée à des tâches définies, avec validation humaine des actions à fort enjeu ou irréversibles.',
+    verbatim:
+      'No participating organisation reported deploying agentic AI systems with unrestricted autonomy. Instead, autonomous execution is typically constrained to clearly defined task scopes, with human approval for high-stake or irreversible actions',
+    theme: 'gouvernance',
+    scope: 'monde',
+    source: { ...OCDE_AGENTIC, page: 'p.15' },
+    provenance: 'primaire',
+  },
+  {
+    id: 'ocde-2026-agentique-taches-structurees-25',
+    value: 25,
+    unit: '',
+    claim:
+      'Pour les 25 organisations pionnières interrogées, les usages agentiques de court terme se concentrent sur des tâches structurées, dont le résultat peut être vérifié et dont le coût d’une erreur reste limité ou réversible.',
+    verbatim:
+      'In the near term, however, they expected adoption to be clustered under narrower conditions: where tasks are structured enough for an agent to plan and execute them; where outcomes can be checked against reliable data or system records; and where the costs of an error is bounded or reversible',
+    theme: 'adoption',
+    scope: 'monde',
+    source: { ...OCDE_AGENTIC, page: 'p.14' },
+    provenance: 'primaire',
+  },
+  {
+    id: 'ocde-2026-agentique-erosion-expertise-25',
+    value: 25,
+    unit: '',
+    claim:
+      'Parmi les 25 organisations pionnières de l’IA agentique interrogées, beaucoup craignent que la délégation aux agents érode l’expertise et réduise l’apprentissage par l’expérience des futurs salariés.',
+    verbatim:
+      'Many interviewees warned that over time this could erode expertise and reduce opportunities for experiential learning and skills development for future generations of workers.',
+    theme: 'competences',
+    scope: 'monde',
+    source: { ...OCDE_AGENTIC, page: 'p.19' },
+    provenance: 'primaire',
+  },
+  {
+    id: 'ocde-2026-agentique-penuries-main-oeuvre-25',
+    value: 25,
+    unit: '',
+    claim:
+      'Parmi les 25 organisations pionnières interrogées, plusieurs présentent l’IA agentique d’abord comme une réponse aux pénuries structurelles de main-d’œuvre, pour augmenter les équipes plutôt que les remplacer.',
+    verbatim:
+      'Several organisations … framed agentic AI primarily as a response to structural labour shortages rather than as a substitute for human workers.',
+    theme: 'emploi',
+    scope: 'monde',
+    source: { ...OCDE_AGENTIC, page: 'p.13' },
     provenance: 'primaire',
   },
 ];

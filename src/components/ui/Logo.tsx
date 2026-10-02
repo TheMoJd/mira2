@@ -9,7 +9,8 @@ interface LogoProps {
 
 export default function Logo({ dark = false, to = '#top' }: LogoProps) {
   const color = dark ? 'var(--dk-ink)' : 'var(--ink)';
-  const style: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10 };
+  // minHeight : cible tactile de 44px (le visuel ne fait que 26px de haut).
+  const style: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, minHeight: 44 };
 
   const inner = (
     <>

@@ -92,7 +92,7 @@ export interface WordBudget {
  * Valeur spéciale d'`allowedSources` :
  *  - `'*'` : toutes les sources (sections transversales).
  */
-export type SourceSelector = string; // 'S01'…'S15' | 'FR1'…'FR5' | '*'
+export type SourceSelector = string; // 'S01'…'S17' | 'FR1'…'FR5' | '*'
 
 export interface ReportSection {
   /**
@@ -167,7 +167,7 @@ export const COMMENT_UTILISER_PARAGRAPHES: string[] = [
 
 /** Corps de §9 « Méthode et socle de sources ». */
 export const METHODE_PARAGRAPHES: string[] = [
-  'Ce pré-rapport applique l’état de l’art public à vos familles de métiers à partir d’un socle de rapports de référence internationaux (OIT, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC, McKinsey), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie / DARES).',
+  'Ce pré-rapport applique l’état de l’art public à vos familles de métiers à partir d’un socle de rapports de référence internationaux (OIT, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC, McKinsey, ETF), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie / DARES).',
   'Points de méthode. Chaque chiffre du rapport renvoie par un appel de note à la section « Sources de référence », qui donne son organisation, son année, sa page, son périmètre, son horizon et la nature de la source (recherche ou commerciale). Le périmètre de chaque chiffre est nommé dans la phrase qui le porte. On distingue exposition et suppression : l’augmentation domine. Le rattachement des métiers déclarés à la classification ISCO affiche un niveau de confiance corrigeable. Socle daté 2023-2026, versionné.',
 ];
 
@@ -227,7 +227,9 @@ export const reportSections: ReportSection[] = [
     contentSource: 'llm',
     call: 'corps',
     allowsStats: true,
-    allowedSources: ['S02', 'S07', 'S08', 'S15', 'FR1', 'FR2'],
+    // S16 (usage de l'IA mesuré en Europe) et S17 (IA agentique : autonomie bornée)
+    // cadrent « où en est l'IA » plus près du lecteur qu'une donnée monde/US.
+    allowedSources: ['S02', 'S07', 'S08', 'S15', 'S16', 'S17', 'FR1', 'FR2'],
     statThemes: ['adoption', 'exposition', 'gouvernance'],
     audience: ['dirigeant', 'rh'],
     offre: 'gratuit',
@@ -272,7 +274,9 @@ export const reportSections: ReportSection[] = [
     contentSource: 'llm',
     call: 'corps',
     allowsStats: true,
-    allowedSources: ['S06', 'S08', 'S10', 'S12'],
+    // S16 : littératie IA, formation et compétences humaines mesurées en Europe.
+    // S17 : risque d'érosion de l'expertise par délégation aux agents (ce qui recule).
+    allowedSources: ['S06', 'S08', 'S10', 'S12', 'S16', 'S17'],
     statThemes: ['competences', 'formation'],
     audience: ['rh'],
     offre: 'gratuit',
@@ -291,7 +295,9 @@ export const reportSections: ReportSection[] = [
     contentSource: 'llm',
     call: 'corps',
     allowsStats: true,
-    allowedSources: ['S04', 'S07', 'S15'],
+    // S16 : recomposition des tâches après adoption (Europe). S17 : pratiques des
+    // organisations pionnières de l'IA agentique (autonomie bornée, tâches structurées).
+    allowedSources: ['S04', 'S07', 'S15', 'S16', 'S17'],
     statThemes: ['productivite', 'adoption'],
     audience: ['dirigeant', 'rh'],
     offre: 'gratuit',
@@ -329,7 +335,9 @@ export const reportSections: ReportSection[] = [
     contentSource: 'llm',
     call: 'corps',
     allowsStats: true,
-    allowedSources: ['S02', 'S05', 'S06', 'FR1', 'FR2', 'FR3', 'FR4', 'FR5'],
+    // S16 : repères européens (usage par pays, management algorithmique en France,
+    // Allemagne, Italie, Espagne), plus proches du secteur français qu'une donnée monde.
+    allowedSources: ['S02', 'S05', 'S06', 'S16', 'FR1', 'FR2', 'FR3', 'FR4', 'FR5'],
     statThemes: ['adoption', 'exposition'],
     audience: ['dirigeant', 'rh'],
     offre: 'gratuit',

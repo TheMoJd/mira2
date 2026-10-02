@@ -15,7 +15,7 @@ export const preRapport = {
     // Double accroche validée par la direction (RH vs dirigeant).
     audiences: [
       { who: 'Pour les RH', msg: 'Anticipez la transformation des compétences et la réforme des entretiens professionnels (EPP 2026).' },
-      { who: 'Pour les dirigeants', msg: 'Sécurisez la pérennité de votre activité et la performance de votre entreprise face à l’IA.' },
+      { who: 'Pour les dirigeants', msg: 'Sécurisez la pérennité de votre activité et la performance de votre organisation face à l’IA.' },
     ],
     cta: 'Commencer',
     legal: 'Offert, sans engagement.',
@@ -23,8 +23,8 @@ export const preRapport = {
 
   /** Métadonnées des 5 étapes du formulaire (ordre = progression). */
   steps: [
-    { id: 'entreprise', label: 'Entreprise', kicker: 'Étape 1 sur 5', title: 'Votre entreprise', subtitle: 'On commence par le contexte général de votre activité.' },
-    { id: 'activite', label: 'Activité', kicker: 'Étape 2 sur 5', title: 'Votre offre', subtitle: 'Ce que vous produisez et pour qui : c’est ce qui rend votre pré-diagnostic pertinent.' },
+    { id: 'entreprise', label: 'Organisation', kicker: 'Étape 1 sur 5', title: 'Votre organisation', subtitle: 'On commence par le contexte général de votre activité.' },
+    { id: 'activite', label: 'Activité', kicker: 'Étape 2 sur 5', title: 'Votre offre / vos services', subtitle: 'Ce que vous produisez et pour qui : c’est ce qui rend votre pré-diagnostic pertinent.' },
     { id: 'metiers', label: 'Métiers', kicker: 'Étape 3 sur 5', title: 'Vos grandes familles de métiers', subtitle: 'Les métiers cœur de votre activité aujourd’hui. C’est sur eux que portera la lecture sectorielle.' },
     { id: 'sources', label: 'Compléments', kicker: 'Étape 4 sur 5', title: 'Compléments (optionnel)', subtitle: 'Quelques sources publiques nous aident à affiner. Tout est facultatif.' },
     { id: 'contact', label: 'Réception', kicker: 'Étape 5 sur 5', title: 'Recevoir votre pré-diagnostic', subtitle: 'Dites-nous à qui l’adresser. Nous vous envoyons le pré-diagnostic complet par email dès qu’il est prêt.' },
@@ -37,7 +37,7 @@ export const preRapport = {
       hint: 'Optionnel. Nous aide à pré-qualifier votre établissement.',
     },
     secteurActivite: {
-      label: 'Dans quel secteur opérez-vous, et que fait concrètement votre entreprise ?',
+      label: 'Dans quel secteur opérez-vous, et que fait concrètement votre organisation ?',
       placeholder: 'Ex. : PME du transport routier de marchandises (120 salariés). Nous assurons la livraison du dernier kilomètre pour des e-commerçants en Île-de-France.',
     },
     produitsServices: {
@@ -55,7 +55,7 @@ export const preRapport = {
     },
     siteUrl: {
       label: 'Site internet',
-      placeholder: 'https://votre-entreprise.fr',
+      placeholder: 'https://votre-organisation.fr',
       hint: 'Optionnel. Permet d’enrichir votre pré-diagnostic avec votre positionnement public.',
     },
     plaquette: {
@@ -82,12 +82,12 @@ export const preRapport = {
     },
     email: {
       label: 'Votre email professionnel',
-      placeholder: 'prenom.nom@entreprise.fr',
+      placeholder: 'prenom.nom@organisation.fr',
       hint: 'Nous y enverrons votre pré-diagnostic. Pas de spam.',
     },
   },
 
-  consent: 'J’accepte que MIRA utilise ces informations pour générer mon pré-diagnostic et me recontacter à ce sujet.',
+  consent: 'J’accepte que MIRA utilise ces informations pour générer mon pré-diagnostic, le transmettre à l’équipe MIRA et me recontacter à ce sujet.',
 
   success: {
     title: 'Votre pré-diagnostic arrive par email',

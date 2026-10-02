@@ -46,7 +46,7 @@ export default function Button({ children, primary, dark, small, href = '#cta' }
 
   return (
     <Magnetic>
-      <motion.a href={href} onClick={onClick} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={style}>
+      <motion.a href={href} onClick={onClick} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} style={style} className="btn-pill">
         {children}
       </motion.a>
     </Magnetic>

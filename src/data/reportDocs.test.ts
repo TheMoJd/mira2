@@ -26,7 +26,9 @@ import {
  */
 
 const DOC_PATH = 'docs/reference-prompts-mira.md';
-const doc = readFileSync(DOC_PATH, 'utf8');
+// Fins de ligne normalisées : sous Windows (core.autocrlf=true) le doc est extrait en
+// CRLF, alors que les template literals du code sont toujours en LF.
+const doc = readFileSync(DOC_PATH, 'utf8').replace(/\r\n/g, '\n');
 
 /** Blocs ```text du doc, qui portent les prompts recopiés. */
 const textBlocks = [...doc.matchAll(/```text\n([\s\S]*?)\n```/g)].map((m) => m[1]);

@@ -97,6 +97,7 @@ export default function Nav() {
           className="mobile-menu-btn"
           style={{
             background: 'none', border: 'none', padding: 8, alignItems: 'center', justifyContent: 'center',
+            minWidth: 44, minHeight: 44, marginRight: -8, // cible tactile 44px, icône alignée sur la marge
             color: 'var(--ink)', fontSize: 22, lineHeight: 1, cursor: 'pointer',
           }}
         >
@@ -116,7 +117,9 @@ export default function Nav() {
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             style={{ overflow: 'hidden', background: 'rgba(245,243,251,.98)', backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--line-soft)' }}
           >
-            <div className="wrap" style={{ display: 'flex', flexDirection: 'column', padding: '8px 0 24px' }}>
+            {/* paddingBlock et non `padding` : le raccourci inline écraserait le
+                padding-inline de .wrap et collerait les liens au bord de l'écran. */}
+            <div className="wrap" style={{ display: 'flex', flexDirection: 'column', paddingBlock: '8px 24px' }}>
               {mira.nav.map((l) => (
                 <a
                   key={l.href}

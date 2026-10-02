@@ -5,7 +5,7 @@
  * L'unité d'analyse du rapport freemium est la **famille de métiers mappée
  * ISCO-08/ESCO** (le secteur n'est qu'une lentille de pondération — cf.
  * `rapportStructure.ts`). La Q4 (« vos 3 à 6 familles de métiers indispensables »)
- * s'appuie sur cette liste guidée d'~28 familles à libellés lisibles, chacune
+ * s'appuie sur cette liste guidée d'~29 familles à libellés lisibles, chacune
  * rattachée à un ou plusieurs sous-grands-groupes ISCO-08 — ce qui ancre
  * l'appariement sémantique texte libre → ISCO et son niveau de confiance.
  *
@@ -26,7 +26,11 @@ export interface FamilleMetier {
 export const famillesMetiers: FamilleMetier[] = [
   // Direction & encadrement
   { id: 'direction-generale', label: 'Direction générale & dirigeants', isco: ['11'], domaine: 'Direction & encadrement' },
-  { id: 'management-commercial-admin', label: 'Management commercial & administratif', isco: ['12'], domaine: 'Direction & encadrement' },
+  // Scission demandée le 28/09/2026 : deux libellés distincts pour le répondant, mais un
+  // même code ISCO 12. La banque de stats s'arrête aux codes à 2 chiffres, elle ne sait
+  // pas distinguer 122 (commercial) de 121 (administratif).
+  { id: 'management-commercial', label: 'Management commercial', isco: ['12'], domaine: 'Direction & encadrement' },
+  { id: 'management-administratif', label: 'Management administratif', isco: ['12'], domaine: 'Direction & encadrement' },
   { id: 'management-production-services', label: 'Management de production & services spécialisés', isco: ['13'], domaine: 'Direction & encadrement' },
   { id: 'management-hotellerie-commerce', label: 'Management hôtellerie, commerce & services', isco: ['14'], domaine: 'Direction & encadrement' },
 

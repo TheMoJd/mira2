@@ -97,6 +97,13 @@ export const SOCLE_ORG_NAMES = [
   'IDC',
   'Cegid',
   'Epoch AI',
+  // S16 (ETF / IAG) et les sources d'origine qu'il recrédite.
+  'European Training Foundation',
+  'ETF',
+  'Cedefop',
+  'Eurofound',
+  'JRC',
+  'Lightcast',
 ] as const;
 
 /** Mots creux interdits par le registre du prompt système (V11). */
