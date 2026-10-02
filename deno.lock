@@ -11,6 +11,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@anthropic-ai/sdk@0.111",
         "npm:@netlify/functions@^5.3.0",
         "npm:@sparticuz/chromium@149",
         "npm:@supabase/supabase-js@^2.108.2",
