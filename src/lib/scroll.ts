@@ -38,6 +38,22 @@ export function scrollToAnchor(hash: string): void {
   }
 }
 
+/** Ramène le haut d'un élément juste sous le header fixe, **seulement** s'il est
+ *  sorti de l'écran par le haut. Cas d'usage : changement d'étape du wizard sur
+ *  mobile, où le bouton « Continuer » est loin sous le titre de l'étape suivante. */
+export function revealTop(el: HTMLElement): void {
+  if (typeof window === 'undefined') return;
+  const top = el.getBoundingClientRect().top;
+  if (top >= -HEADER_OFFSET) return; // déjà visible sous le header : on ne bouge pas
+  const y = window.scrollY + top + HEADER_OFFSET - 16;
+  if (lenis) {
+    lenis.scrollTo(y);
+  } else {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' });
+  }
+}
+
 /** Remet la page en haut, instantanément. Utilisé lors d'un changement de route
  *  (où un défilement animé n'aurait pas de sens). Passe par Lenis s'il est actif
  *  pour rester synchronisé avec sa position interne. */

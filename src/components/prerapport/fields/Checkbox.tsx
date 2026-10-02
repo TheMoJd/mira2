@@ -15,7 +15,8 @@ export default function Checkbox({ checked, onChange, error, children }: Checkbo
   return (
     <div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-        <span style={{ position: 'relative', flexShrink: 0, marginTop: 1 }}>
+        {/* Zone tactile de 44px autour de la case (cf. .pr-check-hit). */}
+        <label htmlFor={id} className="pr-check-hit">
           <input
             id={id}
             type="checkbox"
@@ -23,7 +24,7 @@ export default function Checkbox({ checked, onChange, error, children }: Checkbo
             onChange={(e) => onChange(e.target.checked)}
             aria-invalid={!!error}
             style={{
-              appearance: 'none', WebkitAppearance: 'none', margin: 0,
+              appearance: 'none', WebkitAppearance: 'none', margin: 0, display: 'block',
               width: 20, height: 20, borderRadius: 6,
               border: `1.5px solid ${error ? 'var(--risk)' : checked ? 'var(--violet)' : 'var(--line)'}`,
               background: checked ? 'var(--violet)' : 'var(--paper)',
@@ -33,12 +34,12 @@ export default function Checkbox({ checked, onChange, error, children }: Checkbo
           {checked && (
             <svg
               width="13" height="13" viewBox="0 0 13 13" fill="none"
-              style={{ position: 'absolute', top: 4, left: 3.5, pointerEvents: 'none' }}
+              style={{ position: 'absolute', top: 16, left: 15.5, pointerEvents: 'none' }}
             >
               <path d="M1 6.5 L4.5 10 L12 1.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
-        </span>
+        </label>
         <label htmlFor={id} style={{ fontSize: 13.5, lineHeight: 1.55, color: 'var(--ink-2)', cursor: 'pointer' }}>
           {children}
         </label>

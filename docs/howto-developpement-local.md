@@ -50,7 +50,11 @@ RESEND_API_KEY=re_...
 RESEND_FROM=rapport@votre-domaine-verifie     # ou « MIRA <rapport@votre-domaine-verifie> »
 RESEND_REPLY_TO=vous@votre-boite-relevee      # optionnel : où partent les réponses des prospects
 OPS_EMAIL=ops@votre-domaine                   # optionnel : destinataire des alertes d'échec
+REPORT_BCC_EMAIL=vous@votre-boite-relevee     # optionnel : copie cachée de chaque rapport (virgules si plusieurs)
 ```
+
+En local, ne mettez dans `REPORT_BCC_EMAIL` que votre propre adresse : chaque rapport généré
+y part en copie cachée, pièce jointe comprise.
 
 ## Étape 2 — Lancer le serveur de dev
 

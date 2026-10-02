@@ -6,6 +6,10 @@
  * la génération aboutit quand même (le PDF est stocké), sans planter la chaîne.
  *
  * `notifyFailure` est l'email de repli ops en cas d'échec de génération.
+ *
+ * Copie cachée équipe : si `REPORT_BCC_EMAIL` est posée (une ou plusieurs adresses
+ * séparées par des virgules), chaque rapport envoyé au prospect part aussi en CCI
+ * à ces adresses, pièce jointe comprise. Variable vide ou absente → pas de CCI.
  */
 import { Resend } from 'resend';
 import { RGPD_EMAIL_NOTICE, EMAIL_SENDER_NAME } from '../../../src/data/rgpd';
@@ -17,6 +21,15 @@ const PDF_FILENAME = 'prerapport-mira.pdf';
 /** Échappe le HTML (le nom d'entreprise vient d'une API externe, donné non fiable). */
 const escapeHtml = (s: string): string =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c);
+
+/** Liste d'adresses séparées par des virgules (« a@x.fr, b@y.fr ») → tableau nettoyé.
+ *  Même format pour `CONTACT_NOTIFY_EMAIL` et `REPORT_BCC_EMAIL`. */
+export function parseRecipients(raw: string | undefined): string[] {
+  return (raw ?? '')
+    .split(',')
+    .map((addr) => addr.trim())
+    .filter(Boolean);
+}
 
 /** `from` complet (« MIRA <rapport@domaine> ») si l'envoi est configuré, sinon null. */
 function senderOrNull(): string | null {
@@ -55,12 +68,16 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
   // (ex. moetez@polaria.ai) plutôt que vers l'adresse d'envoi `@mira-audit.fr`, qui
   // n'a pas de boîte derrière. Absent → les réponses repartent vers le `from`.
   const replyTo = process.env.RESEND_REPLY_TO;
+  // Optionnel : l'équipe reçoit une copie cachée de chaque rapport envoyé. Le
+  // prospect ne voit pas ces adresses (CCI), et la mention RGPD l'en informe.
+  const bcc = parseRecipients(process.env.REPORT_BCC_EMAIL);
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
       from,
       to: [to],
+      ...(bcc.length > 0 ? { bcc } : {}),
       ...(replyTo ? { replyTo } : {}),
       subject: 'Votre pré-rapport MIRA',
       html,
@@ -87,10 +104,7 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
 export async function notifyContactRequest(form: ContactForm): Promise<void> {
   const from = senderOrNull();
   // Plusieurs destinataires possibles : liste séparée par des virgules.
-  const recipients = (process.env.CONTACT_NOTIFY_EMAIL || process.env.OPS_EMAIL || '')
-    .split(',')
-    .map((addr) => addr.trim())
-    .filter(Boolean);
+  const recipients = parseRecipients(process.env.CONTACT_NOTIFY_EMAIL || process.env.OPS_EMAIL);
   if (!from || recipients.length === 0) {
     console.warn('[email] CONTACT_NOTIFY_EMAIL/OPS_EMAIL absent — notification contact ignorée (demande enregistrée).');
     return;

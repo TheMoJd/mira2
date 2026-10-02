@@ -215,6 +215,11 @@ Depuis le 10/07, deux gardes s'y ajoutent côté validation serveur :
   derrière ; sans reply-to, la réponse d'un prospect partirait dans le vide. La variable route
   les réponses vers une boîte réellement relevée — c'est le canal de conversion du §8
   (« répondez simplement à cet email »).
+- **Copie cachée équipe** (`REPORT_BCC_EMAIL`, réunion du 28/09/2026). L'équipe voit chaque
+  rapport réellement envoyé, avec le même PDF, sans aller le chercher dans Supabase. La CCI part
+  dans le même appel Resend que l'email du prospect (un envoi, pas deux), et le prospect ne voit
+  pas les adresses. Le wizard (case de consentement) et le bas de l'email l'informent de cette
+  transmission. Variable vide → aucune CCI.
 
 ### La voix du rapport (refonte CEO, Tranche B)
 
@@ -261,7 +266,7 @@ et s'emploie surtout en §2 (contexte) et §7 (repère sectoriel).
 
 ## Limites connues & dette assumée
 
-- **Couverture §3 inégale** : le socle ne couvre pas directement les 28 familles → caractérisation « à confirmer » assumée pour les familles non couvertes.
+- **Couverture §3 inégale** : le socle ne couvre pas directement les 29 familles → caractérisation « à confirmer » assumée pour les familles non couvertes.
 - **`enforceSectionGrid` ne nettoie que la métadonnée, pas la prose** : le filtre agit sur `sources_citees` (la liste d'`id` cités), pas sur le texte `contenu` des sections. Une statistique hors-grille rédigée *en toutes lettres* dans un paragraphe survit donc au filtre. De plus, l'audit « 0 citation hors-grille » mesure ce même champ `sources_citees` qu'il vient de nettoyer : il valide la métadonnée, pas la prose. Acceptable aujourd'hui car la prévention amont (niveau 2 : le modèle ne reçoit pas les chiffres interdits par section) traite la cause à la racine ; le filtre aval n'est qu'une seconde barrière. À renforcer (scan de la prose) seulement si une fuite en toutes lettres est observée en pratique.
 - **Mentions RGPD factuelles, pas encore juridiques** : `rgpd.ts` et la page de fin portent des mentions de transparence factuelles (sans placeholder), mais la mention d'information détaillée + DPA validées côté juridique restent à intégrer. Ne pas présenter l'existant comme une affirmation de conformité.
 - **Parsing plaquette reporté** : la présence de la plaquette est notée, mais son contenu n'est pas encore parsé (libs lourdes hors V1). Seul le site est lu.

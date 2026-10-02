@@ -20,7 +20,7 @@ export default function Footer() {
         {footerLinks.map(([heading, items]) => (
           <div key={heading}>
             <div className="kicker" style={{ color: 'var(--ink-3)', marginBottom: 16 }}>{heading}</div>
-            <div style={{ display: 'grid', gap: 10 }}>
+            <div className="footer-links" style={{ display: 'grid', gap: 10 }}>
               {items.map((it) => (
                 <a key={it} href="#" style={{ fontSize: 14, color: 'var(--ink-2)' }}>{it}</a>
               ))}

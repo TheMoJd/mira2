@@ -40,7 +40,7 @@ export function validateStep(step: number, f: PreRapportForm): PreRapportErrors 
       if (f.famillesMetiers.length === 0) e.famillesMetiers = 'Ajoutez au moins une famille de métiers.';
       break;
     case 3:
-      if (f.siteUrl.trim() && !URL_RE.test(f.siteUrl.trim())) e.siteUrl = 'URL invalide (ex. https://votre-entreprise.fr).';
+      if (f.siteUrl.trim() && !URL_RE.test(f.siteUrl.trim())) e.siteUrl = 'URL invalide (ex. https://votre-organisation.fr).';
       break;
     case 4:
       if (!f.prenom.trim()) e.prenom = 'Votre prénom est requis.';
