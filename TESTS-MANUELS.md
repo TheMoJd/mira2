@@ -52,14 +52,24 @@ from leads l, jsonb_array_elements(l.report_json->'sections') s
 where l.id = '<leadId>' order by 1;
 ```
 
-**Vérifier les contrôles V1-V12** (un rapport propre part avec `needs_review = false`) :
+**Vérifier les contrôles V1-V14** (un rapport propre part avec `needs_review = false`) :
 ```sql
 select needs_review, validation_findings
 from reports where lead_id = '<leadId>';
 ```
 Un `needs_review = true` n'est pas un échec de génération : le rapport est parti, mais des
 contrôles sont restés en échec après les rejeux. `validation_findings` dit lesquels (code,
-niveau, section, message) et sert à mesurer la qualité de sortie lead après lead.
+niveau, section, message) et sert à mesurer la qualité de sortie lead après lead. Les
+commentaires SQL de ces deux colonnes disent encore « V1-V12 » (migration `0005`, appliquée
+et donc figée) : elles portent bien les contrôles V1 à V14.
+
+**Rejouer un rapport déjà persisté, hors ligne** (aucun appel OpenAI, aucune écriture) :
+```bash
+npx --yes tsx scripts/replay-report.ts <leadId> --out tmp/replay.html
+```
+Le script relit `leads.report_json`, repasse les contrôles V1 à V14, imprime chaque échec et le
+décompte de mots par section, puis réécrit le HTML du PDF. Voir
+[`docs/howto-developpement-local.md`](docs/howto-developpement-local.md).
 
 **Vérifier le rendu du PDF** : l'encart de synthèse §1 porte un chiffre-signal et trois à
 quatre points clés, chaque chiffre du rapport porte un appel de note en exposant, et la

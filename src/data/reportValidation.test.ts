@@ -244,6 +244,133 @@ describe('V10 / V11 / V12 — registre et style', () => {
   });
 });
 
+describe('Q1 — sous un encart, le contenu de la §1 ne compte pas', () => {
+  const mots = (n: number) => Array.from({ length: n }, () => 'mot').join(' ');
+  const synthese = (contenu: ReportSectionOutput['contenu']): ReportSectionOutput => ({
+    id: 'synthese-executive',
+    titre: 'Synthèse exécutive',
+    contenu,
+    sources_citees: [WEF],
+    familles: null,
+    encart: encart(),
+  });
+
+  it('un contenu de six paragraphes (avec un point-virgule) ne change ni V9 ni V10', () => {
+    // Le défaut vu en production : le modèle a recopié l'encart en paragraphes. Le
+    // report_json persisté le porte encore, la lecture l'ignore.
+    const six = Array.from({ length: 6 }, () => `${mots(50)} ; suite`);
+    const avec = { sections: [synthese([{ intertitre: null, paragraphes: six }]), contexte([`Constat [[${WEF}]].`], [WEF])] };
+    const sans = { sections: [synthese([]), contexte([`Constat [[${WEF}]].`], [WEF])] };
+    expect(codes(avec)).toEqual(codes(sans));
+    expect(codes(avec)).not.toContain('V10');
+    // Le V9 restant porte sur l'encart lui-même (trop court), pas sur le contenu.
+    const v9 = validateReport(avec).filter((f) => f.code === 'V9' && f.sectionId === 'synthese-executive');
+    expect(v9).toHaveLength(1);
+    expect(v9[0].message).not.toContain('300 mots');
+  });
+});
+
+describe('V14 — la part de tâches', () => {
+  const ILO = 'ilo-2023-clerical-exposure-82';
+  const s3 = (part_taches: string | null, explication: string): ReportSectionOutput => ({
+    id: 'familles-metiers',
+    titre: 'Vos familles de métiers face à l’IA',
+    contenu: [{ intertitre: null, paragraphes: ['Intro.'] }],
+    sources_citees: [ILO],
+    familles: [
+      {
+        famille: 'Relation client & accueil',
+        exposition: 'élevée',
+        natures: ['automatisation'],
+        part_taches,
+        explication,
+      },
+    ],
+    encart: null,
+  });
+  const v14 = (section: ReportSectionOutput) => validateReport(reportWith(section)).filter((f) => f.code === 'V14');
+
+  it('avertit sur une phrase à la place du nombre (le défaut vu en production)', () => {
+    const found = v14(
+      s3('82 % des tâches exposées à un niveau supérieur à la moyenne, dont 24 % fortement', `Constat [[${ILO}]].`),
+    );
+    expect(found).toHaveLength(1);
+    expect(found[0].level).toBe('avertissement');
+    expect(found[0].message).toContain('hors format court');
+  });
+
+  it('laisse passer une part courte portée par une statistique citée dans l’explication', () => {
+    expect(v14(s3('jusqu’à 82 %', `Constat [[${ILO}]].`))).toEqual([]);
+  });
+
+  it('avertit quand le nombre ne figure dans aucune statistique citée', () => {
+    const found = v14(s3('jusqu’à 40 %', `Constat [[${ILO}]].`));
+    expect(found).toHaveLength(1);
+    expect(found[0].message).toContain('40');
+    expect(found[0].message).toContain('Relation client & accueil');
+  });
+
+  it('ne dit rien quand la part est null', () => {
+    expect(v14(s3(null, `Constat [[${ILO}]].`))).toEqual([]);
+  });
+
+  it('ne fait pas rejouer une section pour un V14 seul', () => {
+    const findings = v14(s3('jusqu’à 40 %', `Constat [[${ILO}]].`));
+    expect(sectionsToReplay(findings)).toEqual([]);
+  });
+});
+
+describe('V13 — caractères hors alphabet latin', () => {
+  const v13 = (texte: string) =>
+    validateReport(reportWith(contexte([texte], []))).filter((f) => f.code === 'V13');
+
+  it('refuse une lettre arménienne, cyrillique ou grecque, et un emoji', () => {
+    for (const texte of [
+      'Cela tient à la formulation des խնդիրmes rencontrés.',
+      'Une bascule вопрос mesurée.',
+      'Une bascule πρόβλημα mesurée.',
+      'Un constat net 🚀.',
+    ]) {
+      const found = v13(texte);
+      expect(found, texte).toHaveLength(1);
+      expect(found[0].level, texte).toBe('bloquant');
+    }
+  });
+
+  it('montre le mot fautif et son entourage au rejeu', () => {
+    const [f] = v13('Cela tient à la formulation des խնդիրmes rencontrés par les équipes.');
+    expect(f.message).toContain('« խնդիր » (U+056D)');
+    expect(f.message).toContain('la formulation des խնդիրmes rencontrés');
+    expect(findingsBrief([f], 'contexte')).toContain('[V13]');
+  });
+
+  it('compte les autres passages du même texte plutôt que de les répéter', () => {
+    const [f, ...reste] = v13('Un вопрос puis un πρόβλημα dans la même phrase.');
+    expect(reste).toHaveLength(0);
+    expect(f.message).toContain('« вопрос »');
+    expect(f.message).toContain('1 autre passage');
+  });
+
+  it('accepte le français typographié : accents, ligatures, ponctuation et symboles', () => {
+    for (const texte of [
+      'œuvre',
+      'Éléonore',
+      'ça',
+      'naïve',
+      '39 %',
+      '1 200 €',
+      '1 200 €',
+      '2 × 3',
+      'suite…',
+      'des « guillemets »',
+      'l’apostrophe',
+      'n° 5',
+    ]) {
+      expect(codes(reportWith(contexte([texte], []))), texte).not.toContain('V13');
+    }
+  });
+});
+
 describe('portée des contrôles', () => {
   it('ne valide jamais les sections figées injectées par le code', () => {
     // §8bis contient un point d'exclamation (V10) et des parenthèses : c'est voulu,

@@ -84,11 +84,16 @@ qu'inutile : il détruit la crédibilité. Le système le garantit par **défens
    inventée). Détail intégral dans
    [reference-prompts-mira.md](reference-prompts-mira.md).
 
-4. **Les contrôles.** `reportValidation.ts` repasse derrière le modèle (V1 → V12) : chaque
+4. **Les contrôles.** `reportValidation.ts` repasse derrière le modèle (V1 → V14) : chaque
    phrase chiffrée doit porter son marqueur, chaque marqueur doit exister dans la liste
    autorisée de sa section, la première page ne peut citer qu'un chiffre déjà exposé dans le
    corps. Un échec **bloquant** fait rejouer la seule section fautive, deux fois au plus ;
    au-delà, le rapport est marqué pour relecture humaine plutôt que d'être publié en silence.
+   Les contrôles ne relisent pas la forme d'une section eux-mêmes : `reportLecture.ts` est la
+   **seule traversée** de cette forme (`lireSection`), et c'est elle qui dit quel texte est de
+   la prose du modèle, sous quel titre la section s'imprime, et quel `contenu` est ignoré parce
+   que la section porte un encart. Le rendu, les appels de note et le rappel du corps au second
+   appel lisent la même chose : ce qui est contrôlé est exactement ce qui est imprimé.
 
 5. **Le rendu.** `reportHtml.ts` n'affiche que le texte de `report_json` ; les marqueurs
    `[[id]]` deviennent des appels de note et la section « Sources de référence » est

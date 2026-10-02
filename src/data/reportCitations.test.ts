@@ -4,7 +4,6 @@ import {
   tokenizeCitations,
   stripMarkers,
   markersIn,
-  encartMarkers,
   renderNoteText,
 } from './reportCitations';
 import type { PreRapportOutput } from './reportSchema';
@@ -29,21 +28,8 @@ describe('marqueurs de citation', () => {
     expect(stripMarkers(`Trois mots ici [[${WEF}]].`)).toBe('Trois mots ici .');
     expect(markersIn(`a [[x]] b [[y]] c [[x]]`)).toEqual(['x', 'y', 'x']);
   });
-
-  it('lit l’encart dans l’ordre de lecture : chiffre-signal puis points clés', () => {
-    const ids = encartMarkers({
-      chapeau: 'c',
-      chiffre_signal: { valeur: '39 %', phrase: 'p', source_id: WEF },
-      points_cles: [
-        { axe: 'exposition', titre: 't', texte: `x [[${STANFORD}]]`, source_id: STANFORD },
-        // Marqueur oublié dans le texte : le source_id compte quand même.
-        { axe: 'besoins', titre: 't', texte: 'y', source_id: PWC_COMMERCIALE },
-      ],
-      calibrage_court: '',
-      perimetre: '',
-    });
-    expect(ids).toEqual([WEF, STANFORD, PWC_COMMERCIALE]);
-  });
+  // L'ordre de lecture de l'encart (chiffre-signal puis points clés, source_id compté
+  // à défaut de marqueur) se teste à l'interface de la lecture : reportLecture.test.ts.
 });
 
 describe('buildCitationIndex — numérotation continue, regroupement par section', () => {
@@ -93,6 +79,36 @@ describe('buildCitationIndex — numérotation continue, regroupement par sectio
     // §2 ne re-liste pas le chiffre déjà numéroté en première page.
     expect(index.groups[1].notes.map((n) => n.id)).toEqual([STANFORD]);
   });
+
+  it('le groupe de notes porte le titre canonique et le numéro de la section (Q3)', () => {
+    const doublé = buildCitationIndex({
+      sections: [
+        {
+          id: 'facteur-humain',
+          // Le modèle a mis le numéro dans le titre : le groupe ne le reprend pas.
+          titre: '§6. Le facteur humain',
+          contenu: [{ intertitre: null, paragraphes: [`a [[${WEF}]]`] }],
+          sources_citees: [WEF],
+          familles: null,
+          encart: null,
+        },
+      ],
+    });
+    expect(doublé.groups[0].sectionTitle).toBe('Le facteur humain');
+    expect(doublé.groups[0].numero).toBe('6');
+  });
+
+  it('un contenu recopié sous l’encart §1 ne crée aucune note (Q1)', () => {
+    const avecContenu = buildCitationIndex({
+      sections: [
+        {
+          ...report.sections[0],
+          contenu: [{ intertitre: null, paragraphes: [`recopie [[${PWC_COMMERCIALE}]]`] }],
+        },
+      ],
+    });
+    expect([...avecContenu.numberById.keys()]).toEqual([WEF]);
+  });
 });
 
 describe('renderNoteText — la ligne de référence', () => {
@@ -115,29 +131,5 @@ describe('renderNoteText — la ligne de référence', () => {
     const note = renderNoteText(statById[CIANUM_SECONDAIRE]);
     expect(note.startsWith('Epoch AI.')).toBe(true);
     expect(note).toContain('Cité par CIANum, 2025');
-  });
-});
-
-describe('chiffre-signal — le marqueur peut être dans la phrase', () => {
-  it('ne compte le chiffre qu’une fois quand la phrase porte déjà son marqueur', () => {
-    const ids = encartMarkers({
-      chapeau: 'c',
-      chiffre_signal: { valeur: '39 %', phrase: `des compétences transformées [[${WEF}]]`, source_id: WEF },
-      points_cles: [],
-      calibrage_court: '',
-      perimetre: '',
-    });
-    expect(ids).toEqual([WEF]);
-  });
-
-  it('compte le source_id quand le modèle a oublié le marqueur', () => {
-    const ids = encartMarkers({
-      chapeau: 'c',
-      chiffre_signal: { valeur: '39 %', phrase: 'des compétences transformées', source_id: WEF },
-      points_cles: [],
-      calibrage_court: '',
-      perimetre: '',
-    });
-    expect(ids).toEqual([WEF]);
   });
 });

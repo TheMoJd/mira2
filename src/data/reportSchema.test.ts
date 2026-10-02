@@ -86,6 +86,12 @@ describe('reportSchema — `response_format` du premier appel (le corps)', () =>
       'part_taches',
     ]);
   });
+
+  it('fait voyager la contrainte de format de part_taches jusqu’au modèle', () => {
+    // Un `.describe()` zod entre dans le `response_format`, un commentaire non.
+    const familles = nonNullBranch(sectionItem.properties.familles).items.properties;
+    expect(nonNullBranch(familles.part_taches).description ?? familles.part_taches.description).toContain('82 %');
+  });
 });
 
 describe('reportSchema — `response_format` du second appel (la synthèse §1)', () => {
@@ -112,6 +118,15 @@ describe('reportSchema — `response_format` du second appel (la synthèse §1)'
   it('ne demande PAS au modèle les deux lignes injectées par le code', () => {
     expect(Object.keys(encart)).not.toContain('calibrage_court');
     expect(Object.keys(encart)).not.toContain('perimetre');
+  });
+
+  it('ne demande pas de contenu : tout le texte de la §1 vit dans l’encart', () => {
+    expect(Object.keys(schema.properties.section.properties).sort()).toEqual([
+      'encart',
+      'id',
+      'sources_citees',
+      'titre',
+    ]);
   });
 });
 
@@ -164,7 +179,6 @@ const synthese = {
         },
       ],
     },
-    contenu: [],
     sources_citees: ['wef-2025-skills-transformed-39'],
   },
 };
@@ -173,6 +187,14 @@ describe('parseCorps / parseSynthese — validation runtime des réponses du mod
   it('accepte des réponses conformes et les renvoie typées', () => {
     expect(parseCorps(JSON.stringify(corps))).toEqual(corps);
     expect(parseSynthese(JSON.stringify(synthese))).toEqual(synthese);
+  });
+
+  it('accepte une synthèse sans contenu, et retire un contenu hors contrat', () => {
+    expect(synthese.section).not.toHaveProperty('contenu');
+    const avecContenu = {
+      section: { ...synthese.section, contenu: [{ intertitre: null, paragraphes: ['Doublon.'] }] },
+    };
+    expect(parseSynthese(JSON.stringify(avecContenu))).toEqual(synthese);
   });
 
   it('applique le verrou de style (sanitizeReportProse) sur la sortie du modèle', () => {
@@ -237,6 +259,11 @@ describe('assembleReport — le code injecte ce que le modèle ne rédige pas', 
     expect(encart.perimetre).toBe(LIGNE_PERIMETRE);
     expect(encart.chapeau).toBe('Acme et ses métiers tech.');
   });
+
+  it('pose contenu: [] sur la §1 (son texte est dans l’encart)', () => {
+    expect(report.sections.find((s) => s.id === 'synthese-executive')!.contenu).toEqual([]);
+  });
+
 
   it('ajoute §8bis et §9 tels quels, hors de portée du modèle', () => {
     const bis = report.sections.find((s) => s.id === 'comment-utiliser')!;

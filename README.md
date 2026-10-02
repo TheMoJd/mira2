@@ -47,11 +47,12 @@ src/
 │   ├── mira.ts           # ★ TOUT le contenu de la landing (textes, chiffres, offres)
 │   ├── prerapport.ts     # ★ tous les textes du wizard
 │   ├── statbank.ts       # banque de statistiques sourcées (seuls chiffres citables du rapport)
-│   ├── rapportStructure.ts / reportPrompt.ts / reportSchema.ts / reportCitations.ts /
-│   │   reportValidation.ts / reportSanitize.ts / reportHtml.ts / rgpd.ts
+│   ├── rapportStructure.ts / reportPrompt.ts / reportSchema.ts / reportLecture.ts /
+│   │   reportCitations.ts / reportValidation.ts / reportSanitize.ts / reportHtml.ts / rgpd.ts
 │   │                     # déroulé §0→§9 (+ §8bis) et textes figés, prompts, contrats de sortie,
-│   │                     # appels de note et sources de référence, contrôles V1-V12, verrou de
-│   │                     # style, gabarit PDF, mentions RGPD
+│   │                     # lecture d'une section (seule traversée de la forme), appels de note
+│   │                     # et sources de référence, contrôles V1-V14, verrou de style,
+│   │                     # gabarit PDF, mentions RGPD
 │   └── types.ts          # types du contenu landing
 ├── hooks/                # useCountTo, useInViewOnce, useActiveSection, useMotionPrefs
 └── components/

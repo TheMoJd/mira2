@@ -193,7 +193,7 @@ async function main() {
       findings = validateReport(report);
       console.log('  [reuse] report.json existant réutilisé (pas d’appel OpenAI)');
     } else {
-      // Exactement l'orchestration de production : deux appels, contrôles V1 → V12,
+      // Exactement l'orchestration de production : deux appels, contrôles V1 → V14,
       // rejeu des sections en échec. Un échantillon doit montrer ce que reçoit un
       // client, rejeux compris.
       const ask: AskModel = async (system, user, format) => {
@@ -269,7 +269,7 @@ async function main() {
     md += `- **Familles déclarées** : ${r.c.familles.join(', ')}.\n`;
     md += `- **§3 — verdict par famille** : ${familleVerdicts(r)}\n`;
     md += `- **Audit citations** : ${r.a.total} citées, ${r.a.invented.length} inventées, ${r.a.outOfGrid.length} hors-grille.\n`;
-    md += `- **Contrôles V1-V12 bloquants** : ${r.bloquants.length}${r.bloquants.length ? ` (${[...new Set(r.bloquants.map((f) => f.code))].join(', ')})` : ''}.\n`;
+    md += `- **Contrôles V1-V14 bloquants** : ${r.bloquants.length}${r.bloquants.length ? ` (${[...new Set(r.bloquants.map((f) => f.code))].join(', ')})` : ''}.\n`;
     md += `- **Chiffre-signal (§1)** : ${chiffreSignal(r)}\n`;
     md += `- 📄 [Rapport HTML](${r.c.slug}.html) · [JSON](${r.c.slug}.report.json)\n\n`;
   }

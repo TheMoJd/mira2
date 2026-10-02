@@ -83,8 +83,18 @@ const ReportFamilleSchema = z.object({
   famille: z.string(),
   exposition: z.enum(EXPOSITION),
   natures: z.array(z.enum(NATURES)),
-  /** Part de tâches concernée si une source la donne (ex. « jusqu'à 82 % »), sinon null. */
-  part_taches: z.string().nullable(),
+  /**
+   * Part de tâches concernée si une source la donne. La contrainte de format voyage
+   * jusqu'au modèle : un `.describe()` entre dans `RESPONSE_FORMAT_CORPS`, un simple
+   * commentaire non. Le rendu n'accole « des tâches » qu'à une part au format court
+   * (voir `reportLecture.ts`), et V14 avertit sinon.
+   */
+  part_taches: z
+    .string()
+    .nullable()
+    .describe(
+      'Uniquement la part, au format « 82 % » ou « jusqu’à 82 % », quinze caractères maximum, sans phrase. Ce nombre figure dans une statistique citée par l’explication. Sinon null.',
+    ),
   explication: z.string(),
 });
 
@@ -134,11 +144,15 @@ const EncartModelSchema = z.object({
   points_cles: z.array(PointCleSchema),
 });
 
+/**
+ * La §1 ne porte pas de `contenu` : tout son texte vit dans l'encart. Le second appel
+ * ne le demande donc pas, `assembleReport` le pose à `[]`, et la lecture
+ * (`reportLecture.ts`) ignore de toute façon le `contenu` d'une section à encart.
+ */
 const SyntheseSectionSchema = z.object({
   id: z.literal(SYNTHESE_SECTION_ID),
   titre: z.string(),
   encart: EncartModelSchema,
-  contenu: z.array(ReportBlocSchema),
   sources_citees: z.array(z.string()),
 });
 
@@ -280,7 +294,8 @@ export function assembleReport(corps: CorpsOutput, synthese: SyntheseOutput): Pr
     {
       id: synthese.section.id,
       titre: synthese.section.titre,
-      contenu: synthese.section.contenu,
+      // La §1 n'a pas de contenu : tout son texte est dans l'encart.
+      contenu: [],
       sources_citees: synthese.section.sources_citees,
       familles: null,
       encart: {

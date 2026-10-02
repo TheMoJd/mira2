@@ -10,7 +10,7 @@
  *      a. le corps du rapport (§0, §2 → §8) ;
  *      b. la synthèse exécutive §1, à partir de la liste héritée du corps (union des
  *         `sources_citees` de §2 à §7) — aucun chiffre neuf en première page.
- *   4. Assemblage (+ textes figés du code), contrôles V1 → V12, rejeu des sections
+ *   4. Assemblage (+ textes figés du code), contrôles V1 → V14, rejeu des sections
  *      en échec (plafond de deux par section), puis marquage pour relecture humaine
  *      s'il reste des échecs bloquants.
  *   5. Persistance dans `leads.report_json`.
@@ -55,7 +55,7 @@ function citedStatIds(report: PreRapportOutput): string[] {
 
 /**
  * Transport OpenAI de la génération. L'orchestration (deux appels, contrôles
- * V1 → V12, rejeu des sections en échec) vit dans `src/data/reportGeneration.ts`,
+ * V1 → V14, rejeu des sections en échec) vit dans `src/data/reportGeneration.ts`,
  * partagée avec le script d'échantillons pour que les deux chemins produisent le
  * même rapport.
  */
@@ -187,7 +187,7 @@ export const handler: Handler = async (event) => {
       pdf_path: pdfPath,
       model,
       sources: citedStatIds(report) as unknown as Database['public']['Tables']['reports']['Insert']['sources'],
-      // Contrôles V1-V12 encore en échec après les rejeux : le rapport part, mais il
+      // Contrôles V1-V14 encore en échec après les rejeux : le rapport part, mais il
       // est marqué pour relecture humaine (et les échecs sont conservés pour l'ops).
       needs_review: bloquants.length > 0,
       validation_findings: (findings.length > 0

@@ -60,7 +60,6 @@ const report: PreRapportOutput = assembleReport(
           },
         ],
       },
-      contenu: [],
       sources_citees: [WEF],
     },
   },

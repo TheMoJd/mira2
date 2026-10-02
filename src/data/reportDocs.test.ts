@@ -83,12 +83,12 @@ describe('docs/reference-prompts-mira.md — le doc cite le code sans dériver',
     }
   });
 
-  it('documente les douze contrôles, un par ligne de tableau', () => {
-    for (let n = 1; n <= 12; n++) {
+  it('documente les quatorze contrôles, un par ligne de tableau', () => {
+    for (let n = 1; n <= 14; n++) {
       expect(doc, `contrôle V${n} absent du tableau`).toMatch(new RegExp(`\\|\\s*V${n}\\s*\\|`));
     }
-    // Pas de V13 fantôme laissé par une édition.
-    expect(doc).not.toMatch(/\|\s*V13\s*\|/);
+    // Pas de V15 fantôme laissé par une édition.
+    expect(doc).not.toMatch(/\|\s*V15\s*\|/);
   });
 
   it('n’annonce plus les champs retirés par Caroline', () => {

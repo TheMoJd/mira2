@@ -33,6 +33,7 @@ import {
   FAMILLES_SECTION_ID,
 } from './rapportStructure';
 import type { CorpsOutput } from './reportSchema';
+import { lireSection } from './reportLecture';
 
 export const SYSTEM_PROMPT = `Tu es le moteur de rédaction du pré-rapport MIRA, un diagnostic gratuit qui éclaire les DRH et les dirigeants de PME et d'ETI françaises sur ce que l'intelligence artificielle change dans leurs familles de métiers.
 
@@ -94,7 +95,7 @@ L'unité d'analyse est la famille de métiers (classification ISCO-08), pas le s
 
 # Caractérisation d'une famille de métiers (§3, le cœur)
 Pour chaque famille déclarée, tu produis :
-- intensité d'exposition : faible | modérée | élevée | à confirmer, avec la part de tâches concernée si une source la donne
+- intensité d'exposition : faible | modérée | élevée | à confirmer, avec la part de tâches concernée si une source la donne. Cette part (part_taches) est uniquement le nombre, au format « 82 % » ou « jusqu'à 82 % », quinze caractères maximum, sans phrase. Ce nombre figure dans une statistique citée par l'explication. Sinon null
 - nature de l'impact : une ou plusieurs valeurs parmi automatisation, augmentation, création
 - une explication de deux à quatre phrases. La première est le constat, elle nomme la famille et le code la met en exergue. Au moins une phrase porte une statistique choisie selon la règle 2, suivie de son marqueur. La dernière traduit ce que cela change dans les tâches de cette famille. Quand la famille dispose d'une source directe (indiquée dans le rattachement), tu la cites en priorité. Quand elle n'en a aucune, tu cites la statistique générale la plus proche en nommant son périmètre.
 Tu ne produis ni niveau de confiance ni verdict de transposabilité par famille : les précautions de lecture sont portées une fois pour toutes par l'encart §8bis, en fin de rapport.
@@ -132,7 +133,7 @@ Tu réponds uniquement via la structure imposée (sortie structurée), un objet 
 - contenu (le texte rédigé : tableau de paragraphes et d'intertitres)
 - sources_citees (liste des id de statistiques effectivement citées dans la section)
 - pour §3 uniquement : familles, tableau de caractérisations (famille, exposition, natures, part de tâches, explication)
-- pour §1 uniquement : encart, avec chapeau, chiffre_signal (valeur, phrase, source_id) et points_cles (axe, titre, texte, source_id)
+- pour §1 uniquement : encart, avec chapeau, chiffre_signal (valeur, phrase, source_id) et points_cles (axe, titre, texte, source_id). La section §1 ne porte pas de contenu : tout son texte est dans l'encart
 Aucun texte hors de cette structure, aucune mise en forme décorative.
 
 # Crible avant de rendre
@@ -339,24 +340,26 @@ ${sections}`,
     .join('\n\n');
 }
 
-/** Rappel textuel d'une section du corps, pour le second appel. */
+/**
+ * Rappel textuel d'une section du corps, pour le second appel. La forme de la section
+ * est lue par `lireSection` : même titre canonique et même mise en forme de la part de
+ * tâches que le PDF, donc le modèle relit exactement ce que le lecteur lira.
+ */
 function renderCorpsRappel(corps: CorpsOutput): string {
   const heritage = new Set(HERITAGE_SECTION_IDS);
   return corps.sections
     .filter((s) => heritage.has(s.id))
     .map((s) => {
-      const blocs = s.contenu
-        .map((b) => [b.intertitre, ...b.paragraphes].filter(Boolean).join('\n'))
-        .join('\n');
-      const familles = (s.familles ?? [])
-        .map(
-          (f) =>
-            `${f.famille} : exposition ${f.exposition}${
-              f.part_taches ? ` (${f.part_taches} des tâches)` : ''
-            }, ${f.natures.join(', ')}. ${f.explication}`,
-        )
-        .join('\n');
-      return [`#### ${s.titre} (id: ${s.id})`, blocs, familles].filter(Boolean).join('\n');
+      // Une section de `CorpsOutput` est une `SectionLisible` (sans encart).
+      const l = lireSection(s);
+      const blocs = l.blocs.map((b) =>
+        [b.intertitre?.texte, ...b.paragraphes.map((p) => p.texte)].filter(Boolean).join('\n'),
+      );
+      const familles = l.familles.map(
+        (f) =>
+          `${f.nom.texte} : exposition ${f.exposition}${f.part ? ` (${f.part.affichage})` : ''}, ${f.natures.join(', ')}. ${f.explication.texte}`,
+      );
+      return [`#### ${l.titre} (id: ${l.id})`, ...blocs, ...familles].filter(Boolean).join('\n');
     })
     .join('\n\n');
 }
@@ -388,7 +391,7 @@ export function buildSyntheseMessage(ctx: GenerationContext, corps: CorpsOutput)
 }
 
 // ---------------------------------------------------------------------------
-// Rejeu d'une section (contrôles V1 → V12 en échec).
+// Rejeu d'une section (contrôles V1 → V14 en échec).
 // ---------------------------------------------------------------------------
 
 /** Bloc de consigne corrective, commun aux deux rejeux. */

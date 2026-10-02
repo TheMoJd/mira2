@@ -21,23 +21,21 @@
  * Structure : page de garde (branding) → carte d'identité (page 2) → §0 → encart de
  * synthèse §1 → §2 à §8 (tableau récapitulatif en §3) → encart §8bis → méthode §9 →
  * « Sources de référence » → page de fin.
+ *
+ * Le gabarit ne lit pas la forme du modèle lui-même : chaque section passe par la
+ * lecture (`reportLecture.ts`, `lireSection`), qui décide du titre d'affichage, de ce
+ * qui s'imprime (le `contenu` d'une section à encart ne s'imprime pas), de la part de
+ * tâches mise en forme et des appels de note à poser. Ici ne restent que la mise en
+ * page, l'échappement et le style.
  */
 
-import type {
-  PreRapportOutput,
-  ReportSectionOutput,
-  ReportBloc,
-  ReportFamille,
-  ReportEncart,
-} from './reportSchema';
-import {
-  reportSections,
-  SOURCES_SECTION_TITLE,
-  CONTACT_URL,
-  COMMENT_UTILISER_CTA,
-} from './rapportStructure';
+import type { PreRapportOutput } from './reportSchema';
+import type { ExpositionLevel } from './rapportStructure';
+import { SOURCES_SECTION_TITLE, CONTACT_URL, COMMENT_UTILISER_CTA } from './rapportStructure';
 import type { CitationIndex } from './reportCitations';
-import { buildCitationIndex, tokenizeCitations, markersIn, renderNoteText } from './reportCitations';
+import { buildCitationIndex, tokenizeCitations, renderNoteText } from './reportCitations';
+import { lireSection } from './reportLecture';
+import type { LectureSection, Texte, BlocLu, EncartLu, FamilleLue } from './reportLecture';
 import { RGPD_PDF_FOOTER } from './rgpd';
 
 /** Contexte de l'entreprise pour la page de garde et l'entête (issu du lead + enrichissement). */
@@ -100,7 +98,7 @@ const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 26 26" fill="none">
 </svg>`;
 
 /** Couleur d'un niveau d'exposition (§3). */
-function expositionColor(level: ReportFamille['exposition']): string {
+function expositionColor(level: ExpositionLevel): string {
   switch (level) {
     case 'élevée':
       return BRAND.risk;
@@ -134,10 +132,6 @@ function esc(input: string): string {
 
 // --- Appels de note --------------------------------------------------------
 
-/** Numéro tel qu'il s'affiche par id de section, dérivé du déroulé (« 8bis » compris). */
-const SECTION_LABEL_BY_ID: Map<string, string> = new Map(
-  reportSections.map((s) => [s.id, s.numLabel]),
-);
 /** Appel de note en exposant. Un id inconnu de la stat-bank n'affiche rien. */
 function noteCall(n: number | undefined): string {
   if (n === undefined) return '';
@@ -145,32 +139,29 @@ function noteCall(n: number | undefined): string {
 }
 
 /**
- * Échappe une chaîne de prose et remplace ses marqueurs `[[id]]` par des appels de
- * note numérotés. C'est ici que la traçabilité devient visible pour le lecteur.
+ * Un texte lu : échappé, marqueurs `[[id]]` devenus appels de note numérotés, appel
+ * rattaché (`source_id` sans marqueur dans le texte) posé en fin. C'est ici que la
+ * traçabilité devient visible pour le lecteur.
  */
-function escWithNotes(text: string, index: CitationIndex): string {
-  return tokenizeCitations(text)
-    .map((t) => (t.type === 'text' ? esc(t.value) : noteCall(index.numberById.get(t.id))))
+function prose(t: Texte, index: CitationIndex): string {
+  const html = tokenizeCitations(t.texte)
+    .map((tok) => (tok.type === 'text' ? esc(tok.value) : noteCall(index.numberById.get(tok.id))))
     .join('');
+  return t.appelAjoute ? html + noteCall(index.numberById.get(t.appelAjoute)) : html;
 }
 
 // --- Blocs de contenu ------------------------------------------------------
 
-function renderBloc(bloc: ReportBloc, index: CitationIndex): string {
+/** Un bloc déjà nettoyé par la lecture : plus de paragraphe vide à filtrer. */
+function renderBloc(bloc: BlocLu, index: CitationIndex): string {
   const titre = bloc.intertitre
-    ? `<h3 style="font-size:14px;font-weight:600;color:${BRAND.violet700};margin:18px 0 6px">${escWithNotes(
+    ? `<h3 style="font-size:14px;font-weight:600;color:${BRAND.violet700};margin:18px 0 6px">${prose(
         bloc.intertitre,
         index,
       )}</h3>`
     : '';
   const paras = bloc.paragraphes
-    // La sanitisation de style (reportSanitize) peut vider une chaîne réduite à
-    // un tiret : ne pas rendre de <p> vide.
-    .filter((p) => p.trim() !== '')
-    .map(
-      (p) =>
-        `<p style="margin:0 0 10px;line-height:1.6;color:${BRAND.ink}">${escWithNotes(p, index)}</p>`,
-    )
+    .map((p) => `<p style="margin:0 0 10px;line-height:1.6;color:${BRAND.ink}">${prose(p, index)}</p>`)
     .join('');
   return titre + paras;
 }
@@ -180,64 +171,59 @@ function renderBloc(bloc: ReportBloc, index: CitationIndex): string {
 /**
  * Encart de format fixe en première page : chapeau, chiffre-signal isolé, trois à
  * quatre points clés, puis les deux lignes figées injectées par le code (calibrage
- * et périmètre). Aucun chiffre neuf ici : tout vient déjà du corps du rapport.
+ * et périmètre). Aucun chiffre neuf ici : tout vient déjà du corps du rapport. Les
+ * appels de note à défaut de marqueur sont décidés par la lecture (`appelAjoute`).
  */
-function renderEncart(encart: ReportEncart, index: CitationIndex): string {
-  // Le marqueur du chiffre-signal peut être dans la phrase (format du prompt) ou
-  // seulement déclaré en `source_id` : on n'ajoute l'appel de note qu'à défaut.
-  const signalNote = markersIn(encart.chiffre_signal.phrase).includes(encart.chiffre_signal.source_id)
-    ? ''
-    : noteCall(index.numberById.get(encart.chiffre_signal.source_id));
-  const points = encart.points_cles
-    .map((pt) => {
-      // Si le modèle a oublié le marqueur dans le texte, l'appel de note est placé
-      // en fin de point clé : le chiffre reste traçable dans tous les cas.
-      const inline = markersIn(pt.texte);
-      const fallback = inline.includes(pt.source_id)
-        ? ''
-        : noteCall(index.numberById.get(pt.source_id));
-      return `<div style="padding:10px 0;border-top:1px solid ${BRAND.lineSoft}">
-        <div style="font-size:12.5px;font-weight:600;color:${BRAND.violet700};margin:0 0 3px">${escWithNotes(
+function renderEncart(encart: EncartLu, index: CitationIndex): string {
+  const points = encart.points
+    .map(
+      (pt) => `<div style="padding:10px 0;border-top:1px solid ${BRAND.lineSoft}">
+        <div style="font-size:12.5px;font-weight:600;color:${BRAND.violet700};margin:0 0 3px">${prose(
           pt.titre,
           index,
         )}</div>
-        <div style="font-size:12.5px;line-height:1.55;color:${BRAND.ink}">${escWithNotes(
-          pt.texte,
-          index,
-        )}${fallback}</div>
-      </div>`;
-    })
+        <div style="font-size:12.5px;line-height:1.55;color:${BRAND.ink}">${prose(pt.texte, index)}</div>
+      </div>`,
+    )
     .join('');
 
   return `<div style="border:1px solid ${BRAND.line};border-top:4px solid ${BRAND.violet};border-radius:14px;padding:18px 20px;background:${BRAND.bgSoft}">
-    <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${BRAND.ink}">${escWithNotes(
+    <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${BRAND.ink}">${prose(
       encart.chapeau,
       index,
     )}</p>
     <div style="display:flex;align-items:baseline;gap:14px;padding:14px 16px;margin:0 0 12px;background:${BRAND.paper};border-radius:10px;border-left:4px solid ${BRAND.violet}">
-      <span style="font-family:var(--serif);font-size:34px;font-weight:500;color:${BRAND.violet};line-height:1;white-space:nowrap">${escWithNotes(
-        encart.chiffre_signal.valeur,
+      <span style="font-family:var(--serif);font-size:34px;font-weight:500;color:${BRAND.violet};line-height:1;white-space:nowrap">${prose(
+        encart.signal.valeur,
         index,
       )}</span>
-      <span style="font-size:13.5px;line-height:1.45;color:${BRAND.ink}">${escWithNotes(
-        encart.chiffre_signal.phrase,
+      <span style="font-size:13.5px;line-height:1.45;color:${BRAND.ink}">${prose(
+        encart.signal.phrase,
         index,
-      )}${signalNote}</span>
+      )}</span>
     </div>
     ${points}
     <p style="margin:14px 0 0;font-size:11px;line-height:1.5;color:${BRAND.ink3}">${esc(
-      encart.calibrage_court,
+      encart.calibrageCourt.texte,
     )}</p>
     <p style="margin:6px 0 0;font-size:11px;line-height:1.5;color:${BRAND.ink3}">${esc(
-      encart.perimetre,
+      encart.lignePerimetre.texte,
     )}</p>
   </div>`;
 }
 
 // --- §3 : les familles de métiers ------------------------------------------
 
-/** Carte de caractérisation d'une famille de métiers (§3). */
-function renderFamille(fam: ReportFamille, index: CitationIndex): string {
+/**
+ * Carte de caractérisation d'une famille de métiers (§3). La part de tâches arrive
+ * déjà mise en forme par la lecture : « des tâches » n'est accolé qu'à une part au
+ * format court, une phrase écrite par le modèle s'affiche telle quelle (Q4).
+ *
+ * Le nom passe par `prose`, comme la valeur du chiffre-signal : un libellé est numéroté
+ * par la lecture s'il porte un marqueur, donc il doit aussi le transformer en appel de
+ * note. Aucun texte rendu ne laisse de marqueur brut au lecteur.
+ */
+function renderFamille(fam: FamilleLue, index: CitationIndex): string {
   const color = expositionColor(fam.exposition);
   const natures = fam.natures
     .map(
@@ -245,27 +231,23 @@ function renderFamille(fam: ReportFamille, index: CitationIndex): string {
         `<span style="display:inline-block;font-size:11px;color:${BRAND.violet700};background:${BRAND.violet100};border-radius:999px;padding:2px 9px;margin:0 6px 4px 0">${esc(natureLabel(n))}</span>`,
     )
     .join('');
-  const part = fam.part_taches
-    ? `<span style="color:${BRAND.ink2}"> · ${esc(fam.part_taches)} des tâches</span>`
-    : '';
+  const part = fam.part ? `<span style="color:${BRAND.ink2}"> · ${esc(fam.part.affichage)}</span>` : '';
   return `<div style="border:1px solid ${BRAND.line};border-left:4px solid ${color};border-radius:10px;padding:14px 16px;margin:0 0 12px;background:${BRAND.paper}">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-      <strong style="font-size:14px;color:${BRAND.ink}">${esc(fam.famille)}</strong>
+      <strong style="font-size:14px;color:${BRAND.ink}">${prose(fam.nom, index)}</strong>
       <span style="font-size:12px;font-weight:600;color:${color}">Exposition ${esc(fam.exposition)}${part}</span>
     </div>
     <div style="margin:8px 0 4px">${natures}</div>
-    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${escWithNotes(
-      fam.explication,
-      index,
-    )}</p>
+    <p style="margin:6px 0 0;line-height:1.55;color:${BRAND.ink}">${prose(fam.explication, index)}</p>
   </div>`;
 }
 
 /**
  * Tableau récapitulatif des familles (§3) : Famille / Exposition / Nature de l'impact.
  * Casse l'aspect textuel et donne une lecture « en un coup d'œil » avant les fiches.
+ * Même règle que la fiche pour le nom : `prose`, jamais de marqueur brut.
  */
-function renderRecapTable(familles: ReportFamille[]): string {
+function renderRecapTable(familles: readonly FamilleLue[], index: CitationIndex): string {
   const th = `padding:7px 9px;border-bottom:2px solid ${BRAND.line};color:${BRAND.ink3};text-transform:uppercase;font-size:10px;letter-spacing:.04em;text-align:left`;
   const td = `padding:7px 9px;border-bottom:1px solid ${BRAND.lineSoft};vertical-align:top`;
   const rows = familles
@@ -273,7 +255,7 @@ function renderRecapTable(familles: ReportFamille[]): string {
       const color = expositionColor(f.exposition);
       const natures = f.natures.map((n) => esc(natureLabel(n))).join(', ');
       return `<tr>
-        <td style="${td};color:${BRAND.ink};font-weight:600">${esc(f.famille)}</td>
+        <td style="${td};color:${BRAND.ink};font-weight:600">${prose(f.nom, index)}</td>
         <td style="${td};color:${color};font-weight:600;white-space:nowrap">${esc(f.exposition)}</td>
         <td style="${td};color:${BRAND.ink2}">${natures}</td>
       </tr>`;
@@ -299,18 +281,17 @@ function renderRecapTable(familles: ReportFamille[]): string {
  * corps analytique : c'est une prise de parole de MIRA, pas une analyse. Le
  * « contactez-nous ! » de clôture est un lien.
  */
-function renderEncadre(section: ReportSectionOutput): string {
-  const paragraphes = section.contenu
+function renderEncadre(lecture: LectureSection): string {
+  const paragraphes = lecture.blocs
     .flatMap((b) => b.paragraphes)
-    .filter((p) => p.trim() !== '')
     .map((p) => {
-      const isCta = p.trim() === COMMENT_UTILISER_CTA;
+      const isCta = p.texte.trim() === COMMENT_UTILISER_CTA;
       const html = isCta
-        ? esc(p).replace(
+        ? esc(p.texte).replace(
             esc('contactez-nous !'),
             `<a href="${CONTACT_URL}" style="color:${BRAND.violet};font-weight:600;text-decoration:underline">contactez-nous !</a>`,
           )
-        : esc(p);
+        : esc(p.texte);
       return `<p style="margin:0 0 10px;line-height:1.6;color:${BRAND.ink}${
         isCta ? ';font-weight:500' : ''
       }">${html}</p>`;
@@ -319,7 +300,7 @@ function renderEncadre(section: ReportSectionOutput): string {
   return `<section style="margin:0 0 26px;page-break-inside:avoid">
     <div style="border:1px solid ${BRAND.violet};border-radius:14px;padding:18px 20px;background:${BRAND.bgSoft}">
       <h2 style="font-family:var(--serif);font-size:18px;font-weight:500;color:${BRAND.violet};margin:0 0 12px">${esc(
-        section.titre,
+        lecture.titre,
       )}</h2>
       ${paragraphes}
     </div>
@@ -328,24 +309,28 @@ function renderEncadre(section: ReportSectionOutput): string {
 
 // --- Sections --------------------------------------------------------------
 
-function renderSection(section: ReportSectionOutput, index: CitationIndex): string {
-  if (section.id === 'comment-utiliser') return renderEncadre(section);
+/**
+ * Une section lue. Le titre est le titre canonique de la lecture (Q3 : « §6 · Le
+ * facteur humain » une seule fois), et `blocs` est vide sous un encart (Q1 : la §1
+ * ne s'imprime qu'une fois, même sur un `report_json` dont le `contenu` est rempli).
+ */
+function renderSection(lecture: LectureSection, index: CitationIndex): string {
+  if (lecture.id === 'comment-utiliser') return renderEncadre(lecture);
 
-  const label = SECTION_LABEL_BY_ID.get(section.id);
-  const prefix = label !== undefined ? `§${label} · ` : '';
-  const hasFamilles = section.familles && section.familles.length > 0;
-  const recap = hasFamilles ? renderRecapTable(section.familles!) : '';
-  const familles = hasFamilles
-    ? `<div style="margin-top:14px">${section.familles!.map((f) => renderFamille(f, index)).join('')}</div>`
-    : '';
-  const encart = section.encart ? renderEncart(section.encart, index) : '';
+  const prefix = lecture.numero !== null ? `§${lecture.numero} · ` : '';
+  const recap = lecture.familles.length > 0 ? renderRecapTable(lecture.familles, index) : '';
+  const familles =
+    lecture.familles.length > 0
+      ? `<div style="margin-top:14px">${lecture.familles.map((f) => renderFamille(f, index)).join('')}</div>`
+      : '';
+  const encart = lecture.encart ? renderEncart(lecture.encart, index) : '';
   return `<section style="margin:0 0 26px;page-break-inside:avoid">
     <h2 style="font-family:var(--serif);font-size:19px;font-weight:500;color:${BRAND.violet};margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid ${BRAND.lineSoft}">
-      <span style="font-size:13px;color:${BRAND.ink3};font-family:var(--sans)">${prefix}</span>${esc(section.titre)}
+      <span style="font-size:13px;color:${BRAND.ink3};font-family:var(--sans)">${prefix}</span>${esc(lecture.titre)}
     </h2>
     ${encart}
     ${recap}
-    ${section.contenu.map((b) => renderBloc(b, index)).join('')}
+    ${lecture.blocs.map((b) => renderBloc(b, index)).join('')}
     ${familles}
   </section>`;
 }
@@ -413,8 +398,8 @@ function renderReferences(index: CitationIndex): string {
   if (index.groups.length === 0) return '';
   const groups = index.groups
     .map((g) => {
-      const label = SECTION_LABEL_BY_ID.get(g.sectionId);
-      const titre = label !== undefined ? `§${label} · ${g.sectionTitle}` : g.sectionTitle;
+      // Titre canonique et numéro venus de la lecture : jamais « §6 · §6. … ».
+      const titre = g.numero !== null ? `§${g.numero} · ${g.sectionTitle}` : g.sectionTitle;
       const items = g.notes
         .map(
           (note) => `<li style="margin:0 0 6px;line-height:1.5;color:${BRAND.ink2}">
@@ -476,7 +461,7 @@ export function renderReportHtml(report: PreRapportOutput, ctx: ReportRenderCont
   const index = buildCitationIndex(report);
   const cover = renderCover(ctx);
   const identity = renderIdentity(ctx);
-  const sections = report.sections.map((s) => renderSection(s, index)).join('');
+  const sections = report.sections.map((s) => renderSection(lireSection(s), index)).join('');
   const references = renderReferences(index);
   const closing = renderClosing();
   const watermark = renderWatermark();
