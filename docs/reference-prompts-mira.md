@@ -346,7 +346,7 @@ vers https://mira-audit.fr/contact.
 
 ### §9. Méthode et socle de sources (id: sources-methode)
 
-> Ce pré-rapport applique l’état de l’art public à vos familles de métiers à partir d’un socle de rapports de référence internationaux (OIT, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC, McKinsey), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie / DARES).
+> Ce pré-rapport applique l’état de l’art public à vos familles de métiers à partir d’un socle de rapports de référence internationaux (OIT, Stanford AI Index, MIT, OCDE, WEF, CIANum, Indeed, PwC, McKinsey, ETF), complété d’une couche France (Parlons RH, CEGOS, Neobrain × Sopra Steria, France Stratégie / DARES).
 >
 > Points de méthode. Chaque chiffre du rapport renvoie par un appel de note à la section « Sources de référence », qui donne son organisation, son année, sa page, son périmètre, son horizon et la nature de la source (recherche ou commerciale). Le périmètre de chaque chiffre est nommé dans la phrase qui le porte. On distingue exposition et suppression : l’augmentation domine. Le rattachement des métiers déclarés à la classification ISCO affiche un niveau de confiance corrigeable. Socle daté 2023-2026, versionné.
 
@@ -444,7 +444,7 @@ jamais validées : elles ne viennent pas du modèle.
 | V2 | Chaque `source_id` de `chiffre_signal` et de `points_cles` figure dans `sources_citees` de la §1 | §1 | Bloquant |
 | V3 | Nombre de marqueurs dans l'encart entre 3 et 5, chiffre-signal compris | §1 | Bloquant |
 | V4 | Motif de citation dans le texte : nom d'organisation suivi d'une année entre parenthèses, ou année seule entre parenthèses. Expression régulière | Toutes | Bloquant |
-| V5 | Nom d'organisation du socle n'importe où dans le texte (liste fermée : OIT, Organisation internationale du travail, World Economic Forum, WEF, Stanford, MIT, OCDE, CIANum, Indeed, PwC, McKinsey, Parlons RH, CEGOS, Neobrain, Sopra Steria, France Stratégie, DARES, Centre Inffo, Crédoc, IDC, Cegid, Epoch AI). **Exemption** : « OCDE » employé comme périmètre géographique (« Dans les pays de l'OCDE, … »), que la règle 3 exige justement de nommer dans la phrase. L'emploi en crédit de source (« selon l'OCDE ») reste signalé | Toutes sauf §0 | Avertissement |
+| V5 | Nom d'organisation du socle n'importe où dans le texte (liste fermée : OIT, Organisation internationale du travail, World Economic Forum, WEF, Stanford, MIT, OCDE, CIANum, Indeed, PwC, McKinsey, Parlons RH, CEGOS, Neobrain, Sopra Steria, France Stratégie, DARES, Centre Inffo, Crédoc, IDC, Cegid, Epoch AI, European Training Foundation, ETF, Cedefop, Eurofound, JRC, Lightcast). **Exemption** : « OCDE » employé comme périmètre géographique (« Dans les pays de l'OCDE, … »), que la règle 3 exige justement de nommer dans la phrase. L'emploi en crédit de source (« selon l'OCDE ») reste signalé | Toutes sauf §0 | Avertissement |
 | V6 | Toute phrase contenant un pourcentage (`\d+(,\d+)?\s?%`) ou un nombre statistique (nombre suivi de millions, milliers, milliards, points, fois, postes, emplois, heures, euros) contient au moins un marqueur `[[id]]`. Exclusions : années 19xx et 20xx, codes ISCO et NAF, numéros de section, §0 entier | Toutes sauf §0 | Bloquant |
 | V7 | Chaque marqueur `[[id]]` du texte figure dans la liste autorisée de la section et dans `sources_citees`, et réciproquement | Toutes | Bloquant |
 | V8 | Un `id` ne figure dans les `sources_citees` que d'une seule section parmi §2 à §8 | §2 à §8 | Avertissement |
