@@ -327,7 +327,7 @@ vente **24/07** · commercialisation fin août.
 - **Critère** : 3 jeux d'artefacts dans `docs/samples/` (un par modèle), tableau coût
   (tokens × tarif) + observations qualité (respect de la grille de sources, ton, tirets).
 
-### [ ] R5 · Alerte ops sur échec de génération (S1, avant la comm du 15/07)
+### [x] R5 · Alerte ops sur échec de génération (S1, avant la comm du 15/07) — fait le 07/10
 - **Contrat** : quand la génération d'un pré-rapport échoue (lead `failed`), l'équipe reçoit
   un email d'alerte au lieu de découvrir le problème via un prospect qui relance.
 - **État** : le mécanisme existe déjà (`notifyFailure` dans `netlify/functions/lib/email.ts:79`,
@@ -337,6 +337,11 @@ vente **24/07** · commercialisation fin août.
   pas d'adresse contact publique à ce jour, cf. R3.)
 - **Critère** : provoquer un échec de génération en prod (ou staging) → email d'alerte reçu
   avec le `leadId` et l'erreur.
+- **Fait** : `OPS_EMAIL=moetez@polaria.ai` posée sur Netlify (tous contextes, non secrète),
+  après la panne silencieuse de mi-septembre (Supabase en pause et clé OpenAI révoquée, sans
+  aucune alerte). Vérifié le 07/10 sur la deploy preview de la PR #11 : génération déclenchée
+  sur un lead inexistant → `failed` → alerte envoyée, acceptée par Resend (aucune erreur
+  journalisée, la journalisation des refus Resend étant active).
 
 ### Suivi équipe (pas d'action code, à surveiller comme dépendances)
 - **Caroline** : feedbacks précis sur le rapport (12/07) → alimente R1 ; ajustements
