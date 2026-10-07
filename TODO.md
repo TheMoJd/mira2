@@ -237,8 +237,14 @@ vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régén�
 - `src/components/report/ReportDocument.tsx` toujours orphelin (seul son test l'importe) et
   pourtant refondu (258 lignes) : supprimer avec son test (cf. note transverse), ou le
   remonter si l'affichage web revient.
-- `OPENAI_MODEL ?? 'gpt-4.1'` (function) et `.env.example` : la prod tourne en `gpt-5.4`
-  (colonne `reports.model`) → aligner le défaut, ou lever une erreur explicite si absent.
+- ✅ Fait le 07/10/2026 : défaut `OPENAI_MODEL` (function, `generate-samples.ts`, `.env.example`,
+  docs) aligné sur `gpt-6.1-sol`, et prod migrée de `gpt-5.4` vers `gpt-6.1-sol` (effort de
+  raisonnement au défaut `medium`, aucun paramètre envoyé). Test réel sur Doctolib avant bascule :
+  2 appels, 129 s, 0,135 $, 0 contrôle bloquant. Tarif 2 $ / 10 $ par 1M tokens (≈ 0,13 $ le
+  rapport contre ≈ 0,15 $ en 5.4), mais ≈ 1,6× plus lent que 5.4 (≈ 80 s). À surveiller :
+  `reports.model`, `needs_review`, durée de génération. Retour arrière : remettre
+  `OPENAI_MODEL=gpt-5.4` dans Netlify et redéployer. `scripts/benchmark-models.ts` a les tarifs à
+  jour mais ne compile plus (`RESPONSE_FORMAT` n'existe plus) : à rebrancher sur `generateReport`.
 - Travail R4 non committé depuis juillet : à committer sur une branche ou à retirer.
 - `docs/samples/*` datent de juin (ancien pipeline, mentions « confiance ») : régénérer après
   Q1 à Q4 ; c'est aussi la recette de ce plan.

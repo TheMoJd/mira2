@@ -145,7 +145,7 @@ function audit(report: PreRapportOutput) {
 
 async function main() {
   const apiKey = readEnv('OPENAI_API_KEY');
-  const model = readEnv('OPENAI_MODEL') ?? 'gpt-4.1';
+  const model = readEnv('OPENAI_MODEL') ?? 'gpt-6.1-sol';
   if (!apiKey) throw new Error('OPENAI_API_KEY absent de .env');
   mkdirSync(OUT_DIR, { recursive: true });
   const openai = new OpenAI({ apiKey });

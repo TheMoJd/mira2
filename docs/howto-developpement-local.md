@@ -30,7 +30,7 @@ Renseignez au minimum, dans `.env` :
 SUPABASE_URL=https://votre-projet.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...      # clé service_role, secrète
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4.1                          # optionnel (défaut gpt-4.1)
+OPENAI_MODEL=gpt-6.1-sol                       # optionnel (défaut gpt-6.1-sol)
 ```
 
 Pour générer le PDF en local, ajoutez le chemin de votre navigateur :
