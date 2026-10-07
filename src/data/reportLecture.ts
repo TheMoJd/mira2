@@ -212,7 +212,8 @@ export interface FamilleLue {
  *      modèle débarrassé d'un préfixe reconnu par `PREFIXE_NUMERO_RE`, `spec.title` si ce
  *      qui reste est vide. Hors déroulé (`spec: null`) : le titre du modèle débarrassé du
  *      préfixe. `titreModele` garde toujours ce que le modèle avait écrit (diagnostic).
- *  I8. Q4 : `part` est `null` si `part_taches` est `null` ou blanc. Sinon
+ *  I8. Q4 : `part` est `null` si `part_taches` est `null`, blanc, ou une valeur nulle
+ *      écrite en texte (« null », « None », « n/a », casse ignorée). Sinon
  *      `part.court` équivaut à `part.nombre !== null` et à « `part.affichage` se termine
  *      par `PART_TACHES_SUFFIXE` ». « jusqu’à 82 % des tâches » écrit par le modèle n'est
  *      PAS court : affiché tel quel, jamais de double suffixe.
@@ -328,11 +329,17 @@ function titreAffiche(titreModele: string, spec: ReportSection | null): string {
   return sansPrefixe;
 }
 
+/**
+ * Valeur nulle écrite en toutes lettres par le modèle (« null », « None », « n/a ») au lieu
+ * du `null` JSON. Vu le 07/10/2026 avec gpt-5.4 : le PDF affichait « Exposition élevée · null ».
+ */
+const PART_NULLE_TEXTE_RE = /^(?:null|none|n\/a)$/i;
+
 /** La part de tâches d'une famille, lue et mise en forme (I8). */
 function lirePart(brutOuNull: string | null | undefined): PartTaches | null {
   if (brutOuNull === null || brutOuNull === undefined) return null;
   const brut = brutOuNull.trim();
-  if (brut === '') return null;
+  if (brut === '' || PART_NULLE_TEXTE_RE.test(brut)) return null;
   const m = PART_COURTE_RE.exec(brut);
   if (!m) return { brut, court: false, nombre: null, affichage: brut };
   return { brut, court: true, nombre: m[1], affichage: `${brut} ${PART_TACHES_SUFFIXE}` };

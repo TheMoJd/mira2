@@ -201,6 +201,12 @@ describe('lireSection — I8 (Q4) : la part de tâches', () => {
     expect(lireSection(s3('   ')).familles[0].part).toBeNull();
   });
 
+  // Vu le 07/10/2026 (gpt-5.4) : le modèle écrit la valeur nulle en toutes lettres, et le PDF
+  // affichait « Exposition élevée · null ».
+  it.each(['null', ' NULL ', 'None', 'n/a', 'N/A'])('« %s » (valeur nulle écrite en texte) donne une part nulle', (brut) => {
+    expect(lireSection(s3(brut)).familles[0].part).toBeNull();
+  });
+
   it('les préfixes admis sont exposés', () => {
     expect(PART_TACHES_PREFIXES).toEqual(['jusqu’à', 'environ', 'près de']);
   });
