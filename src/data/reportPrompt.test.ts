@@ -59,6 +59,13 @@ describe('SYSTEM_PROMPT — la règle du jeu', () => {
     }
   });
 
+  it('contraint le format de part_taches et dit que la §1 ne porte pas de contenu', () => {
+    // Verrou local, en plus du verrou doc/code de reportDocs.test.ts.
+    expect(SYSTEM_PROMPT).toContain('part_taches');
+    expect(SYSTEM_PROMPT).toContain('au format « 82 % » ou « jusqu\'à 82 % », quinze caractères maximum');
+    expect(SYSTEM_PROMPT).toContain('La section §1 ne porte pas de contenu');
+  });
+
   it('annonce que les textes figés sont injectés par le code, sans les contenir', () => {
     expect(SYSTEM_PROMPT).toContain('injectés par le code');
     expect(SYSTEM_PROMPT).not.toContain(CALIBRAGE_COURT);
@@ -153,6 +160,83 @@ describe('buildSyntheseMessage — second appel, aucun chiffre neuf en première
 
   it('ne présente que la section §1', () => {
     expect(sectionBlocks(msg).map((b) => b.id)).toEqual(['synthese-executive']);
+  });
+});
+
+describe('renderCorpsRappel — le rappel du corps lit la section comme le PDF', () => {
+  /** Le seul bloc « Rappel du corps » du message, isolé du reste du contexte. */
+  const rappel = (m: string) => m.slice(m.indexOf('Rappel du corps déjà rédigé'));
+
+  /** Un corps réduit à §3, avec une seule famille dont la part de tâches varie. */
+  const corpsAvecPart = (part: string | null): CorpsOutput => ({
+    sections: [
+      {
+        id: 'familles-metiers',
+        titre: 'Vos familles de métiers face à l’IA',
+        contenu: [{ intertitre: null, paragraphes: ['Intro.'] }],
+        sources_citees: ['ilo-2023-clerical-exposure-82'],
+        familles: [
+          {
+            famille: 'Administration & gestion',
+            exposition: 'élevée',
+            natures: ['automatisation'],
+            part_taches: part,
+            explication: 'Constat [[ilo-2023-clerical-exposure-82]].',
+          },
+        ],
+      },
+    ],
+  });
+
+  it('accole « des tâches » à une part au format court, comme le PDF', () => {
+    expect(buildSyntheseMessage(ctx, corpsAvecPart('jusqu’à 82 %'))).toContain('(jusqu’à 82 % des tâches)');
+  });
+
+  it('affiche une part en phrase telle quelle, sans suffixe accolé', () => {
+    const phrase = '82 % des tâches exposées à un niveau supérieur à la moyenne, dont 24 % fortement';
+    const msg = buildSyntheseMessage(ctx, corpsAvecPart(phrase));
+    expect(msg).toContain(`(${phrase})`);
+    expect(msg).not.toContain('des tâches)');
+  });
+
+  it('reprend le titre canonique de la section, sans le préfixe de numéro du modèle', () => {
+    const msg = buildSyntheseMessage(ctx, {
+      sections: [
+        {
+          id: 'facteur-humain',
+          titre: '§6. Le facteur humain',
+          contenu: [{ intertitre: null, paragraphes: ['Constat.'] }],
+          sources_citees: [],
+          familles: null,
+        },
+      ],
+    });
+    expect(rappel(msg)).toContain('#### Le facteur humain (id: facteur-humain)');
+    expect(rappel(msg)).not.toContain('§6.');
+  });
+
+  it('ne rappelle que les sections héritées (§2 → §7), jamais la §8', () => {
+    const msg = buildSyntheseMessage(ctx, {
+      sections: [
+        {
+          id: 'contexte',
+          titre: 'Le contexte en bref',
+          contenu: [{ intertitre: null, paragraphes: ['Constat du contexte.'] }],
+          sources_citees: [],
+          familles: null,
+        },
+        {
+          id: 'lecture-strategique',
+          titre: 'Lecture stratégique',
+          contenu: [{ intertitre: null, paragraphes: ['Questions de la lecture stratégique.'] }],
+          sources_citees: [],
+          familles: null,
+        },
+      ],
+    });
+    expect(rappel(msg)).toContain('#### Le contexte en bref (id: contexte)');
+    expect(rappel(msg)).not.toContain('(id: lecture-strategique)');
+    expect(rappel(msg)).not.toContain('(id: synthese-executive)');
   });
 });
 

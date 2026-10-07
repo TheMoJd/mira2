@@ -13,7 +13,7 @@ Chaque rapport est rendu en HTML (ouvrir dans un navigateur, imprimable en PDF) 
 >
 > En attendant, la cible de conformité est
 > [`src/data/__fixtures__/rapportConforme.ts`](../../src/data/__fixtures__/rapportConforme.ts) :
-> un rapport de référence **écrit à la main**, qui passe les douze contrôles V1 → V12 sans un seul
+> un rapport de référence **écrit à la main**, qui passe les quatorze contrôles V1 → V14 sans un seul
 > échec ni avertissement, et que `reportConformance.test.ts` rend de bout en bout. Ce n'est pas un
 > échantillon généré, c'est ce à quoi la sortie du modèle doit ressembler.
 

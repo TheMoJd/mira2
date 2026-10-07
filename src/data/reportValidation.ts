@@ -1,5 +1,5 @@
 /**
- * VALIDATIONS DU RAPPORT GÉNÉRÉ (V1 → V12)
+ * VALIDATIONS DU RAPPORT GÉNÉRÉ (V1 → V14)
  * ========================================
  *
  * La liste autorisée est une consigne, et une consigne peut être mal suivie. Après
@@ -22,12 +22,16 @@
  * | V10 | caractères interdits : cadratin, demi-cadratin, point-virgule, ! | bloquant |
  * | V11 | mots creux interdits et vocabulaire de décision                  | bloquant |
  * | V12 | intertitres et titres de points clés à douze mots maximum        | avertissement |
+ * | V13 | lettre hors alphabet latin ou pictogramme dans toute prose       | bloquant |
+ * | V14 | part_taches hors format court, ou nombre absent des statistiques citées par l'explication | avertissement |
  *
- * Les sections figées injectées par le code (§8bis, §9) ne sont jamais validées :
- * elles ne viennent pas du modèle.
+ * Les contrôles lisent la section à travers `lireSection` (`reportLecture.ts`) : c'est
+ * la lecture qui décide quel texte est de la prose du modèle, quel texte vient du
+ * code (les deux lignes figées de l'encart, les sections §8bis et §9, jamais
+ * validées), et quel `contenu` est ignoré parce que la section porte un encart.
  */
 
-import type { PreRapportOutput, ReportSectionOutput } from './reportSchema';
+import type { PreRapportOutput } from './reportSchema';
 import type { ReportSection } from './rapportStructure';
 import {
   reportSections,
@@ -36,16 +40,17 @@ import {
   HERITAGE_SECTION_IDS,
   SYNTHESE_SECTION_ID,
 } from './rapportStructure';
-import { statbank } from './statbank';
-import { markersIn, stripMarkers, encartMarkers } from './reportCitations';
+import type { StatEntry } from './statbank';
+import { statbank, statById } from './statbank';
+import { markersIn } from './reportCitations';
+import { lireSection } from './reportLecture';
 
 const KNOWN_STAT_IDS = new Set(statbank.map((s) => s.id));
-const SECTION_BY_ID = new Map(reportSections.map((s) => [s.id, s]));
 
 export type ValidationLevel = 'bloquant' | 'avertissement';
 
 export interface ValidationFinding {
-  /** Code du contrôle (`V1` … `V12`). */
+  /** Code du contrôle (`V1` … `V14`). */
   code: string;
   level: ValidationLevel;
   /** Section concernée. */
@@ -144,6 +149,20 @@ const CARACTERES_INTERDITS: { char: string; label: string }[] = [
   { char: '!', label: "point d'exclamation" },
 ];
 
+/**
+ * Lettre hors alphabet latin, ou pictogramme (V13). Un rapport en français ne
+ * contient que des lettres latines et la ponctuation courante. Tout le reste est un
+ * accident de tokenisation du modèle (« la formulation des խնդիրmes », vu en
+ * production) que la police du PDF rend en trou, et qu'aucune règle de prompt ne
+ * peut attraper. Les lettres latines accentuées ou ligaturées (é, ç, œ) matchent
+ * `\p{Script=Latin}`. Guillemets, apostrophe typographique, points de suspension,
+ * €, ×, % et espaces fines ne sont pas des lettres : tous passent.
+ */
+const HORS_LATIN_RE = /(?!\p{Script=Latin})\p{L}|\p{Extended_Pictographic}/gu;
+
+/** Caractères de contexte gardés de part et d'autre du passage fautif (V13). */
+const HORS_LATIN_CONTEXTE = 20;
+
 /** Rend un motif tolérant aux deux apostrophes (droite et typographique). */
 function toPattern(needle: string): RegExp {
   const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/['’]/g, "['’]");
@@ -206,51 +225,17 @@ const STAT_NUMBER_RE =
 // Aides.
 // ---------------------------------------------------------------------------
 
-/** Toutes les chaînes de prose d'une section rédigées par le modèle. */
-function proseOf(section: ReportSectionOutput): string[] {
-  const out: string[] = [];
-  for (const bloc of section.contenu) {
-    if (bloc.intertitre) out.push(bloc.intertitre);
-    out.push(...bloc.paragraphes);
-  }
-  for (const fam of section.familles ?? []) out.push(fam.explication);
-  const e = section.encart;
-  if (e) {
-    // `calibrage_court` et `perimetre` sont des textes du code : hors contrôle.
-    out.push(e.chapeau, e.chiffre_signal.phrase);
-    for (const pt of e.points_cles) out.push(pt.titre, pt.texte);
-  }
-  return out.filter((s) => s.trim() !== '');
-}
-
-/** Intertitres et titres de points clés d'une section (V12). */
-function headingsOf(section: ReportSectionOutput): string[] {
-  const out = section.contenu.map((b) => b.intertitre).filter((t): t is string => Boolean(t));
-  for (const pt of section.encart?.points_cles ?? []) out.push(pt.titre);
-  return out;
-}
-
-function wordCount(text: string): number {
-  const clean = stripMarkers(text);
-  return clean === '' ? 0 : clean.split(/\s+/).length;
-}
-
-/** Nombre de mots facturés à une section (V9). */
-function sectionWordCount(section: ReportSectionOutput): number {
-  return proseOf(section).reduce((n, t) => n + wordCount(t), 0);
-}
-
-/** Bornes de budget d'une section, tolérance comprise. §3 dépend du nombre de familles. */
-function budgetOf(
-  spec: ReportSection,
-  section: ReportSectionOutput,
-): { min: number; max: number } | null {
+/**
+ * Bornes de budget d'une section, tolérance comprise. §3 dépend du nombre de familles.
+ * Exporté pour que le rejeu hors ligne (`scripts/replay-report.ts`) affiche le budget
+ * réellement appliqué par V9, au lieu de recopier la règle et de mentir sur §3.
+ */
+export function budgetOf(spec: ReportSection, nbFamilles: number): { min: number; max: number } | null {
   if (!spec.wordBudget) return null;
   let { min, max } = spec.wordBudget;
   if (spec.wordBudgetPerFamille) {
-    const n = section.familles?.length ?? 0;
-    min += n * spec.wordBudgetPerFamille.min;
-    max += n * spec.wordBudgetPerFamille.max;
+    min += nbFamilles * spec.wordBudgetPerFamille.min;
+    max += nbFamilles * spec.wordBudgetPerFamille.max;
   }
   return {
     min: Math.floor(min * (1 - WORD_BUDGET_TOLERANCE)),
@@ -282,24 +267,74 @@ function stripNonStatNumbers(text: string): string {
     .replace(/\b(?:19|20)\d{2}\b/g, ' ');
 }
 
+/** Un passage hors alphabet latin : des caractères fautifs contigus (V13). */
+interface PassageHorsLatin {
+  passage: string;
+  index: number;
+}
+
+/**
+ * Passages hors alphabet latin d'un texte, caractères contigus groupés : un mot
+ * arménien de cinq lettres est un seul passage, pas cinq défauts.
+ */
+function passagesHorsLatin(text: string): PassageHorsLatin[] {
+  const out: PassageHorsLatin[] = [];
+  for (const m of text.matchAll(HORS_LATIN_RE)) {
+    const dernier = out[out.length - 1];
+    if (dernier && dernier.index + dernier.passage.length === m.index) {
+      dernier.passage += m[0];
+    } else {
+      out.push({ passage: m[0], index: m.index });
+    }
+  }
+  return out;
+}
+
+/**
+ * Extrait d'une quarantaine de caractères autour d'un passage : le rejeu doit voir
+ * le mot fautif, pas seulement le caractère. Ne coupe jamais une paire de
+ * substitution (emoji) au bord de l'extrait, sinon la chaîne persistée en base
+ * serait invalide.
+ */
+function extraitAutour(text: string, index: number, longueur: number): string {
+  let debut = Math.max(0, index - HORS_LATIN_CONTEXTE);
+  let fin = Math.min(text.length, index + longueur + HORS_LATIN_CONTEXTE);
+  if (debut > 0 && /[\uDC00-\uDFFF]/.test(text[debut])) debut -= 1;
+  if (fin < text.length && /[\uD800-\uDBFF]/.test(text[fin - 1])) fin += 1;
+  return `${debut > 0 ? '…' : ''}${text.slice(debut, fin)}${fin < text.length ? '…' : ''}`;
+}
+
+/**
+ * Le claim (ou la valeur) d'une statistique porte-t-il ce pourcentage ? (V14)
+ * « 82 » est porté par une entrée de `value: 82`, ou dont le `claim` contient « 82 % »
+ * (« 82,5 » tolère « 82.5 »). « 2 % » ne matche pas « 82 % » : le chiffre doit être
+ * précédé d'autre chose qu'un chiffre ou un séparateur décimal.
+ */
+function claimPorte(entry: StatEntry | undefined, nombre: string): boolean {
+  if (!entry) return false;
+  if (entry.value === Number(nombre.replace(',', '.'))) return true;
+  const n = nombre.replace(/[,.]/, '[,.]');
+  return new RegExp(`(^|[^\\d,.])${n}[\\s\\u00a0\\u202f]?%`).test(entry.claim);
+}
+
 // ---------------------------------------------------------------------------
 // Les contrôles.
 // ---------------------------------------------------------------------------
 
 /**
  * Repasse derrière le modèle. Renvoie tous les contrôles en échec, dans l'ordre
- * V1 → V12, sections dans l'ordre du rapport. Les sections figées (§8bis, §9) sont
- * ignorées : elles ne viennent pas du modèle.
+ * V1 → V14, sections dans l'ordre du rapport. Les sections figées (§8bis, §9) et les
+ * sections inconnues du déroulé sont ignorées : la lecture les dit d'origine `code`
+ * ou sans `spec`, elles ne viennent pas du modèle.
  */
 export function validateReport(report: PreRapportOutput): ValidationFinding[] {
   const findings: ValidationFinding[] = [];
   const heritage = inheritedStatIds(report);
-  const modelSections = report.sections.filter(
-    (s) => (SECTION_BY_ID.get(s.id)?.call ?? 'code') !== 'code',
-  );
 
-  for (const section of modelSections) {
-    const spec = SECTION_BY_ID.get(section.id)!;
+  for (const section of report.sections) {
+    const lecture = lireSection(section);
+    if (lecture.origine === 'code' || !lecture.spec) continue; // §8bis, §9, id inconnu
+    const spec = lecture.spec;
     const add = (code: string, level: ValidationLevel, message: string) =>
       findings.push({ code, level, sectionId: section.id, message });
 
@@ -313,15 +348,14 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
           `chiffre absent du corps du rapport, donc hors liste héritée : ${horsHeritage.join(', ')}. La première page ne cite que des chiffres déjà exposés en §2 à §7.`,
         );
       }
-      const encart = section.encart;
+      const encart = lecture.encart;
       if (!encart) {
         add('V2', 'bloquant', 'la synthèse exécutive §1 doit porter un encart.');
       } else {
         const citees = new Set(section.sources_citees);
-        const manquants = [
-          encart.chiffre_signal.source_id,
-          ...encart.points_cles.map((p) => p.source_id),
-        ].filter((id) => id && !citees.has(id));
+        const manquants = [encart.signal.sourceId, ...encart.points.map((p) => p.sourceId)].filter(
+          (id) => id && !citees.has(id),
+        );
         if (manquants.length > 0) {
           add(
             'V2',
@@ -329,7 +363,7 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
             `source_id de l'encart absent de sources_citees : ${[...new Set(manquants)].join(', ')}.`,
           );
         }
-        const nbMarqueurs = new Set(encartMarkers(encart)).size;
+        const nbMarqueurs = new Set(encart.notes).size;
         if (nbMarqueurs < ENCART_MARKERS_MIN || nbMarqueurs > ENCART_MARKERS_MAX) {
           add(
             'V3',
@@ -340,9 +374,8 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
       }
     }
 
-    const prose = proseOf(section);
-
-    for (const text of prose) {
+    for (const t of lecture.prose) {
+      const text = t.texte;
       // --- V4 : motif de citation dans le texte ---
       const cite = text.match(CITATION_RE);
       if (cite) {
@@ -380,6 +413,21 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
         }
       }
 
+      // --- V13 : lettre hors alphabet latin ou pictogramme ---
+      const horsLatin = passagesHorsLatin(text);
+      if (horsLatin.length > 0) {
+        const [premier] = horsLatin;
+        const codePoint = premier.passage.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0');
+        const autres = horsLatin.length - 1;
+        const suite =
+          autres > 0 ? `, et ${autres} autre${autres > 1 ? 's' : ''} passage${autres > 1 ? 's' : ''} dans ce texte` : '';
+        add(
+          'V13',
+          'bloquant',
+          `caractère hors alphabet latin « ${premier.passage} » (U+${codePoint}) dans « ${extraitAutour(text, premier.index, premier.passage.length)} »${suite}. Le rapport s'écrit en lettres latines, sans pictogramme.`,
+        );
+      }
+
       // --- V11 : mots creux et vocabulaire de décision ---
       for (const { needle, re } of MOTS_CREUX_RE) {
         if (re.test(text)) add('V11', 'bloquant', `mot creux interdit : « ${needle} ».`);
@@ -399,8 +447,7 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
       section.id === SYNTHESE_SECTION_ID
         ? heritage
         : new Set(statsForSection(spec).map((s) => s.id));
-    const marques = new Set(prose.flatMap(markersIn));
-    if (section.encart) for (const id of encartMarkers(section.encart)) marques.add(id);
+    const marques = new Set(lecture.notes);
 
     for (const id of marques) {
       if (!KNOWN_STAT_IDS.has(id)) {
@@ -420,24 +467,38 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
       }
     }
 
-    // --- V9 : budget de mots ---
-    const budget = budgetOf(spec, section);
-    if (budget) {
-      const mots = sectionWordCount(section);
-      if (mots < budget.min || mots > budget.max) {
-        add(
-          'V9',
-          'bloquant',
-          `${mots} mots, hors budget toléré de ${budget.min} à ${budget.max} mots.`,
-        );
-      }
+    // --- V9 : budget de mots (la lecture compte la prose du modèle seule) ---
+    const budget = budgetOf(spec, lecture.familles.length);
+    if (budget && (lecture.mots < budget.min || lecture.mots > budget.max)) {
+      add(
+        'V9',
+        'bloquant',
+        `${lecture.mots} mots, hors budget toléré de ${budget.min} à ${budget.max} mots.`,
+      );
     }
 
     // --- V12 : longueur des intertitres et des titres de points clés ---
-    for (const heading of headingsOf(section)) {
-      const n = wordCount(heading);
-      if (n > HEADING_MAX_WORDS) {
-        add('V12', 'avertissement', `intertitre de ${n} mots (maximum ${HEADING_MAX_WORDS}) : « ${heading} ».`);
+    for (const t of lecture.titres) {
+      if (t.mots > HEADING_MAX_WORDS) {
+        add('V12', 'avertissement', `intertitre de ${t.mots} mots (maximum ${HEADING_MAX_WORDS}) : « ${t.texte} ».`);
+      }
+    }
+
+    // --- V14 : la part de tâches d'une famille est un nombre court, porté par une statistique citée ---
+    for (const fam of lecture.familles) {
+      if (!fam.part) continue;
+      if (!fam.part.court) {
+        add(
+          'V14',
+          'avertissement',
+          `part_taches hors format court : « ${fam.part.brut} ». Attendu « 82 % » ou « jusqu'à 82 % », quinze caractères maximum, sans phrase, sinon null.`,
+        );
+      } else if (!fam.explication.notes.some((id) => claimPorte(statById[id], fam.part!.nombre!))) {
+        add(
+          'V14',
+          'avertissement',
+          `part_taches « ${fam.part.brut} » : le nombre ${fam.part.nombre} ne figure dans aucune statistique citée par l'explication de « ${fam.nom.texte} ».`,
+        );
       }
     }
   }
@@ -491,9 +552,7 @@ export function findingsBrief(findings: ValidationFinding[], sectionId: string):
  */
 export function syncSourcesCitees<T extends PreRapportOutput>(report: T): T {
   for (const section of report.sections) {
-    const marques = new Set(proseOf(section).flatMap(markersIn));
-    if (section.encart) for (const id of encartMarkers(section.encart)) marques.add(id);
-    section.sources_citees = [...marques].filter((id) => KNOWN_STAT_IDS.has(id));
+    section.sources_citees = [...new Set(lireSection(section).notes)].filter((id) => KNOWN_STAT_IDS.has(id));
   }
   return report;
 }

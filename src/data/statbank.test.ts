@@ -54,4 +54,12 @@ describe('statbank — invariants', () => {
     expect(statById[sample.id]).toBe(sample);
     expect(statsBySource(sample.source.sourceId)).toContain(sample);
   });
+
+  // La claim est recopiée telle quelle dans les notes « Sources de référence » du PDF et
+  // donnée au modèle : elle suit le style du rapport (ni tiret long ni point-virgule).
+  // Le verbatim, citation exacte de la source, n'est pas concerné.
+  it('aucune claim ne porte de tiret cadratin, demi-cadratin ou point-virgule', () => {
+    const fautives = statbank.filter((s) => /[—–;]/.test(s.claim)).map((s) => s.id);
+    expect(fautives).toEqual([]);
+  });
 });

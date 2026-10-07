@@ -6,12 +6,12 @@
  * servir de cible de conformité. Les échantillons issus de vrais appels OpenAI
  * vivent dans `docs/samples/` (voir `scripts/generate-samples.ts`).
  *
- * À quoi ça sert. Les contrôles V1 → V12 de `reportValidation.ts` sont sévères :
+ * À quoi ça sert. Les contrôles V1 → V14 de `reportValidation.ts` sont sévères :
  * budgets de mots, un marqueur par phrase chiffrée, un chiffre une seule fois,
  * liste fermée par section, vocabulaire proscrit. Un jeu de règles sévère peut être
  * *impossible* à satisfaire, et le code ne le dirait pas : il marquerait chaque
  * rapport pour relecture, indéfiniment. Cette fixture est la preuve que le contrat
- * est satisfaisable : un rapport bien formé doit passer les douze contrôles avec
+ * est satisfaisable : un rapport bien formé doit passer les quatorze contrôles avec
  * **zéro échec bloquant**.
  *
  * Elle sert aussi de cible lisible pour l'équipe : c'est à ça que doit ressembler
@@ -347,7 +347,6 @@ export const SYNTHESE_CONFORME: SyntheseOutput = {
         },
       ],
     },
-    contenu: [],
     sources_citees: [
       'ilo-2023-clerical-exposure-82',
       'wef-2025-tasks-humans-alone-47',

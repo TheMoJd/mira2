@@ -122,7 +122,7 @@ appel OpenAI à chaque fois, repassez un `report_json` déjà généré (table `
 
 ## Scripts d'exploitation
 
-Trois scripts ponctuels (voir la [référence](reference-pipeline-prerapport.md#scripts-dexploitation-scripts)
+Quatre scripts ponctuels (voir la [référence](reference-pipeline-prerapport.md#scripts-dexploitation-scripts)
 pour leur surface exacte). Ils lisent `.env` et utilisent la clé `service_role` : usage interne.
 
 **Renvoyer un rapport déjà généré** (email perdu, spam, nouvelle adresse) :
@@ -145,3 +145,20 @@ npx tsx scripts/investigate-leads.ts
 Lecture : un lead `sent` avec `report:oui` mais sans email reçu → problème Resend
 (vérifier `envcheck` en prod, puis les spams) ; un lead bloqué `generating`/`failed` →
 problème de génération (logs Netlify).
+
+**Rejouer un rapport déjà produit, hors ligne** (aucun appel OpenAI, aucune écriture en base) :
+
+```bash
+npx --yes tsx scripts/replay-report.ts <leadId> --out tmp/replay.html
+npx --yes tsx scripts/replay-report.ts --file chemin/report.json --entreprise "Acme SAS"
+```
+
+Le script relit le `report_json` (depuis `leads` en lecture seule, ou depuis un fichier local
+avec `--file`), le repasse dans `parseReport`, imprime chaque contrôle V1 → V14 en échec (code,
+niveau, section, message) et le décompte de mots par section, puis réécrit le HTML du PDF. Sortie
+par défaut : `tmp/replay-<id>.html` (le dossier `tmp/` est ignoré par git).
+
+C'est l'outil pour répondre à « qu'est-ce que ce changement de contrôle, de lecture ou de gabarit
+donne sur un vrai rapport ». Il ne régénère rien et ne renvoie aucun email : un rapport qui sort
+avec un échec bloquant est à régénérer, pas à renvoyer. Un `report_json` de client exporté sur
+disque reste une donnée client : le garder hors du repo.

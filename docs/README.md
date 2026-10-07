@@ -28,7 +28,7 @@ Le [README racine](../README.md) couvre la landing et la prise en main général
 Un visiteur remplit un wizard (`/pre-rapport`) → `submit-prerapport` capture le lead dans
 Supabase → `generate-prerapport-background` enrichit, appelle OpenAI en deux temps (le corps
 du rapport, puis la synthèse exécutive à partir des seuls chiffres déjà cités), repasse
-derrière le modèle avec les contrôles V1 → V12, rend un PDF de marque (Chromium) et l'envoie
+derrière le modèle avec les contrôles V1 → V14, rend un PDF de marque (Chromium) et l'envoie
 par email. **Aucun chiffre n'est inventé** : le modèle ne cite que des statistiques sourcées
 de la stat-bank, et chaque chiffre renvoie par un appel de note à la section
 « Sources de référence ».

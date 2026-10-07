@@ -417,7 +417,7 @@ export const statbank: StatEntry[] = [
     value: 59,
     unit: '%',
     claim:
-      '59 % des travailleurs auront besoin d’une formation d’ici 2030 ; 11 % risquent de ne pas y avoir accès.',
+      '59 % des travailleurs auront besoin d’une formation d’ici 2030, et 11 % risquent de ne pas y avoir accès.',
     verbatim:
       'if the world’s workforce was made up of 100 people, 59 would need training by 2030 … 11 would be unlikely to receive the reskilling or upskilling needed',
     theme: 'formation',
@@ -545,7 +545,7 @@ export const statbank: StatEntry[] = [
     value: 37,
     unit: '%',
     claim:
-      'Seuls 37 % des professionnels RH évoluent dans un service où au moins un outil intégrant l’IA a été déployé — l’usage individuel (83 %) devance largement l’intégration collective.',
+      'Seuls 37 % des professionnels RH évoluent dans un service où au moins un outil intégrant l’IA a été déployé. L’usage individuel (83 %) devance largement l’intégration collective.',
     verbatim:
       '37 % d’entre eux évoluent dans un service RH où l’un de ces outils a été déployé',
     theme: 'adoption',
@@ -717,7 +717,7 @@ export const statbank: StatEntry[] = [
     value: 8,
     unit: '%',
     claim:
-      'En 2023, seules 8 % des entreprises utilisaient l’IA en moyenne dans les pays de l’OCDE — l’adoption reste très inégale.',
+      'En 2023, seules 8 % des entreprises utilisaient l’IA en moyenne dans les pays de l’OCDE, et l’adoption reste très inégale.',
     verbatim:
       'compared to an overall adoption rate of 8% in the same year on average across OECD countries',
     theme: 'adoption',
@@ -1004,7 +1004,7 @@ export const statbank: StatEntry[] = [
     value: 82,
     unit: '%',
     claim:
-      '82 % des dirigeants déclarent que l’IA a augmenté leurs effectifs ou n’a entraîné aucun changement — l’IA reconfigure les emplois plus qu’elle ne les supprime massivement.',
+      '82 % des dirigeants déclarent que l’IA a augmenté leurs effectifs ou n’a entraîné aucun changement. L’IA reconfigure les emplois plus qu’elle ne les supprime massivement.',
     verbatim: '82% say that AI has increased or caused no change in headcount',
     theme: 'rh',
     scope: 'monde',
@@ -1111,7 +1111,7 @@ export const statbank: StatEntry[] = [
     value: 34,
     unit: '%',
     claim:
-      'Seules 34 % des organisations disposent d’une politique encadrant l’IA — 63 % au-delà de 5 000 salariés, mais 10 % en deçà de 10 salariés.',
+      'Seules 34 % des organisations disposent d’une politique encadrant l’IA : 63 % au-delà de 5 000 salariés, mais 10 % en deçà de 10 salariés.',
     verbatim:
       'Votre organisation dispose-t-elle d’une politique encadrant l’IA ? Oui 34 % … Plus de 5000 salariés : 63 % … Moins de 10 salariés : 10 %',
     theme: 'gouvernance',
@@ -1342,7 +1342,7 @@ export const statbank: StatEntry[] = [
     value: 490000,
     unit: '',
     claim:
-      'Métier de terrain en forte tension de recrutement : 490 000 postes seraient à pourvoir chez les agents d’entretien entre 2019 et 2030, dont 460 000 dus aux départs en fin de carrière — l’enjeu est le renouvellement, pas la suppression.',
+      'Métier de terrain en forte tension de recrutement : 490 000 postes seraient à pourvoir chez les agents d’entretien entre 2019 et 2030, dont 460 000 dus aux départs en fin de carrière. L’enjeu est le renouvellement, pas la suppression.',
     verbatim:
       'entre 2019 et 2030, 490 000 postes seraient à pourvoir chez les agents d’entretien, dont 460 000 dus aux départs en fin de carrière',
     theme: 'emploi',
@@ -1418,7 +1418,7 @@ export const statbank: StatEntry[] = [
     value: 34,
     unit: '%',
     claim:
-      'Les conducteurs de véhicules sont un métier en légère croissance mais sous forte tension de renouvellement : les départs en fin de carrière y sont parmi les plus élevés (34 %) et les jeunes débutants ne suffiraient pas à les remplacer — l’enjeu est l’attractivité, pas la suppression par l’IA.',
+      'Les conducteurs de véhicules sont un métier en légère croissance mais sous forte tension de renouvellement : les départs en fin de carrière y sont parmi les plus élevés (34 %) et les jeunes débutants ne suffiraient pas à les remplacer. L’enjeu est l’attractivité, pas la suppression par l’IA.',
     verbatim:
       'Les conducteurs de véhicules sont un métier légèrement en croissance, dont le nombre de départs en fin de carrière est parmi les plus élevés (34 %). Les jeunes débutant en emploi ne suffiraient pas à remplacer tous ces départs.',
     theme: 'emploi',
@@ -1435,7 +1435,7 @@ export const statbank: StatEntry[] = [
     value: 33,
     unit: '%',
     claim:
-      'Les techniciens et agents de maîtrise de la maintenance sont en tension de recrutement : les postes à pourvoir d’ici 2030 représenteraient 33 % de l’emploi du métier de 2019 — l’enjeu est le renouvellement des compétences, pas la suppression par l’IA.',
+      'Les techniciens et agents de maîtrise de la maintenance sont en tension de recrutement : les postes à pourvoir d’ici 2030 représenteraient 33 % de l’emploi du métier de 2019. L’enjeu est le renouvellement des compétences, pas la suppression par l’IA.',
     verbatim:
       'les besoins de recrutement sont importants mais ils représentent une plus faible proportion de l’emploi du métier : c’est le cas en particulier des vendeurs (19 %), des enseignants (31 %), des techniciens et agents de maîtrise de la maintenance (33 %)',
     theme: 'emploi',
@@ -1453,7 +1453,7 @@ export const statbank: StatEntry[] = [
     value: 90,
     unit: '%',
     claim:
-      'Les métiers à forte composante d’activités physiques répétitives en environnement prévisible (production, conduite de machines, manutention) ont un potentiel d’automatisation technique élevé — supérieur à 90 % pour certains (soudeurs en usine) — quand les métiers d’interaction (relation client) restent sous 30 %. C’est un potentiel technique à horizon long (robotique), pas une suppression immédiate.',
+      'Les métiers à forte composante d’activités physiques répétitives en environnement prévisible (production, conduite de machines, manutention) ont un potentiel d’automatisation technique élevé (supérieur à 90 % pour certains, comme les soudeurs en usine), quand les métiers d’interaction (relation client) restent sous 30 %. C’est un potentiel technique à horizon long (robotique), pas une suppression immédiate.',
     verbatim:
       'occupations that have a large proportion of physical activities in predictable environments such as factory welders have a technical automation potential above 90 percent, whereas for customer service representatives that potential is less than 30 percent',
     theme: 'exposition',
@@ -1480,7 +1480,7 @@ export const statbank: StatEntry[] = [
     value: 50,
     unit: '%',
     claim:
-      'Environ la moitié des activités de travail dans le monde ont le potentiel technique d’être automatisées avec les technologies déjà démontrées — mais la part réellement automatisée d’ici 2030 sera bien plus faible.',
+      'Environ la moitié des activités de travail dans le monde ont le potentiel technique d’être automatisées avec les technologies déjà démontrées, mais la part réellement automatisée d’ici 2030 sera bien plus faible.',
     verbatim:
       'about half of all work activities globally have the technical potential to be automated by adapting currently demonstrated technologies',
     theme: 'exposition',

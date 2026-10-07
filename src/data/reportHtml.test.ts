@@ -85,7 +85,6 @@ const report: PreRapportOutput = assembleReport(
           },
         ],
       },
-      contenu: [],
       sources_citees: [WEF, STANFORD],
     },
   },
@@ -212,6 +211,132 @@ describe('renderReportHtml', () => {
     expect(html).toContain('Exposition élevée');
     expect(html).not.toContain('Confiance :');
     expect(html).not.toContain('non directement transposable');
+  });
+
+  it('Q1 — un contenu recopié sous l’encart §1 ne s’imprime pas : le chapeau apparaît une fois', () => {
+    const chapeau = 'Acme SAS et ses métiers tech face à l’IA.';
+    const s1 = report.sections.find((s) => s.id === 'synthese-executive')!;
+    const doublé: PreRapportOutput = {
+      sections: report.sections.map((s) =>
+        s.id === 'synthese-executive'
+          ? { ...s, contenu: [{ intertitre: null, paragraphes: [chapeau, `Rappel du point [[${WEF}]].`] }] }
+          : s,
+      ),
+    };
+    const propre: PreRapportOutput = {
+      sections: report.sections.map((s) => (s.id === 'synthese-executive' ? { ...s, contenu: [] } : s)),
+    };
+    expect(s1.contenu).toEqual([]);
+    const htmlDouble = renderReportHtml(doublé, ctx);
+    expect(htmlDouble.split(chapeau).length).toBe(2);
+    expect(htmlDouble).toBe(renderReportHtml(propre, ctx));
+  });
+
+  it('Q3 — le titre de section canonique, une seule fois, dans le corps et dans les sources', () => {
+    const sixieme = renderReportHtml(
+      {
+        sections: [
+          {
+            id: 'facteur-humain',
+            titre: '§6. Le facteur humain',
+            contenu: [{ intertitre: null, paragraphes: [`Constat [[${STANFORD}]].`] }],
+            sources_citees: [STANFORD],
+            familles: null,
+            encart: null,
+          },
+        ],
+      },
+      ctx,
+    );
+    expect(sixieme).toContain('§6 · </span>Le facteur humain');
+    expect(sixieme).not.toContain('§6.');
+    expect(sixieme.match(/Le facteur humain/g)).toHaveLength(2);
+
+    const septieme = renderReportHtml(
+      {
+        sections: [
+          {
+            id: 'repere-sectoriel',
+            titre: '§7. Le cloud en repère',
+            contenu: [{ intertitre: null, paragraphes: ['Constat.'] }],
+            sources_citees: [],
+            familles: null,
+            encart: null,
+          },
+        ],
+      },
+      ctx,
+    );
+    expect(septieme).toContain('§7 · </span>Le cloud en repère');
+    expect(septieme).not.toContain('§7.');
+  });
+
+  it('Q4 — « des tâches » n’est accolé qu’à une part au format court', () => {
+    // La fixture porte « jusqu’à 40 % » : le suffixe reste.
+    expect(html).toContain('jusqu’à 40 % des tâches');
+
+    const phrase = '82 % des tâches exposées à un niveau supérieur à la moyenne, dont 24 % fortement';
+    const longue = renderReportHtml(
+      {
+        sections: [
+          {
+            id: 'familles-metiers',
+            titre: 'Vos familles de métiers face à l’IA',
+            contenu: [{ intertitre: null, paragraphes: ['Intro.'] }],
+            sources_citees: [WEF],
+            familles: [
+              {
+                famille: 'Relation client & accueil',
+                exposition: 'élevée',
+                natures: ['automatisation'],
+                part_taches: phrase,
+                explication: `Constat [[${WEF}]].`,
+              },
+            ],
+            encart: null,
+          },
+        ],
+      },
+      ctx,
+    );
+    expect(longue).toContain(phrase);
+    expect(longue).not.toContain('fortement des tâches');
+  });
+
+  it('nom de famille avec marqueur : transformé en appel de note, jamais laissé brut', () => {
+    // Un libellé est numéroté par la lecture s'il porte un marqueur : le rendu doit
+    // donc le transformer, dans la fiche comme dans le tableau récapitulatif.
+    const avecMarqueur = renderReportHtml(
+      {
+        sections: [
+          {
+            id: 'familles-metiers',
+            titre: 'Vos familles de métiers face à l’IA',
+            contenu: [{ intertitre: null, paragraphes: ['Intro.'] }],
+            sources_citees: [WEF],
+            familles: [
+              {
+                famille: `Comptabilité, paie & gestion des données [[${WEF}]]`,
+                exposition: 'élevée',
+                natures: ['automatisation'],
+                part_taches: null,
+                explication: 'Constat sans marqueur.',
+              },
+            ],
+            encart: null,
+          },
+        ],
+      },
+      ctx,
+    );
+    expect(avecMarqueur).not.toMatch(/\[\[[^\]]*\]\]/);
+    // Le nom paraît deux fois (fiche et tableau), chaque fois suivi de son appel de note.
+    const nom = 'Comptabilité, paie &amp; gestion des données';
+    expect(avecMarqueur.split(nom).length - 1).toBe(2);
+    expect(avecMarqueur.split(`${nom} <sup`).length - 1).toBe(2);
+    // La note du libellé rejoint bien « Sources de référence ».
+    expect(avecMarqueur).toContain(SOURCES_SECTION_TITLE);
+    expect(avecMarqueur).toContain('World Economic Forum');
   });
 
   it('omet la section des références quand aucun chiffre n’est cité', () => {

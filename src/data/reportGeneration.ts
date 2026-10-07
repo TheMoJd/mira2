@@ -15,7 +15,7 @@
  *   1. le corps du rapport (§0, §2 → §8) ;
  *   2. la synthèse exécutive §1, à partir de la liste héritée du corps (union des
  *      `sources_citees` de §2 à §7) — aucun chiffre neuf en première page ;
- *   3. l'assemblage (textes figés du code compris) puis les contrôles V1 → V12 ;
+ *   3. l'assemblage (textes figés du code compris) puis les contrôles V1 → V14 ;
  *   4. le rejeu des seules sections porteuses d'un échec bloquant, avec le détail
  *      des contrôles échoués, `MAX_REPLAYS_PER_SECTION` fois au plus.
  *

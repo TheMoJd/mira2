@@ -10,11 +10,11 @@ import { SOURCES_SECTION_TITLE } from './rapportStructure';
 /**
  * Le contrat de sortie est-il SATISFAISABLE ?
  *
- * Les contrôles V1 → V12 sont sévères. Un jeu de règles sévère peut être
+ * Les contrôles V1 → V14 sont sévères. Un jeu de règles sévère peut être
  * impossible à satisfaire, et le code ne le dirait pas : il marquerait chaque
  * rapport pour relecture, indéfiniment, et l'équipe apprendrait à ignorer le
  * signal. Ce test est le garde-fou contre ce scénario : un rapport bien formé
- * passe les douze contrôles sans un seul échec, ni même un avertissement.
+ * passe les quatorze contrôles sans un seul échec, ni même un avertissement.
  *
  * Il sert aussi de test d'intégration de bout en bout de la chaîne de rendu :
  * assemblage, numérotation des notes, section des références, encart §1.
@@ -29,7 +29,7 @@ describe('rapport de référence — le contrat est satisfaisable', () => {
     expect(PreRapportSchema.safeParse(report).success).toBe(true);
   });
 
-  it('passe les contrôles V1 → V12 sans échec bloquant ni avertissement', () => {
+  it('passe les contrôles V1 → V14 sans échec bloquant ni avertissement', () => {
     const findings = validateReport(report);
     // Message d'échec lisible : le détail des contrôles, pas juste un compte.
     expect(findings.map((f) => `[${f.code}] §${f.sectionId} : ${f.message}`)).toEqual([]);

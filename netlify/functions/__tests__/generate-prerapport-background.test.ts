@@ -98,7 +98,6 @@ const SYNTHESE = {
         },
       ],
     },
-    contenu: [],
     sources_citees: [WEF],
   },
 };

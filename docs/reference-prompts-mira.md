@@ -89,7 +89,7 @@ L'unité d'analyse est la famille de métiers (classification ISCO-08), pas le s
 
 # Caractérisation d'une famille de métiers (§3, le cœur)
 Pour chaque famille déclarée, tu produis :
-- intensité d'exposition : faible | modérée | élevée | à confirmer, avec la part de tâches concernée si une source la donne
+- intensité d'exposition : faible | modérée | élevée | à confirmer, avec la part de tâches concernée si une source la donne. Cette part (part_taches) est uniquement le nombre, au format « 82 % » ou « jusqu'à 82 % », quinze caractères maximum, sans phrase. Ce nombre figure dans une statistique citée par l'explication. Sinon null
 - nature de l'impact : une ou plusieurs valeurs parmi automatisation, augmentation, création
 - une explication de deux à quatre phrases. La première est le constat, elle nomme la famille et le code la met en exergue. Au moins une phrase porte une statistique choisie selon la règle 2, suivie de son marqueur. La dernière traduit ce que cela change dans les tâches de cette famille. Quand la famille dispose d'une source directe (indiquée dans le rattachement), tu la cites en priorité. Quand elle n'en a aucune, tu cites la statistique générale la plus proche en nommant son périmètre.
 Tu ne produis ni niveau de confiance ni verdict de transposabilité par famille : les précautions de lecture sont portées une fois pour toutes par l'encart §8bis, en fin de rapport.
@@ -127,7 +127,7 @@ Tu réponds uniquement via la structure imposée (sortie structurée), un objet 
 - contenu (le texte rédigé : tableau de paragraphes et d'intertitres)
 - sources_citees (liste des id de statistiques effectivement citées dans la section)
 - pour §3 uniquement : familles, tableau de caractérisations (famille, exposition, natures, part de tâches, explication)
-- pour §1 uniquement : encart, avec chapeau, chiffre_signal (valeur, phrase, source_id) et points_cles (axe, titre, texte, source_id)
+- pour §1 uniquement : encart, avec chapeau, chiffre_signal (valeur, phrase, source_id) et points_cles (axe, titre, texte, source_id). La section §1 ne porte pas de contenu : tout son texte est dans l'encart
 Aucun texte hors de cette structure, aucune mise en forme décorative.
 
 # Crible avant de rendre
@@ -385,7 +385,8 @@ dans `leads.report_json`). Tous dérivés des schémas zod de
 - `sources_citees` : liste des `id` de statistiques effectivement citées dans la section
 - §3 uniquement : `familles`, tableau de caractérisations (`famille`, `exposition`, `natures`, `part_taches`, `explication`)
 
-**Second appel** (`SyntheseSchema`) : la seule section `synthese-executive`, avec son `encart`.
+**Second appel** (`SyntheseSchema`) : la seule section `synthese-executive`, avec son `encart`, sans
+`contenu`.
 
 **Document assemblé** (`PreRapportSchema`) : les sections des deux appels, plus `comment-utiliser`
 et `sources-methode` injectées par le code, ordonnées selon le déroulé. Chaque section y porte
@@ -413,7 +414,6 @@ et `sources-methode` injectées par le code, ordonnées selon le déroulé. Chaq
     "calibrage_court": "string",
     "perimetre": "string"
   },
-  "contenu": [],
   "sources_citees": ["string"]
 }
 ```
@@ -422,6 +422,9 @@ et `sources-methode` injectées par le code, ordonnées selon le déroulé. Chaq
 `source_id` : doit figurer dans la liste héritée. `points_cles` : trois à quatre items, exactement
 un `source_id` par point clé, le `texte` contient le marqueur `[[id]]`. `calibrage_court` et
 `perimetre` ne sont pas demandés au modèle : `assembleReport` les remplit.
+
+`contenu` : toujours vide sur la §1. Il n'est pas demandé au second appel, `assembleReport` le pose
+à `[]`, et le rendu comme les contrôles l'ignorent dès que la section porte un encart.
 
 ---
 
@@ -452,6 +455,8 @@ jamais validées : elles ne viennent pas du modèle.
 | V10 | Caractères interdits dans tout texte de section : `—`, `–`, `;`, `!` | Toutes | Bloquant |
 | V11 | Mots creux interdits et vocabulaire de décision (listes fermées du prompt système) | Toutes | Bloquant |
 | V12 | Intertitres et titres de points clés à douze mots maximum | Toutes | Avertissement |
+| V13 | Lettre hors alphabet latin (toute lettre `\p{L}` qui n'est pas `\p{Script=Latin}`) ou pictogramme (`\p{Extended_Pictographic}`) dans toute prose du modèle. Les lettres latines accentuées ou ligaturées (é, ç, œ) restent permises, comme la ponctuation et les symboles courants (guillemets, apostrophe typographique, points de suspension, €, ×, %, espaces fines), qui ne sont pas des lettres. Le message du rejeu cite le passage fautif et son entourage | Toutes | Bloquant |
+| V14 | `part_taches` d'une famille (§3) hors format court (un pourcentage, précédé au plus de « jusqu'à », « environ » ou « près de », quinze caractères maximum), ou nombre absent des formulations (`claim`) des statistiques citées dans l'explication de cette famille. Le rendu n'accole « des tâches » qu'à une part au format court, sinon il affiche la valeur telle quelle | §3 | Avertissement |
 
 Deux garde-fous complètent ces contrôles, appliqués **après** la validation (sinon V7 ne verrait
 plus rien) :
@@ -463,11 +468,11 @@ plus rien) :
 
 ### Le contrat est-il satisfaisable ?
 
-Douze contrôles sévères, ça peut être *impossible* à satisfaire, et le code ne le dirait pas :
+Quatorze contrôles sévères, ça peut être *impossible* à satisfaire, et le code ne le dirait pas :
 il marquerait chaque rapport pour relecture, indéfiniment, et l'équipe apprendrait à ignorer le
 signal. `src/data/__fixtures__/rapportConforme.ts` est la preuve du contraire : un rapport de
 référence **écrit à la main**, sur données réelles (un réseau coopératif de distribution bio,
-trois familles déclarées dont deux que le socle ne documente pas), qui passe les douze contrôles
+trois familles déclarées dont deux que le socle ne documente pas), qui passe les quatorze contrôles
 avec **zéro échec bloquant et zéro avertissement**. `reportConformance.test.ts` le verrouille et
 rend au passage la chaîne complète : assemblage, numérotation des notes, encart §1, références.
 
