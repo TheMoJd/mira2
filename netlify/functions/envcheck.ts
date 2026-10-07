@@ -14,8 +14,11 @@ const present = (k: string) => {
   return { set: !!v, len: v ? v.length : 0 };
 };
 
-export const handler: Handler = async () => {
+export const handler: Handler = async (event) => {
   const body = {
+    // Hôte de la requête tel que la function le reçoit : c'est sur lui que
+    // submit-prerapport déclenche la génération (même déploiement que la soumission).
+    requestHost: event.headers.host ?? null,
     RESEND_API_KEY: present('RESEND_API_KEY'),
     RESEND_FROM: present('RESEND_FROM'),
     RESEND_REPLY_TO: present('RESEND_REPLY_TO'),
