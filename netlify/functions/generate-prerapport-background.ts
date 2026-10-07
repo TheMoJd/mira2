@@ -137,7 +137,7 @@ export const handler: Handler = async (event) => {
     }
 
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-    const model = process.env.OPENAI_MODEL ?? 'gpt-4.1';
+    const model = process.env.OPENAI_MODEL ?? 'gpt-6.1-sol';
     const { report, findings } = await generateReport(openaiAsk(openai, model), ctx, {
       onReplay: (sectionId, attempt, brief) =>
         console.warn(`[generate] lead ${leadId} : rejeu §${sectionId} (essai ${attempt})\n${brief}`),

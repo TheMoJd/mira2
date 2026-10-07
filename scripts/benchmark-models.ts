@@ -43,13 +43,19 @@ interface ModelSpec {
   prixIn: number;
   prixOut: number;
 }
-const MODELS: ModelSpec[] = [
+// Tarifs OpenAI relevés le 07/10/2026 (developers.openai.com/api/docs/pricing, contexte court).
+const ALL_MODELS: ModelSpec[] = [
+  { id: 'gpt-5.4', label: 'GPT-5.4', provider: 'openai', prixIn: 2.5, prixOut: 15 },
   { id: 'gpt-5.5-2026-04-23', label: 'GPT-5.5', provider: 'openai', prixIn: 5, prixOut: 30 },
-  { id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', prixIn: 2.5, prixOut: 15 },
-  { id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', prixIn: 5, prixOut: 30 },
+  { id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', prixIn: 2, prixOut: 12 },
+  { id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', prixIn: 4, prixOut: 20 },
+  { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', provider: 'openai', prixIn: 2, prixOut: 10 },
   { id: 'claude-opus-4-8', label: 'Claude Opus 4.8', provider: 'anthropic', prixIn: 5, prixOut: 25 },
   { id: 'claude-sonnet-5', label: 'Claude Sonnet 5', provider: 'anthropic', prixIn: 3, prixOut: 15 },
 ];
+// `BENCH_MODELS=gpt-6.1-sol,gpt-5.4` restreint le run (un test coûte quelques cents par modèle).
+const ONLY = process.env.BENCH_MODELS?.split(',').map((s) => s.trim());
+const MODELS = ONLY ? ALL_MODELS.filter((m) => ONLY.includes(m.id)) : ALL_MODELS;
 
 interface Company {
   slug: string;

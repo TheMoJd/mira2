@@ -283,7 +283,7 @@ en production. Voir [`.env.example`](../.env.example).
 | `SUPABASE_URL` | ✅ | submit, generate | Endpoint du projet Supabase. |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | submit, generate | Clé `service_role` — **secrète, serveur uniquement**, bypass RLS. |
 | `OPENAI_API_KEY` | ✅ | generate | Clé OpenAI. |
-| `OPENAI_MODEL` | optionnel | generate | Modèle. Défaut : `gpt-4.1`. |
+| `OPENAI_MODEL` | optionnel | generate | Modèle. Défaut : `gpt-6.1-sol`. |
 | `RESEND_API_KEY` | optionnel | email | Absent → email `skipped` (le PDF reste stocké). |
 | `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). Format « Nom <adresse> » ou adresse seule. |
 | `RESEND_REPLY_TO` | optionnel | email | Boîte qui reçoit les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
