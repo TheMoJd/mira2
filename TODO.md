@@ -38,7 +38,7 @@ lit `leads.report_json`, passe `parseReport` → `validateReport` → `renderRep
 un HTML local. Il rejoue un rapport existant **sans appel OpenAI** : c'est ce qui permet de
 vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régénération.
 
-### [ ] Q1 · §1 : l'encart de synthèse imprimé deux fois (P0)
+### [x] Q1 · §1 : l'encart de synthèse imprimé deux fois (P0) — fait, en prod le 07/10 (PR #10)
 - **Constat** : page 4, l'encart s'affiche, puis le même contenu réapparaît en paragraphes et
   déborde sur la page 5. Le lecteur lit deux fois les mêmes quatre points.
 - **Cause** (défaut de conception, pas de prompt) : `SyntheseSectionSchema` exige `contenu`
@@ -58,6 +58,10 @@ vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régén�
   « encart + contenu non vide » → rendu et comptage identiques à « encart seul »).
 - **Critère** : `replay-report` sur le lead OVHcloud → une seule occurrence du chapeau dans
   le HTML ; V9 §1 recalculé sur l'encart seul et dans les bornes ; `npm test` vert.
+- **Fait** : `SyntheseSectionSchema` sans `contenu`, et `lireSection` (`reportLecture.ts`)
+  ignore le `contenu` sous un encart pour le rendu comme pour les contrôles. Vérifié le 07/10 :
+  `replay-report` OVHcloud → chapeau une seule fois, §1 à 309 mots (bornes 252 à 397, contre
+  621 le 08/09) ; génération réelle sur la preview (lead de test `fb2a46b0`) conforme.
 
 ### [x] Q2 · Caractères hors alphabet latin au milieu d'un mot (P0) — nouveau contrôle V13 — fait le 08/09
 - **Constat** : page 6, famille Ingénierie : « la formulation des խնդիրmes » (« խնդիր » =
@@ -89,7 +93,7 @@ vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régén�
   un V13 sur `familles-metiers` avec l’extrait « խնդիրmes ». Faux positifs connus et assumés : ©, ®, ™
   (pictogrammes) et µ (script Common) déclencheraient V13. Commentaires SQL de la migration 0005
   laissés tels quels (« V1-V12 »).
-### [ ] Q3 · Titre de section doublé « §6 · §6. Le facteur humain » (P0)
+### [x] Q3 · Titre de section doublé « §6 · §6. Le facteur humain » (P0) — fait, en prod le 07/10 (PR #10)
 - **Constat** : le modèle a mis le numéro dans `titre`, le renderer préfixe déjà « §6 · ».
   Doublé dans le corps (p. 9) et dans « Sources de référence » (p. 12).
 - **Contrat** : le rendu utilise le titre canonique de `rapportStructure.ts` pour toute
@@ -100,8 +104,12 @@ vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régén�
   retirer par sécurité un préfixe de numéro (« §7. », « 7 · », « 7 - »). Tests.
 - **Critère** : `replay-report` OVHcloud → « §6 · Le facteur humain » une seule fois, dans
   le corps et dans les sources.
+- **Fait** : le titre d'affichage vient de `lireSection` (invariant I7 : titre du déroulé pour
+  les sections à titre figé, préfixe de numéro retiré sinon), consommé par le gabarit HTML et
+  par les sources. Vérifié le 07/10 sur le rejeu OVHcloud et sur le PDF de test : aucun
+  « §N · §N ».
 
-### [ ] Q4 · `part_taches` détourné en phrase (P0)
+### [x] Q4 · `part_taches` détourné en phrase (P0) — fait, en prod le 07/10 (PR #10)
 - **Constat** : p. 7, « Exposition élevée · 82 % des tâches exposées à un niveau supérieur à
   la moyenne, dont 24 % fortement des tâches ». Le champ attend une valeur courte
   (« jusqu'à 82 % »), le modèle y a mis une phrase, le renderer accole « des tâches ».
@@ -116,6 +124,11 @@ vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régén�
   nombre absent des claims des stats citées dans l'explication.
 - **Critère** : `replay-report` OVHcloud → plus de « … fortement des tâches » ; fixture
   conforme (« jusqu'à 82 % ») inchangée.
+- **Fait** : format court lu par `lireSection` (invariant I8), suffixe accolé seulement au
+  format court, V14 en avertissement. Vérifié le 07/10 : plus de « … fortement des tâches »
+  sur le rejeu OVHcloud. La génération de test a révélé un cas de plus, corrigé : le modèle
+  écrit parfois « null » en toutes lettres, le PDF affichait « Exposition élevée · null »
+  (« null », « None », « n/a » valent désormais une part absente).
 
 ### [ ] Q5 · Règle 7 (« un chiffre, une seule fois ») vs V8 en avertissement — décision Cyril + Caroline (P1)
 - **Constat** : quatre statistiques citées dans plusieurs sections du corps (notes 1 à 4
@@ -187,7 +200,7 @@ vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régén�
   OVHcloud (`generate-samples.ts`) et vérifier que 21 et 35 passent en exposition qualifiée.
 - **Dépendances** : Q7 ; décision « primaire vs secondaire » pour les chiffres tiers.
 
-### [ ] Q9 · Alerte ops quand `needs_review = true` (P1, zéro risque)
+### [x] Q9 · Alerte ops quand `needs_review = true` (P1, zéro risque) — fait le 07/10 (PR #11)
 - **Constat** : un rapport marqué pour relecture part au client sans que l'équipe soit
   prévenue (seul `notifyFailure` existe, sur `failed`). La relecture humaine promise par
   `needs_review` ne peut pas avoir lieu.
@@ -197,6 +210,12 @@ vérifier Q1 à Q4 et Q6 sur le rapport OVHcloud lui-même, avant toute régén�
 - **Décision** : envoyer quand même (aujourd'hui) ou retenir le PDF jusqu'à relecture
   (nouveau statut `review` dans `lead_status`) ? Recommandation : envoyer + alerter tant que
   le volume est faible ; retenir dès que la relecture ne peut plus suivre.
+- **Fait** (option « envoyer + alerter ») : `notifyReview({ leadId, findings })` dans
+  `lib/email.ts`, appelée par `generate-prerapport-background.ts` après l'envoi quand des
+  contrôles bloquants restent en échec. L'email liste le lead et chaque contrôle (code,
+  section, message). Testé avec Resend mocké. Dans la même PR : `notifySubmitFailure`
+  (insertion du lead en échec, base indisponible) et journalisation des erreurs Resend des
+  alertes, renvoyées et non levées par le SDK.
 
 ### [x] Q10 · Suite de tests rouge sur Windows (P0 pour le poste de dev) — fait le 08/09
 - **Constat** : `reportDocs.test.ts` échoue en local (« aucun bloc de prompt système trouvé
