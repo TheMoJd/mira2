@@ -180,7 +180,10 @@ async function sendOpsAlert(subject: string, text: string, journal: string): Pro
   }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from, to: [ops], subject, text });
+    // Resend ne lève pas sur une erreur d'API : il la renvoie. Sans ce contrôle, une
+    // alerte refusée (domaine, quota, clé) disparaissait sans trace.
+    const { error } = await resend.emails.send({ from, to: [ops], subject, text });
+    if (error) console.error(`[email] alerte ops refusée par Resend (${journal})`, error);
   } catch (err) {
     console.error('[email] échec de l’alerte ops', err);
   }

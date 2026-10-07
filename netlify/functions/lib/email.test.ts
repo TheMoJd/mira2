@@ -8,14 +8,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { sendReportEmail, parseRecipients, notifyReview, notifySubmitFailure } from './email';
 
-const h = vi.hoisted(() => ({ sent: [] as Array<Record<string, unknown>> }));
+const h = vi.hoisted(() => ({
+  sent: [] as Array<Record<string, unknown>>,
+  /** Erreur d'API que le prochain envoi renverra (une seule fois), comme le fait Resend. */
+  nextError: null as { message: string } | null,
+  lastError: null as { message: string } | null,
+}));
 
 vi.mock('resend', () => ({
   Resend: class {
     emails = {
       send: async (payload: Record<string, unknown>) => {
         h.sent.push(payload);
-        return { data: { id: 'email-test' }, error: null };
+        const error = h.nextError;
+        h.nextError = null;
+        h.lastError = error;
+        return error ? { data: null, error } : { data: { id: 'email-test' }, error: null };
       },
     };
   },
@@ -100,6 +108,14 @@ describe('alertes ops (OPS_EMAIL)', () => {
     expect(payload.to).toEqual(['ops@mira.test']);
     expect(String(payload.text)).toContain('fetch failed');
     expect(String(payload.text)).toContain('prospect@client.test');
+  });
+
+  it('une alerte refusée par Resend (erreur renvoyée, pas levée) est journalisée', async () => {
+    h.nextError = { message: 'domain not verified' };
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await notifyReview({ leadId: 'lead-9', findings: [] });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('refusée par Resend'), h.lastError);
+    spy.mockRestore();
   });
 
   it('sans OPS_EMAIL, aucune alerte ne part (journalisée seulement)', async () => {
