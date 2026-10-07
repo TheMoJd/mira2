@@ -31,7 +31,7 @@ import { statbank } from '../../src/data/statbank';
 import { renderReportHtml, REPORT_PAGE_FOOTER_PREFIX } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
 import { htmlToPdf } from './lib/pdf';
-import { sendReportEmail, notifyFailure } from './lib/email';
+import { sendReportEmail, notifyFailure, notifyReview } from './lib/email';
 import { enrichSiret, fetchSiteResume } from './lib/enrichment';
 import { buildGenerationContext } from './lib/context';
 
@@ -206,6 +206,9 @@ export const handler: Handler = async (event) => {
         error: new Error('Rapport généré et stocké, mais envoi email échoué.'),
       });
     }
+    // TODO Q9 : le rapport part même avec des contrôles bloquants en échec (volume faible),
+    // mais l'équipe est prévenue pour le relire. Sans alerte, needs_review n'était lu par personne.
+    if (bloquants.length > 0) await notifyReview({ leadId, findings: bloquants });
 
     await supabase.from('leads').update({ status: 'sent' }).eq('id', leadId);
     return { statusCode: 200 };

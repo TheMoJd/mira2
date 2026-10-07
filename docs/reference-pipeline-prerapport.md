@@ -92,6 +92,8 @@ Configuration dans [`netlify.toml`](../netlify.toml) :
 - **Méthode** : `POST` uniquement (sinon `405`).
 - **Entrée** : `multipart/form-data` (sinon `415` / `400` si boundary absente).
 - **Déroulé** : parse multipart → honeypot → validation serveur → rate-limit → upload plaquette → insert lead → déclenche la génération → `202`.
+- **Déclenchement** : `POST https://<hôte de la requête>/.netlify/functions/generate-prerapport-background` (`generationBaseUrl`). L'hôte de la requête, et non `process.env.URL`, que Netlify fixe à l'adresse principale dans tous les contextes : une soumission sur une deploy preview génère donc sur cette preview, sans la copie cachée de la prod.
+- **Insert en échec** (base indisponible) : `502` au prospect et `notifySubmitFailure` à `OPS_EMAIL`, avec l'adresse saisie pour le recontacter.
 - **Sortie** : `202 { ok: true, leadId }` (ou `{ ok: true }` factice si honeypot piégé).
 
 Validation serveur (jamais de confiance au client) :
@@ -153,7 +155,9 @@ le diagnostic terminé** (le fichier porte le même avertissement).
 | | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
 | [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
 | [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Copie cachée à `REPORT_BCC_EMAIL` si définie (liste à virgules, même pièce jointe). Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
-| | `notifyFailure({leadId, error})` | Email de repli ops (no-op loggé si `OPS_EMAIL`/Resend absents). |
+| | `notifyFailure({leadId, error})` | Email de repli ops : génération en échec, ou rapport généré mais email non parti (no-op loggé si `OPS_EMAIL`/Resend absents). |
+| | `notifyReview({leadId, findings})` | Alerte ops quand le rapport part avec des contrôles bloquants encore en échec après les rejeux (`reports.needs_review = true`, TODO Q9) : lead et liste des contrôles. |
+| | `notifySubmitFailure({email, error})` | Alerte ops quand une demande n'a pas pu être enregistrée (base indisponible) : erreur et adresse saisie. |
 
 ---
 
@@ -283,10 +287,10 @@ en production. Voir [`.env.example`](../.env.example).
 | `RESEND_API_KEY` | optionnel | email | Absent → email `skipped` (le PDF reste stocké). |
 | `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). Format « Nom <adresse> » ou adresse seule. |
 | `RESEND_REPLY_TO` | optionnel | email | Boîte qui reçoit les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
-| `OPS_EMAIL` | optionnel | email | Destinataire des alertes d'échec (`notifyFailure`). |
+| `OPS_EMAIL` | conseillé en prod | email | Destinataire des alertes ops : `notifyFailure`, `notifyReview`, `notifySubmitFailure`. Vide → incidents visibles dans les logs seulement. |
 | `REPORT_BCC_EMAIL` | optionnel | email | Copie cachée (CCI) de chaque rapport envoyé au prospect, PDF compris. Une ou plusieurs adresses séparées par des virgules. Vide ou absent → pas de CCI. |
 | `CHROME_EXECUTABLE_PATH` | dev local | pdf | Chemin vers Chrome/Edge local (le binaire `@sparticuz/chromium` est Linux). |
-| `URL` | fourni par Netlify | submit | Base URL pour déclencher la background function. |
+| `URL` | fourni par Netlify | submit | Repli seulement : la génération est déclenchée sur l'hôte de la requête (`generationBaseUrl`), `URL` valant l'adresse principale dans tous les contextes. |
 
 En cas de doute sur ce que le runtime voit réellement en production, la function
 [`envcheck`](#envcheck-diagnostic-temporaire) renvoie la présence (jamais la valeur) de

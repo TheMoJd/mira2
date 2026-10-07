@@ -14,6 +14,21 @@ import { parse as parseMultipart, getBoundary } from 'parse-multipart-data';
 import { randomUUID } from 'node:crypto';
 import type { Database } from '../../src/types/supabase';
 import { EMAIL_RE, PHONE_RE, MAX_IDENTITY_LEN, normalizePhone } from '../../src/components/prerapport/validation';
+import { notifySubmitFailure } from './lib/email';
+
+/**
+ * Base de l'URL qui déclenche la génération : le déploiement qui a reçu la soumission,
+ * lu dans l'en-tête `Host`. `process.env.URL` ne convient pas : Netlify y met l'adresse
+ * principale du site dans TOUS les contextes, si bien qu'une soumission faite sur une
+ * deploy preview lançait la génération en production (ancien code, copie cachée à
+ * l'équipe). Netlify route par l'hôte, donc cet hôte désigne toujours un déploiement
+ * de ce site. Sans en-tête (cas théorique), repli sur `URL`.
+ */
+export function generationBaseUrl(host: string | undefined, fallback: string | undefined): string {
+  if (!host) return fallback ?? 'http://localhost:8888';
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host);
+  return `${local ? 'http' : 'https'}://${host}`;
+}
 
 /** Limite de taille plaquette : sous le plafond ~6 Mo des functions synchrones Netlify. */
 const MAX_PLAQUETTE_BYTES = 4 * 1024 * 1024;
@@ -177,11 +192,16 @@ export const handler: Handler = async (event) => {
     .select('id')
     .single();
 
-  if (error || !data) return fail(502, 'Échec de l’enregistrement de votre demande.');
+  if (error || !data) {
+    // Base indisponible (Supabase en pause, quota…) : sans alerte, la panne ne se voyait
+    // que si un prospect venait s'en plaindre.
+    await notifySubmitFailure({ email, error: new Error(error?.message ?? 'insertion du lead sans retour') });
+    return fail(502, 'Échec de l’enregistrement de votre demande.');
+  }
 
   // Déclenche la génération asynchrone. La background function répond 202 puis
   // tourne en arrière-plan ; on ne bloque donc pas la réponse à l'utilisateur.
-  const base = process.env.URL ?? `http://${event.headers.host ?? 'localhost:8888'}`;
+  const base = generationBaseUrl(event.headers.host, process.env.URL);
   try {
     await fetch(`${base}/.netlify/functions/generate-prerapport-background`, {
       method: 'POST',

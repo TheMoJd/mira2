@@ -1,11 +1,12 @@
 /**
- * Tests de `sendReportEmail` : copie cachée équipe (`REPORT_BCC_EMAIL`).
+ * Tests de `sendReportEmail` (copie cachée équipe, `REPORT_BCC_EMAIL`) et des alertes
+ * ops (`OPS_EMAIL`).
  *
  * Resend est mocké : aucun email ne part, on inspecte seulement le payload que la
  * function aurait envoyé. Adresses en `.test` (domaine réservé, jamais routable).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { sendReportEmail, parseRecipients } from './email';
+import { sendReportEmail, parseRecipients, notifyReview, notifySubmitFailure } from './email';
 
 const h = vi.hoisted(() => ({ sent: [] as Array<Record<string, unknown>> }));
 
@@ -60,6 +61,52 @@ describe('sendReportEmail — copie cachée équipe', () => {
   it('le prospect est informé de la transmission à l’équipe (mention RGPD)', async () => {
     await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
     expect(String(h.sent[0].html)).toContain('Une copie en est transmise à l\'équipe MIRA');
+  });
+});
+
+describe('alertes ops (OPS_EMAIL)', () => {
+  beforeEach(() => {
+    h.sent = [];
+    vi.stubEnv('RESEND_API_KEY', 're_test');
+    vi.stubEnv('RESEND_FROM', 'rapport@mira.test');
+    vi.stubEnv('OPS_EMAIL', 'ops@mira.test');
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('notifyReview : le rapport part à relire, l’ops reçoit le lead et les contrôles bloquants', async () => {
+    await notifyReview({
+      leadId: 'lead-9',
+      findings: [
+        { code: 'V13', level: 'bloquant', sectionId: 'familles-metiers', message: 'caractère hors alphabet latin' },
+      ],
+    });
+
+    expect(h.sent).toHaveLength(1);
+    const payload = h.sent[0];
+    expect(payload.to).toEqual(['ops@mira.test']);
+    expect(String(payload.subject)).toContain('lead-9');
+    expect(String(payload.text)).toContain('V13');
+    expect(String(payload.text)).toContain('familles-metiers');
+    expect(String(payload.text)).toContain('caractère hors alphabet latin');
+  });
+
+  it('notifySubmitFailure : la demande n’a pas pu être enregistrée, l’ops reçoit l’erreur et l’adresse à recontacter', async () => {
+    await notifySubmitFailure({ email: 'prospect@client.test', error: new Error('fetch failed') });
+
+    expect(h.sent).toHaveLength(1);
+    const payload = h.sent[0];
+    expect(payload.to).toEqual(['ops@mira.test']);
+    expect(String(payload.text)).toContain('fetch failed');
+    expect(String(payload.text)).toContain('prospect@client.test');
+  });
+
+  it('sans OPS_EMAIL, aucune alerte ne part (journalisée seulement)', async () => {
+    vi.stubEnv('OPS_EMAIL', '');
+    await notifyReview({ leadId: 'lead-9', findings: [] });
+    await notifySubmitFailure({ email: 'prospect@client.test', error: new Error('x') });
+    expect(h.sent).toHaveLength(0);
   });
 });
 

@@ -5,7 +5,9 @@
  * (+ `RESEND_FROM`) ne sont pas configurés, on log et on retourne `'skipped'` —
  * la génération aboutit quand même (le PDF est stocké), sans planter la chaîne.
  *
- * `notifyFailure` est l'email de repli ops en cas d'échec de génération.
+ * Alertes ops vers `OPS_EMAIL` : `notifyFailure` (génération en échec),
+ * `notifyReview` (rapport parti mais à relire, TODO Q9) et `notifySubmitFailure`
+ * (demande non enregistrée, base indisponible).
  *
  * Copie cachée équipe : si `REPORT_BCC_EMAIL` est posée (une ou plusieurs adresses
  * séparées par des virgules), chaque rapport envoyé au prospect part aussi en CCI
@@ -15,6 +17,7 @@ import { Resend } from 'resend';
 import { RGPD_EMAIL_NOTICE, EMAIL_SENDER_NAME } from '../../../src/data/rgpd';
 import type { ContactForm } from '../../../src/types/contact';
 import { FONCTION_AUTRE } from '../../../src/data/contact';
+import type { ValidationFinding } from '../../../src/data/reportValidation';
 
 const PDF_FILENAME = 'prerapport-mira.pdf';
 
@@ -161,24 +164,73 @@ export async function notifyContactRequest(form: ContactForm): Promise<void> {
   }
 }
 
-/** Email de repli ops si la génération échoue. No-op (log) si Resend non configuré. */
-export async function notifyFailure({ leadId, error }: { leadId: string; error: unknown }): Promise<void> {
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * Alerte texte vers `OPS_EMAIL`. Best-effort : ne throw jamais. Sans Resend ou sans
+ * `OPS_EMAIL`, rien ne part et `journal` est écrit dans les logs de la function, qui
+ * restent alors le seul endroit où l'incident est visible.
+ */
+async function sendOpsAlert(subject: string, text: string, journal: string): Promise<void> {
   const from = senderOrNull();
   const ops = process.env.OPS_EMAIL;
-  const message = error instanceof Error ? error.message : String(error);
   if (!from || !ops) {
-    console.error(`[email] échec génération lead ${leadId} — repli ops non configuré : ${message}`);
+    console.error(`[email] ${journal} (alerte ops non configurée)`);
     return;
   }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from,
-      to: [ops],
-      subject: `[MIRA] Échec génération pré-rapport — lead ${leadId}`,
-      text: `La génération du pré-rapport a échoué pour le lead ${leadId}.\n\nErreur : ${message}`,
-    });
+    await resend.emails.send({ from, to: [ops], subject, text });
   } catch (err) {
-    console.error('[email] échec de l’email de repli ops', err);
+    console.error('[email] échec de l’alerte ops', err);
   }
+}
+
+/** Email de repli ops si la génération échoue (lead `failed`, ou rapport généré mais email non parti). */
+export async function notifyFailure({ leadId, error }: { leadId: string; error: unknown }): Promise<void> {
+  const message = messageOf(error);
+  await sendOpsAlert(
+    `[MIRA] Échec génération pré-rapport — lead ${leadId}`,
+    `La génération du pré-rapport a échoué pour le lead ${leadId}.\n\nErreur : ${message}`,
+    `échec génération lead ${leadId} : ${message}`,
+  );
+}
+
+/**
+ * Le rapport est parti au prospect avec des contrôles bloquants encore en échec après
+ * les rejeux (`reports.needs_review = true`). TODO Q9 : on envoie quand même tant que le
+ * volume est faible, mais l'équipe doit relire. L'alerte donne de quoi le faire sans
+ * ouvrir Supabase : le lead et la liste des contrôles en échec.
+ */
+export async function notifyReview({
+  leadId,
+  findings,
+}: {
+  leadId: string;
+  findings: ValidationFinding[];
+}): Promise<void> {
+  const lignes = findings.map((f) => `- ${f.code} (${f.sectionId}) : ${f.message}`).join('\n');
+  await sendOpsAlert(
+    `[MIRA] Rapport à relire : lead ${leadId}`,
+    `Le pré-rapport du lead ${leadId} a été envoyé au prospect, mais ${findings.length} contrôle(s) ` +
+      `bloquant(s) restent en échec après les rejeux (reports.needs_review = true).\n\n${lignes}\n\n` +
+      `Relire leads.report_json et le PDF du bucket reports (${leadId}/prerapport-mira.pdf).`,
+    `rapport à relire, lead ${leadId} : ${findings.map((f) => f.code).join(', ')}`,
+  );
+}
+
+/**
+ * La demande n'a pas pu être enregistrée (base indisponible, par exemple Supabase en
+ * pause) : le prospect voit une erreur et aucun lead n'existe. L'adresse saisie est
+ * jointe pour pouvoir le recontacter, ce que couvre son consentement.
+ */
+export async function notifySubmitFailure({ email, error }: { email: string; error: unknown }): Promise<void> {
+  const message = messageOf(error);
+  await sendOpsAlert(
+    '[MIRA] Échec d’enregistrement d’une demande de pré-rapport',
+    `Une demande de pré-rapport n'a pas pu être enregistrée : le prospect a reçu une erreur et ` +
+      `aucun lead n'a été créé.\n\nAdresse saisie : ${email}\nErreur : ${message}\n\n` +
+      `Vérifier l'état du projet Supabase (pause, quota), puis recontacter le prospect.`,
+    `échec d’enregistrement d’une demande : ${message}`,
+  );
 }

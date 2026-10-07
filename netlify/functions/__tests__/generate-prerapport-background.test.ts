@@ -59,9 +59,11 @@ vi.mock('../lib/pdf', () => ({ htmlToPdf: vi.fn(async () => Buffer.from('%PDF-te
 vi.mock('../lib/email', () => ({
   sendReportEmail: vi.fn(async () => 'skipped'),
   notifyFailure: vi.fn(async () => {}),
+  notifyReview: vi.fn(async () => {}),
 }));
 
 import { handler } from '../generate-prerapport-background';
+import { notifyReview } from '../lib/email';
 
 /**
  * Réponses du modèle, un fixture par appel. Le corps est volontairement minimal :
@@ -180,6 +182,11 @@ describe('generate-prerapport-background (OpenAI + Supabase mockés)', () => {
     expect(Array.isArray(inserted.validation_findings)).toBe(true);
     // Plafond de deux rejeux par section : la boucle s'arrête, elle ne tourne pas sans fin.
     expect(h.createCompletion.mock.calls.length).toBeLessThanOrEqual(12);
+    // Q9 : le rapport part quand même, et l'ops est prévenue pour relire (lead + bloquants).
+    expect(notifyReview).toHaveBeenCalledWith({
+      leadId: 'lead-1',
+      findings: expect.arrayContaining([expect.objectContaining({ level: 'bloquant' })]),
+    });
   });
 
   it('passe le lead en failed si OpenAI échoue', async () => {
