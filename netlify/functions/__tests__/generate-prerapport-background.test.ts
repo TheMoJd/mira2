@@ -63,7 +63,8 @@ vi.mock('../lib/email', () => ({
 }));
 
 import { handler } from '../generate-prerapport-background';
-import { notifyReview } from '../lib/email';
+import { notifyFailure, notifyReview } from '../lib/email';
+import { TRIGGER_HEADER, generationToken } from '../lib/trigger';
 
 /**
  * Réponses du modèle, un fixture par appel. Le corps est volontairement minimal :
@@ -110,7 +111,14 @@ function formatName(params: unknown): string {
     ?.json_schema?.name ?? '';
 }
 
-const event = { body: JSON.stringify({ leadId: 'lead-1' }) } as never;
+const LEAD_ID = '0b9a6f1e-3c2d-4e5f-8a7b-9c0d1e2f3a4b';
+const SERVICE_KEY = 'service-key';
+
+/** Déclenchement tel que l'envoie `submit-prerapport` : leadId signé. */
+function triggerEvent(leadId: string, token: string | undefined = generationToken(leadId, SERVICE_KEY)) {
+  return { body: JSON.stringify({ leadId }), headers: token ? { [TRIGGER_HEADER]: token } : {} } as never;
+}
+const event = triggerEvent(LEAD_ID);
 const ctx = {} as never;
 
 beforeEach(() => {
@@ -118,7 +126,8 @@ beforeEach(() => {
   h.inserts.length = 0;
   h.createCompletion.mockReset();
   process.env.SUPABASE_URL = 'https://example.supabase.co';
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = SERVICE_KEY;
+  vi.mocked(notifyFailure).mockClear();
   process.env.OPENAI_API_KEY = 'sk-test';
 });
 
@@ -184,7 +193,7 @@ describe('generate-prerapport-background (OpenAI + Supabase mockés)', () => {
     expect(h.createCompletion.mock.calls.length).toBeLessThanOrEqual(12);
     // Q9 : le rapport part quand même, et l'ops est prévenue pour relire (lead + bloquants).
     expect(notifyReview).toHaveBeenCalledWith({
-      leadId: 'lead-1',
+      leadId: LEAD_ID,
       findings: expect.arrayContaining([expect.objectContaining({ level: 'bloquant' })]),
     });
   });
@@ -198,7 +207,32 @@ describe('generate-prerapport-background (OpenAI + Supabase mockés)', () => {
   });
 
   it('refuse une requête sans leadId', async () => {
-    const res = (await handler({ body: '{}' } as never, ctx, () => {})) as { statusCode: number };
+    const res = (await handler({ body: '{}', headers: {} } as never, ctx, () => {})) as { statusCode: number };
     expect(res.statusCode).toBe(400);
+  });
+});
+
+describe('generate-prerapport-background — déclenchement authentifié', () => {
+  const status = async (e: never) => ((await handler(e, ctx, () => {})) as { statusCode: number }).statusCode;
+
+  it('refuse en 401 un déclenchement sans signature, sans toucher la base ni alerter l’ops', async () => {
+    expect(await status(triggerEvent(LEAD_ID, ''))).toBe(401);
+    expect(h.updates).toHaveLength(0);
+    expect(h.createCompletion).not.toHaveBeenCalled();
+    expect(notifyFailure).not.toHaveBeenCalled();
+  });
+
+  it('refuse une signature faite pour un autre lead ou avec une autre clé', async () => {
+    const autreLead = '11111111-2222-4333-8444-555555555555';
+    expect(await status(triggerEvent(LEAD_ID, generationToken(autreLead, SERVICE_KEY)))).toBe(401);
+    expect(await status(triggerEvent(LEAD_ID, generationToken(LEAD_ID, 'autre-cle')))).toBe(401);
+    expect(notifyFailure).not.toHaveBeenCalled();
+  });
+
+  it('refuse en 400 un leadId qui n’est pas un uuid (texte libre qui finissait dans l’alerte ops)', async () => {
+    const texte = 'Urgent : reconnectez-vous sur https://exemple.invalid';
+    expect(await status(triggerEvent(texte))).toBe(400);
+    expect(await status({ body: JSON.stringify({ leadId: { $ne: null } }), headers: {} } as never)).toBe(400);
+    expect(notifyFailure).not.toHaveBeenCalled();
   });
 });

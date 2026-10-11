@@ -100,7 +100,7 @@ npm run build     # tsc app + tsc functions + vite build — doit passer avant t
 | `Configuration serveur manquante` (500) au submit | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` absents | Renseigner `.env`, relancer `netlify dev`. |
 | Le statut reste à `generating` | Exception dans la génération | Lire les logs `[generate] échec …`. Souvent : clé OpenAI invalide, ou Chromium introuvable. |
 | Erreur Chromium / `Could not find browser` | Pas de Chrome local | Renseigner `CHROME_EXECUTABLE_PATH` vers chrome.exe / Edge. |
-| Email jamais reçu, logs `skipped` | `RESEND_API_KEY` ou `RESEND_FROM` absent au runtime | Renseigner les deux. En prod, vérifier ce que le runtime voit via `/.netlify/functions/envcheck` (présence des variables, jamais les valeurs). |
+| Email jamais reçu, logs `skipped` | `RESEND_API_KEY` ou `RESEND_FROM` absent au runtime | Renseigner les deux. En prod, vérifier les variables dans Netlify (portée « Functions », bon contexte de déploiement). |
 | `429 Trop de demandes` | Rate-limit 3/email/h atteint | Changer d'email de test, ou attendre 1 h. |
 | `413` / `415` sur la plaquette | > 4 Mo, ou extension non `.pdf/.ppt(x)/.doc(x)` | Réduire le fichier (plafond = 4 Mo). |
 | Statut `failed` immédiat | Lead introuvable, ou parse JSON OpenAI vide | Vérifier `OPENAI_API_KEY` et le modèle dans `OPENAI_MODEL`. |
@@ -143,7 +143,7 @@ npx tsx scripts/investigate-leads.ts
 ```
 
 Lecture : un lead `sent` avec `report:oui` mais sans email reçu → problème Resend
-(vérifier `envcheck` en prod, puis les spams) ; un lead bloqué `generating`/`failed` →
+(vérifier les variables Resend dans Netlify, puis les spams) ; un lead bloqué `generating`/`failed` →
 problème de génération (logs Netlify).
 
 **Rejouer un rapport déjà produit, hors ligne** (aucun appel OpenAI, aucune écriture en base) :

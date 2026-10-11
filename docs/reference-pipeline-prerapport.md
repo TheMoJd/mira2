@@ -92,7 +92,7 @@ Configuration dans [`netlify.toml`](../netlify.toml) :
 - **Méthode** : `POST` uniquement (sinon `405`).
 - **Entrée** : `multipart/form-data` (sinon `415` / `400` si boundary absente).
 - **Déroulé** : parse multipart → honeypot → validation serveur → rate-limit → upload plaquette → insert lead → déclenche la génération → `202`.
-- **Déclenchement** : `POST https://<hôte de la requête>/.netlify/functions/generate-prerapport-background` (`generationBaseUrl`). L'hôte de la requête, et non `process.env.URL`, que Netlify fixe à l'adresse principale dans tous les contextes : une soumission sur une deploy preview génère donc sur cette preview, sans la copie cachée de la prod.
+- **Déclenchement** : `POST https://<hôte de la requête>/.netlify/functions/generate-prerapport-background` (`generationBaseUrl`), avec l'en-tête `x-mira-generation-token` : HMAC-SHA256 du `leadId` (`lib/trigger.ts`, clé dérivée de `SUPABASE_SERVICE_ROLE_KEY`). L'hôte de la requête, et non `process.env.URL`, que Netlify fixe à l'adresse principale dans tous les contextes : une soumission sur une deploy preview génère donc sur cette preview, sans la copie cachée de la prod.
 - **Insert en échec** (base indisponible) : `502` au prospect et `notifySubmitFailure` à `OPS_EMAIL`, avec l'adresse saisie pour le recontacter.
 - **Sortie** : `202 { ok: true, leadId }` (ou `{ ok: true }` factice si honeypot piégé).
 
@@ -123,7 +123,7 @@ La plaquette est stockée dans le bucket `uploads` à `{uuid}/{nom-fichier-assai
 Background function Netlify (suffixe `-background`) : répond immédiatement et tourne
 jusqu'à **15 min**.
 
-- **Entrée** : `POST { leadId }`.
+- **Entrée** : `POST { leadId }` signé par `submit-prerapport`. `leadId` non uuid → `400` ; en-tête `x-mira-generation-token` absent ou faux → `401`, sans accès base ni alerte ops (l'URL est publique : sans ce contrôle, un `leadId` inventé faisait partir une alerte au texte choisi par l'appelant).
 - **Déroulé** :
   1. Charge le lead. **Claim atomique** `received → generating` (compare-and-set) — garantit l'idempotence (un second déclenchement ne matche aucune ligne et abandonne).
   2. Enrichissement best-effort : `enrichSiret(siret)` + `fetchSiteResume(siteUrl)`. Persiste `naf_code` / `effectif_tranche` découverts (sans écraser l'existant).
@@ -136,23 +136,12 @@ jusqu'à **15 min**.
   8. `status = sent`.
 - **Échec** : toute exception → `status = failed` + `notifyFailure`.
 
-### `envcheck` (diagnostic, temporaire)
-
-[`netlify/functions/envcheck.ts`](../netlify/functions/envcheck.ts)
-
-`GET /.netlify/functions/envcheck` renvoie, pour les variables d'env critiques (Resend,
-Supabase, OpenAI), **uniquement leur présence** (booléen) et la longueur de la valeur —
-jamais la valeur — plus le préfixe (3 caractères) de la clé Resend pour vérifier qu'elle
-commence par `re_`. Sert à diagnostiquer ce que le runtime des functions voit réellement
-(cas typique : variable posée dans Netlify mais absente au runtime). **À supprimer une fois
-le diagnostic terminé** (le fichier porte le même avertissement).
-
 ### Bibliothèques de functions
 
 | Fichier | Export | Rôle |
 |---------|--------|------|
 | [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche, categorieEntreprise, anneeCreation, localisation, actif }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Tous les champs sont best-effort (souvent partiels). Retourne `{}` en cas d'échec. |
-| | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
+| | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** ; chaque saut passe par le transport gardé de [`lib/netGuard.ts`](../netlify/functions/lib/netGuard.ts) (IP littérale refusée avant connexion, DNS contrôlé dans le `lookup` de la connexion : anti-SSRF par IP, DNS-rebinding compris). Retourne `undefined` en cas d'échec. |
 | [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
 | [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Copie cachée à `REPORT_BCC_EMAIL` si définie (liste à virgules, même pièce jointe). Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
 | | `notifyFailure({leadId, error})` | Email de repli ops : génération en échec, ou rapport généré mais email non parti (no-op loggé si `OPS_EMAIL`/Resend absents). |
@@ -292,9 +281,9 @@ en production. Voir [`.env.example`](../.env.example).
 | `CHROME_EXECUTABLE_PATH` | dev local | pdf | Chemin vers Chrome/Edge local (le binaire `@sparticuz/chromium` est Linux). |
 | `URL` | fourni par Netlify | submit | Repli seulement : la génération est déclenchée sur l'hôte de la requête (`generationBaseUrl`), `URL` valant l'adresse principale dans tous les contextes. |
 
-En cas de doute sur ce que le runtime voit réellement en production, la function
-[`envcheck`](#envcheck-diagnostic-temporaire) renvoie la présence (jamais la valeur) de
-chacune de ces variables.
+En cas de doute sur ce que le runtime voit réellement en production : Netlify → Site
+configuration → Environment variables (portée « Functions » et contexte de déploiement).
+La function de diagnostic `envcheck` a été retirée lors de la revue de sécurité du 11/10.
 
 ---
 
@@ -319,7 +308,8 @@ dotenv). Ils utilisent la clé `service_role` : **usage interne uniquement**.
 
 `npm test` (Vitest). Exemples notables :
 
-- [`netlify/functions/lib/enrichment.test.ts`](../netlify/functions/lib/enrichment.test.ts) — garde anti-SSRF (refus des hôtes internes, non-suivi des redirections vers IP privées / métadonnées cloud), nettoyage HTML, rejet SIRET invalide sans appel réseau.
+- [`netlify/functions/lib/enrichment.test.ts`](../netlify/functions/lib/enrichment.test.ts) — garde anti-SSRF (refus des hôtes internes dont IPv6 et formes détournées, non-suivi des redirections vers IP privées / métadonnées cloud), nettoyage HTML, décompression, rejet SIRET invalide sans appel réseau.
+- [`netlify/functions/lib/netGuard.test.ts`](../netlify/functions/lib/netGuard.test.ts) — plages IP bloquées, `lookup` gardé (un nom public qui résout vers 127.0.0.1 n'ouvre aucune connexion, vérifié sur un serveur local).
 - [`src/data/reportPrompt.test.ts`](../src/data/reportPrompt.test.ts), [`src/data/reportSchema.test.ts`](../src/data/reportSchema.test.ts), [`src/data/rapportStructure.test.ts`](../src/data/rapportStructure.test.ts), [`src/data/statbank.test.ts`](../src/data/statbank.test.ts), [`src/data/reportHtml.test.ts`](../src/data/reportHtml.test.ts) — invariants de la couche contenu.
 - [`src/components/prerapport/validation.test.ts`](../src/components/prerapport/validation.test.ts) — validation du wizard (dont identité et normalisation téléphone).
 - [`src/data/reportSanitize.test.ts`](../src/data/reportSanitize.test.ts) — verrou de style (tirets/points-virgules → virgules, plages et signes moins préservés).

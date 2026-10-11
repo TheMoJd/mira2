@@ -9,8 +9,13 @@
  *    publique `recherche-entreprises.api.gouv.fr` (gratuite, sans clé).
  *    NB : le MCP « données gouv » n'existe pas au runtime de la function déployée
  *    → on appelle l'API HTTP directement.
- *  - `fetchSiteResume` : URL du site → texte nettoyé/tronqué, avec garde anti-SSRF.
+ *  - `fetchSiteResume` : URL du site → texte nettoyé/tronqué, avec garde anti-SSRF
+ *    par IP (`netGuard.ts`).
  */
+import { pipeline } from 'node:stream';
+import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib';
+import { isBlockedHost, makeGuardedGet } from './netGuard';
+import type { GuardedGet, GuardedResponse } from './netGuard';
 
 const FETCH_TIMEOUT_MS = 6000;
 const SITE_MAX_BYTES = 1_500_000; // ~1.5 Mo de HTML lu au maximum
@@ -112,21 +117,6 @@ export async function enrichSiret(siret: string): Promise<SiretEnrichment> {
   }
 }
 
-/** Hôtes à ne jamais aller chercher (anti-SSRF best-effort). */
-function isBlockedHost(hostname: string): boolean {
-  const h = hostname.toLowerCase();
-  if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.internal')) return true;
-  // IPv6 loopback / non spécifiée
-  if (h === '::1' || h === '[::1]' || h === '0.0.0.0') return true;
-  // Plages IPv4 privées / loopback / link-local
-  if (/^127\./.test(h)) return true;
-  if (/^10\./.test(h)) return true;
-  if (/^192\.168\./.test(h)) return true;
-  if (/^169\.254\./.test(h)) return true; // link-local (métadonnées cloud)
-  if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
-  return false;
-}
-
 /** Nettoie un HTML en texte lisible tronqué. */
 function htmlToText(html: string): string {
   return html
@@ -146,25 +136,26 @@ function htmlToText(html: string): string {
 const MAX_REDIRECTS = 3;
 
 /**
- * Suit les redirections **manuellement** en re-validant l'hôte à CHAQUE saut.
- * `redirect: 'follow'` est dangereux ici : une URL publique peut rediriger vers
- * une IP privée ou les métadonnées cloud (169.254.169.254) → SSRF. On valide
- * donc protocole + hôte avant chaque requête. (Résiduel non couvert : le
- * DNS-rebinding, c.-à-d. un hostname public qui résout vers une IP privée.)
+ * Suit les redirections **manuellement**, chaque saut repassant par le transport gardé
+ * (`netGuard.ts`) : hôte littéral contrôlé avant la connexion, nom résolu contrôlé au
+ * moment même de la connexion (une URL publique qui redirige vers 169.254.169.254, ou un
+ * nom public qui résout vers 127.0.0.1, sont refusés). Les réponses abandonnées sont
+ * vidées pour libérer la socket.
  */
-async function fetchFollowingSafeRedirects(start: URL): Promise<Response | undefined> {
+async function getFollowingSafeRedirects(
+  start: URL,
+  get: GuardedGet,
+  signal: AbortSignal,
+): Promise<GuardedResponse | undefined> {
   let current = start;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     if (current.protocol !== 'http:' && current.protocol !== 'https:') return undefined;
     if (isBlockedHost(current.hostname)) return undefined;
 
-    const res = await fetchWithTimeout(current.toString(), {
-      headers: { accept: 'text/html', 'user-agent': 'MIRA-prerapport/1.0' },
-      redirect: 'manual',
-    });
-
+    const res = await get(current, signal);
     if (res.status >= 300 && res.status < 400) {
-      const location = res.headers.get('location');
+      res.body.resume();
+      const location = res.headers.location;
       if (!location) return undefined;
       try {
         current = new URL(location, current); // résout les redirections relatives
@@ -178,8 +169,27 @@ async function fetchFollowingSafeRedirects(start: URL): Promise<Response | undef
   return undefined; // trop de redirections
 }
 
-/** Récupère un résumé texte du site déclaré. Best-effort + garde anti-SSRF. */
-export async function fetchSiteResume(siteUrl: string): Promise<string | undefined> {
+/** Décompresse si le serveur ignore `accept-encoding: identity`. `pipeline` (et non
+ *  `pipe`) propage l'erreur ou le timeout de la réponse au flux décompressé : sinon la
+ *  lecture attendrait indéfiniment un flux jamais terminé. */
+function decoded(res: GuardedResponse): AsyncIterable<Buffer> {
+  const encoding = String(res.headers['content-encoding'] ?? '').toLowerCase();
+  const inflate =
+    encoding === 'gzip' || encoding === 'x-gzip'
+      ? createGunzip()
+      : encoding === 'deflate'
+        ? createInflate()
+        : encoding === 'br'
+          ? createBrotliDecompress()
+          : null;
+  return inflate ? pipeline(res.body, inflate, () => {}) : res.body;
+}
+
+/**
+ * Récupère un résumé texte du site déclaré. Best-effort + garde anti-SSRF.
+ * `get` est injectable pour les tests ; en production, transport gardé de `netGuard.ts`.
+ */
+export async function fetchSiteResume(siteUrl: string, get: GuardedGet = makeGuardedGet()): Promise<string | undefined> {
   let url: URL;
   try {
     url = new URL(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`);
@@ -187,35 +197,27 @@ export async function fetchSiteResume(siteUrl: string): Promise<string | undefin
     return undefined;
   }
 
+  // Un seul délai pour toute la chaîne (redirections et lecture du corps comprises).
+  const signal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
   try {
-    const res = await fetchFollowingSafeRedirects(url);
-    if (!res || !res.ok) return undefined;
-    const contentType = res.headers.get('content-type') ?? '';
-    if (!contentType.includes('text/html')) return undefined;
+    const res = await getFollowingSafeRedirects(url, get, signal);
+    if (!res) return undefined;
+    const contentType = String(res.headers['content-type'] ?? '');
+    if (res.status < 200 || res.status >= 300 || !contentType.includes('text/html')) {
+      res.body.resume();
+      return undefined;
+    }
 
-    const reader = res.body?.getReader();
-    if (!reader) {
-      const text = await res.text();
-      const resume = htmlToText(text.slice(0, SITE_MAX_BYTES));
-      return resume || undefined;
-    }
-    // Lecture bornée pour ne pas ingérer une page géante.
-    const chunks: Uint8Array[] = [];
+    // Lecture bornée (après décompression) pour ne pas ingérer une page géante.
+    const chunks: Buffer[] = [];
     let total = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        chunks.push(value);
-        total += value.length;
-        if (total >= SITE_MAX_BYTES) {
-          await reader.cancel();
-          break;
-        }
-      }
+    for await (const chunk of decoded(res)) {
+      chunks.push(chunk);
+      total += chunk.length;
+      if (total >= SITE_MAX_BYTES) break;
     }
-    const html = Buffer.concat(chunks.map((c) => Buffer.from(c))).toString('utf8');
-    const resume = htmlToText(html);
+    res.body.destroy();
+    const resume = htmlToText(Buffer.concat(chunks).subarray(0, SITE_MAX_BYTES).toString('utf8'));
     return resume || undefined;
   } catch (err) {
     console.warn('[enrich] site indisponible', err);
