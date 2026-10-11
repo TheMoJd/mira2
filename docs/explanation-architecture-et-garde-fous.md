@@ -24,7 +24,7 @@ D'où la séparation :
 - **`generate-prerapport-background`** est une *background function* Netlify (jusqu'à 15 min).
   Elle fait le travail long sans bloquer personne.
 
-Le pont entre les deux est un simple `fetch` POST `{ leadId }`. Si ce déclenchement échoue,
+Le pont entre les deux est un simple `fetch` POST `{ leadId }`, signé (voir [Déclenchement signé](#declenchement-signe)). Si ce déclenchement échoue,
 **le lead est quand même capturé** (status `received`) et la génération est rejouable —
 on ne perd jamais un prospect à cause d'un hoquet réseau.
 
@@ -148,16 +148,32 @@ une validation serveur de confiance et garde la clé secrète côté serveur.
 ### Anti-SSRF sur la lecture du site {#anti-ssrf}
 
 `fetchSiteResume` récupère une URL fournie par l'utilisateur. Une URL publique peut rediriger
-vers une IP privée ou les métadonnées cloud (`169.254.169.254`) — c'est une SSRF classique.
-`redirect: 'follow'` serait dangereux. La parade :
+vers une IP privée ou les métadonnées cloud (`169.254.169.254`), et un nom public peut tout
+simplement résoudre vers une IP interne (`localtest.me` → `127.0.0.1`) : c'est une SSRF
+classique, et le texte lu finirait dans le PDF envoyé à l'adresse saisie. La parade, dans
+[`lib/netGuard.ts`](../netlify/functions/lib/netGuard.ts) :
 
-- on suit les redirections **manuellement** et on **re-valide l'hôte à chaque saut** ;
+- on suit les redirections **manuellement**, chaque saut repassant par le contrôle ;
 - protocoles `http`/`https` uniquement ;
-- hôtes loopback / privés / link-local bloqués (`127.*`, `10.*`, `192.168.*`, `169.254.*`, `172.16–31.*`, `localhost`, `::1`…) ;
-- timeout (6 s), cap de taille (~1,5 Mo lus), contrôle du `content-type` (`text/html` seulement).
+- le contrôle porte sur l'**IP**, pas sur le texte de l'hôte : plages privées, loopback,
+  link-local, partagée (`100.64/10`), réservées et multicast, en IPv4 comme en IPv6 (ULA,
+  link-local, IPv4 mappées) via `net.BlockList` ;
+- une IP littérale est refusée avant toute connexion ; un nom est résolu **dans le `lookup`
+  de la connexion elle-même** (`node:http(s)`), qui refuse si une seule adresse est interne.
+  L'adresse vérifiée est celle utilisée : pas de fenêtre de DNS-rebinding ;
+- timeout global (6 s, redirections et lecture comprises), cap de taille (~1,5 Mo lus après
+  décompression), contrôle du `content-type` (`text/html` seulement).
 
-Résiduel non couvert (assumé) : le DNS-rebinding (un hostname public qui résout vers une IP
-privée). Les tests dans `enrichment.test.ts` figent ces comportements.
+Les tests (`enrichment.test.ts`, `netGuard.test.ts`) figent ces comportements, dont un
+serveur local jamais atteint par un nom qui résout vers `127.0.0.1`.
+
+### Déclenchement signé de la génération {#declenchement-signe}
+
+`generate-prerapport-background` est une URL publique. `submit-prerapport` signe le `leadId`
+(HMAC-SHA256, [`lib/trigger.ts`](../netlify/functions/lib/trigger.ts), clé dérivée de
+`SUPABASE_SERVICE_ROLE_KEY` que les deux functions ont déjà) ; la background function refuse
+tout le reste sans toucher la base ni alerter l'ops. Sans cela, un `leadId` inventé faisait
+partir une alerte ops au texte choisi par l'appelant, depuis le domaine MIRA.
 
 ### Anti-injection de prompt
 
@@ -276,7 +292,6 @@ et s'emploie surtout en §2 (contexte) et §7 (repère sectoriel).
 - **Mentions RGPD factuelles, pas encore juridiques** : `rgpd.ts` et la page de fin portent des mentions de transparence factuelles (sans placeholder), mais la mention d'information détaillée + DPA validées côté juridique restent à intégrer. Ne pas présenter l'existant comme une affirmation de conformité.
 - **Parsing plaquette reporté** : la présence de la plaquette est notée, mais son contenu n'est pas encore parsé (libs lourdes hors V1). Seul le site est lu.
 - **`ReportDocument.tsx` orphelin** : l'affichage web React du rapport n'est plus monté depuis le passage en livraison email-only ; seul son test le référence encore. À supprimer (avec son test) ou à ressusciter si un affichage en ligne revient — mais ne pas le maintenir « au cas où » en parallèle de `reportHtml.ts`.
-- **`envcheck` temporaire** : la function de diagnostic expose la présence des variables d'env (jamais les valeurs). Inoffensive mais inutile hors diagnostic — à supprimer une fois l'incident Resend clos.
 - *(Écarts corrigés depuis : `RESEND_FROM` vs `RESEND_FROM_EMAIL` dans `.env.example` — aligné ; plafond plaquette UI 10 Mo vs serveur 4 Mo — l'UI annonce 4 Mo.)*
 
 ---

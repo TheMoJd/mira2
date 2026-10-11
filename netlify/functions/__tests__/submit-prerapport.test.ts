@@ -10,6 +10,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { HandlerEvent, HandlerContext } from '@netlify/functions';
 import { handler } from '../submit-prerapport';
+import { TRIGGER_HEADER, isValidGenerationToken } from '../lib/trigger';
 
 const h = vi.hoisted(() => ({
   inserts: [] as Array<Record<string, unknown>>,
@@ -171,6 +172,14 @@ describe('submit-prerapport — déclenchement de la génération', () => {
   it('en production, l’hôte de la requête est le domaine du site', async () => {
     await handler(multipartEvent(validFields, 'mira-audit.fr'), {} as HandlerContext);
     expect(triggerUrl()).toBe('https://mira-audit.fr/.netlify/functions/generate-prerapport-background');
+  });
+
+  it('signe le leadId : la background function n’accepte que ce déclenchement', async () => {
+    await handler(multipartEvent(validFields, 'mira-audit.fr'), {} as HandlerContext);
+    const init = vi.mocked(fetch).mock.calls.at(-1)?.[1] as { headers: Record<string, string> };
+    const token = init.headers[TRIGGER_HEADER];
+    expect(isValidGenerationToken('lead-test', token, 'service-role-test')).toBe(true);
+    expect(isValidGenerationToken('lead-test', token, 'autre-cle')).toBe(false);
   });
 
   it('en local (netlify dev), reste en http', async () => {

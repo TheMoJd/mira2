@@ -63,7 +63,7 @@ src/
     └── sections/         # sections de la landing (Nav, Hero, Stats, Methode, Testimonials, Matrix,
                           #   Diff, Pricing, Conformite, FinalCTA, Footer…)
 
-netlify/functions/        # submit-prerapport, generate-prerapport-background, envcheck + lib/
+netlify/functions/        # submit-prerapport, generate-prerapport-background, submit-contact + lib/
 supabase/migrations/      # schéma Postgres versionné (leads, reports, qualification des leads)
 scripts/                  # scripts ops : generate-samples, resend-report, investigate-leads
 ```

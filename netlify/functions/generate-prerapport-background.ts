@@ -34,6 +34,7 @@ import { htmlToPdf } from './lib/pdf';
 import { sendReportEmail, notifyFailure, notifyReview } from './lib/email';
 import { enrichSiret, fetchSiteResume } from './lib/enrichment';
 import { buildGenerationContext } from './lib/context';
+import { LEAD_ID_RE, TRIGGER_HEADER, isValidGenerationToken } from './lib/trigger';
 
 /** Ids connus de la stat-bank — filtre les ids cités par le modèle pour un audit propre. */
 const KNOWN_STAT_IDS = new Set(statbank.map((s) => s.id));
@@ -84,11 +85,18 @@ export const handler: Handler = async (event) => {
 
   let leadId: string | undefined;
   try {
-    leadId = JSON.parse(event.body ?? '{}').leadId;
+    const parsed: unknown = JSON.parse(event.body ?? '{}').leadId;
+    if (typeof parsed === 'string' && LEAD_ID_RE.test(parsed)) leadId = parsed;
   } catch {
     /* body invalide */
   }
   if (!leadId) return { statusCode: 400 };
+  // URL publique : seul `submit-prerapport` (qui signe le leadId) peut déclencher. Refus
+  // silencieux, sans alerte ops : sinon l'alerte elle-même servirait de relais d'emails.
+  if (!isValidGenerationToken(leadId, event.headers[TRIGGER_HEADER], SUPABASE_SERVICE_ROLE_KEY)) {
+    console.warn('[generate] déclenchement refusé : signature absente ou invalide');
+    return { statusCode: 401 };
+  }
 
   const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },

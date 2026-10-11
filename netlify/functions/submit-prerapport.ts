@@ -15,6 +15,7 @@ import { randomUUID } from 'node:crypto';
 import type { Database } from '../../src/types/supabase';
 import { EMAIL_RE, PHONE_RE, MAX_IDENTITY_LEN, normalizePhone } from '../../src/components/prerapport/validation';
 import { notifySubmitFailure } from './lib/email';
+import { TRIGGER_HEADER, generationToken } from './lib/trigger';
 
 /**
  * Base de l'URL qui déclenche la génération : le déploiement qui a reçu la soumission,
@@ -205,7 +206,8 @@ export const handler: Handler = async (event) => {
   try {
     await fetch(`${base}/.netlify/functions/generate-prerapport-background`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      // Signé : la background function refuse tout déclenchement qui ne vient pas d'ici.
+      headers: { 'content-type': 'application/json', [TRIGGER_HEADER]: generationToken(data.id, serviceKey) },
       body: JSON.stringify({ leadId: data.id }),
     });
   } catch (triggerError) {

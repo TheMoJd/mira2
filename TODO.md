@@ -369,6 +369,37 @@ en ligne revient. Les modifs R1 ne concernent donc que `reportHtml.ts`.
 
 ---
 
+## 🔒 Revue de sécurité du 11/10/2026 (application complète)
+
+Revue de tout le code serveur, du rendu PDF, du front, des migrations et de l'historique
+git. Sain : RLS sans policy publique, buckets privés, `service_role` côté serveur seulement,
+échappement HTML (PDF et emails), aucun secret dans l'historique. Trois corrections livrées :
+
+### [x] S1 · Anti-SSRF contournable sur la lecture du site (moyen) — fait le 11/10
+Le filtre ne regardait que le nom d'hôte écrit : `localtest.me` (→ 127.0.0.1),
+`[::ffff:127.0.0.1]`, `[fd00::1]`, `100.64.0.0/10` passaient, et le texte lu partait dans le
+PDF envoyé à l'adresse saisie. **Fait** : `lib/netGuard.ts` bloque par IP (`net.BlockList`,
+IPv4 et IPv6) et contrôle le DNS **dans le `lookup` de la connexion** (`node:http(s)`), donc
+l'IP vérifiée est celle utilisée : le DNS-rebinding est fermé aussi. Tests : contournements
+listés, nom public → 127.0.0.1 sans aucune connexion au serveur local, chemin nominal.
+
+### [x] S2 · Background function déclenchable par n'importe qui (faible à moyen) — fait le 11/10
+`POST { leadId: "<texte libre>" }` faisait partir une alerte `notifyFailure` vers `OPS_EMAIL`
+avec ce texte, depuis le domaine MIRA, sans limite. **Fait** : `submit-prerapport` signe le
+`leadId` (HMAC-SHA256, en-tête `x-mira-generation-token`, clé dérivée de
+`SUPABASE_SERVICE_ROLE_KEY` : aucune variable de plus) ; la background function refuse un
+`leadId` non uuid (400) ou une signature absente ou fausse (401), sans base ni alerte.
+⚠️ Relancer une génération à la main suppose désormais de signer (`lib/trigger.ts`).
+
+### [x] S3 · Function `envcheck` encore en production (faible) — fait le 11/10
+Supprimée (présence et longueur des secrets, préfixe de la clé Resend, hôte).
+
+### [ ] S4 · Rapports envoyés à une adresse non vérifiée (S2, décision produit)
+N'importe qui peut faire envoyer par MIRA un PDF (avec du texte libre saisi, échappé) à un
+tiers, en CCI de l'équipe. Avec le rate-limit contournable (ci-dessous), c'est aussi un
+levier de coût OpenAI. Pistes : captcha (Turnstile) sur le wizard, ou double opt-in
+(lien de confirmation avant génération), au prix d'une étape de plus pour le prospect.
+
 ## 🔒 Durcissements identifiés par la review du 10/07 (S2, non bloquants)
 
 - **Rate-limit multi-dimensions** : le plafond actuel (3/h) est keyé sur l'email fourni par
