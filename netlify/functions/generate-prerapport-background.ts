@@ -21,7 +21,6 @@
  * n'injecte, par section, que les stats autorisées par la grille `allowedSources`.
  */
 import type { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import type { Database } from '../../src/types/supabase';
 import { generateReport } from '../../src/data/reportGeneration';
@@ -36,6 +35,7 @@ import { sendReportEmail, notifyFailure, notifyReview } from './lib/email';
 import { enrichSiret, fetchSiteResume } from './lib/enrichment';
 import { buildGenerationContext } from './lib/context';
 import { loadActiveStatbank } from './lib/statbankStore';
+import { createServiceClient } from './lib/supabase';
 import type { AdminClient } from './lib/admin';
 
 /**
@@ -90,9 +90,7 @@ export const handler: Handler = async (event) => {
   }
   if (!leadId) return { statusCode: 400 };
 
-  const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+  const supabase = createServiceClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
     const { data: lead, error } = await supabase.from('leads').select('*').eq('id', leadId).single();

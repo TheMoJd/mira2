@@ -11,9 +11,10 @@
  * chaque appel. Ici on vérifie ce jeton auprès de Supabase et l'adresse dans la liste.
  */
 import type { HandlerEvent, HandlerResponse } from '@netlify/functions';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../src/types/supabase';
 import { parseRecipients } from './email';
+import { createServiceClient } from './supabase';
 import { fail as httpFail, json as httpJson, NO_STORE, readJsonBody } from './http';
 
 export type AdminClient = SupabaseClient<Database>;
@@ -37,9 +38,7 @@ export const isAdminEmail = (email: string | undefined | null): boolean =>
 export function serviceClient(): AdminClient | null {
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
-  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return createServiceClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 }
 
 export type AdminAuth = { ok: true; email: string; userId: string } | { ok: false; response: HandlerResponse };
