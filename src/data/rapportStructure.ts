@@ -30,7 +30,8 @@
  */
 
 import type { StatEntry, StatTheme } from './statbank';
-import { statbank } from './statbank';
+import { getStatbank, activeGridFor } from './statbank';
+import type { GridSection } from './statbankSchema';
 
 /** Origine du contenu d'une section. */
 export type ContentSource =
@@ -436,10 +437,29 @@ export const SYNTHESE_SECTION_ID = 'synthese-executive';
  */
 export const statsForSection = (section: ReportSection): StatEntry[] => {
   if (!section.allowsStats) return [];
-  if (section.allowedSources.includes('*')) return statbank;
-  const allowed = new Set(section.allowedSources);
+  const statbank = getStatbank();
+  if (section.allowedSources.includes('*')) return [...statbank];
+  // La grille éditée dans l'admin (banque active) prime sur celle du code.
+  const allowed = new Set<string>(activeGridFor(section.id) ?? section.allowedSources);
   return statbank.filter((s) => allowed.has(s.source.sourceId));
 };
+
+/**
+ * Sections dont la grille de sources est éditable dans l'admin : celles qui citent
+ * des statistiques avec une liste explicite (hors `'*'`, dont §1 et sa liste héritée).
+ */
+export const gridSections = (): GridSection[] =>
+  reportSections
+    .filter((s) => s.allowsStats && !s.allowedSources.includes('*'))
+    .map((s) => ({ id: s.id, label: `§${s.numLabel} ${s.title}` }));
+
+/** Grille du code (section → codes de source), graine de la grille éditable. */
+export const codeGrid = (): Record<string, string[]> =>
+  Object.fromEntries(
+    reportSections
+      .filter((s) => s.allowsStats && !s.allowedSources.includes('*'))
+      .map((s) => [s.id, s.allowedSources.map(String)]),
+  );
 
 /** Forme minimale d'un rapport pour le filtrage des citations. */
 export interface CitingReport {

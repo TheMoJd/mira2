@@ -19,7 +19,7 @@ import type { AskModel } from '../src/data/reportGeneration';
 import { renderReportHtml } from '../src/data/reportHtml';
 import type { ReportRenderContext } from '../src/data/reportHtml';
 import { famillesMetiers } from '../src/data/famillesMetiers';
-import { statbank } from '../src/data/statbank';
+import { getStatbank } from '../src/data/statbank';
 import { reportSections, statsForSection, enforceSectionGrid } from '../src/data/rapportStructure';
 import { validateReport, blockingFindings } from '../src/data/reportValidation';
 import { enrichSiret } from '../netlify/functions/lib/enrichment';
@@ -126,7 +126,7 @@ function mapFamilles(declarees: string[]): GenerationContext['famillesDeclarees'
 }
 
 // Audit garde-fou : citations connues + dans la grille de la section.
-const KNOWN = new Set(statbank.map((s) => s.id));
+const KNOWN = new Set(getStatbank().map((s) => s.id));
 const ALLOWED = new Map(reportSections.map((s) => [s.id, new Set(statsForSection(s).map((x) => x.id))]));
 function audit(report: PreRapportOutput) {
   let total = 0;

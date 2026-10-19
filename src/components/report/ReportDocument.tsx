@@ -11,7 +11,7 @@
  * (source unique). Style : pas de tiret cadratin ni de point-virgule (consigne CEO).
  *
  * Imports type-only pour `PreRapportOutput`/`ReportRenderContext` → zod/openai ne
- * partent jamais dans le bundle client. Seules les données pures (`statbank`,
+ * partent jamais dans le bundle client. Seules les données pures (`statbankSeed`,
  * `reportSections`, RGPD, copie de marque) sont importées au runtime.
  */
 import type { CSSProperties, ReactNode } from 'react';

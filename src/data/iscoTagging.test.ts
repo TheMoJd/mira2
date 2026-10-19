@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { statbank, statsForFamille, iscoCoverage } from './statbank';
+import { statbankSeed, statsForFamille, iscoCoverage } from './statbank';
 import { buildUserMessage } from './reportPrompt';
 import type { GenerationContext } from './reportPrompt';
 import { famillesMetiers } from './famillesMetiers';
@@ -8,7 +8,7 @@ import { enforceSectionGrid } from './rapportStructure';
 describe('rattachement ISCO des statistiques', () => {
   it('tous les codes isco sont des sous-grands-groupes ISCO-08 à 2 chiffres connus', () => {
     const known = new Set(famillesMetiers.flatMap((f) => f.isco));
-    for (const s of statbank) {
+    for (const s of statbankSeed) {
       for (const code of s.isco ?? []) {
         expect(/^\d{2}$/.test(code), `${s.id} code "${code}"`).toBe(true);
         expect(known.has(code), `${s.id} → ISCO ${code} absent de famillesMetiers`).toBe(true);

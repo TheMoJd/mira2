@@ -186,6 +186,117 @@ export type Database = {
           },
         ]
       }
+      stat_sources: {
+        Row: {
+          archived_at: string | null
+          code: string
+          created_at: string
+          in_socle: boolean
+          nature: string
+          note: string | null
+          org: string
+          report: string
+          sections: string[]
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          archived_at?: string | null
+          code: string
+          created_at?: string
+          nature: string
+          note?: string | null
+          org: string
+          report: string
+          sections?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          archived_at?: string | null
+          code?: string
+          created_at?: string
+          nature?: string
+          note?: string | null
+          org?: string
+          report?: string
+          sections?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      stats: {
+        Row: {
+          archived_at: string | null
+          claim: string
+          created_at: string
+          id: string
+          isco: string[]
+          original_source: string | null
+          page: string | null
+          projection: boolean
+          provenance: string
+          scope: string
+          source_code: string
+          theme: string
+          unit: string
+          updated_at: string
+          updated_by: string | null
+          value: number
+          verbatim: string
+        }
+        Insert: {
+          archived_at?: string | null
+          claim: string
+          created_at?: string
+          id: string
+          isco?: string[]
+          original_source?: string | null
+          page?: string | null
+          projection?: boolean
+          provenance: string
+          scope: string
+          source_code: string
+          theme: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+          value: number
+          verbatim: string
+        }
+        Update: {
+          archived_at?: string | null
+          claim?: string
+          created_at?: string
+          id?: string
+          isco?: string[]
+          original_source?: string | null
+          page?: string | null
+          projection?: boolean
+          provenance?: string
+          scope?: string
+          source_code?: string
+          theme?: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+          verbatim?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stats_source_code_fkey"
+            columns: ["source_code"]
+            isOneToOne: false
+            referencedRelation: "stat_sources"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

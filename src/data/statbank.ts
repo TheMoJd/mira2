@@ -288,10 +288,17 @@ const MCKINSEY_2017: StatSource = {
 };
 
 // ---------------------------------------------------------------------------
-// La banque de statistiques.
+// La banque de statistiques (graine).
 // ---------------------------------------------------------------------------
 
-export const statbank: StatEntry[] = [
+/**
+ * Graine de la stat-bank : la banque telle qu'écrite dans le code. Depuis l'interface
+ * admin (`/admin`), la source de vérité en production est la base Supabase (tables
+ * `stat_sources` et `stats`, seedées depuis ce tableau par la migration 0007). Ce
+ * tableau reste la banque par défaut (tests, scripts) et le filet de sécurité de la
+ * génération si la base est injoignable (cf. `setActiveStatbank`).
+ */
+export const statbankSeed: StatEntry[] = [
   // === WEF — Future of Jobs 2025 (macro monde, socle déjà présent sur la landing) ===
   {
     id: 'wef-2025-skill-gaps-barrier',
@@ -1695,20 +1702,65 @@ export const statbank: StatEntry[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Banque active.
+// ---------------------------------------------------------------------------
+//
+// Tout le pipeline (prompt, contrôles, appels de note) lit la banque ACTIVE via les
+// accesseurs ci-dessous, jamais un tableau figé au chargement du module. Par défaut,
+// c'est la graine du code. La function de génération charge la banque éditée par
+// l'admin (Supabase) au début de chaque génération et l'installe ici.
+//
+// Pourquoi un état de module plutôt que passer la banque en paramètre partout : la
+// banque est lue à cinq étages du pipeline (grille de section, rattachement ISCO,
+// V6/V7/V14, appels de note, audit `reports.sources`). La passer en argument
+// toucherait toutes les signatures pour un gain nul : une function Netlify traite
+// une seule requête à la fois par instance, donc l'état ne fuit pas d'un lead à
+// l'autre tant que chaque génération réinstalle sa banque avant de commencer.
+
+let activeStats: StatEntry[] = statbankSeed;
+let activeById: Map<string, StatEntry> = new Map(statbankSeed.map((s) => [s.id, s]));
+let activeGrid: Record<string, string[]> | undefined;
+
+/**
+ * Installe la banque à utiliser pour les générations suivantes. `grid` (facultatif)
+ * remplace la grille « section → sources autorisées » du code pour les sections
+ * listées (clé = id de section, valeur = codes de source), cf. `statsForSection`.
+ */
+export function setActiveStatbank(stats: StatEntry[], grid?: Record<string, string[]>): void {
+  activeStats = stats;
+  activeById = new Map(stats.map((s) => [s.id, s]));
+  activeGrid = grid;
+}
+
+/** Revient à la graine du code (tests, filet de sécurité). */
+export function resetActiveStatbank(): void {
+  setActiveStatbank(statbankSeed);
+}
+
+/** Toutes les statistiques de la banque active. */
+export const getStatbank = (): readonly StatEntry[] => activeStats;
+
+/** Une statistique de la banque active par son id (`undefined` si inconnue). */
+export const getStat = (id: string): StatEntry | undefined => activeById.get(id);
+
+/** Grille éditée pour une section, si la banque active en porte une. */
+export const activeGridFor = (sectionId: string): string[] | undefined => activeGrid?.[sectionId];
+
+// ---------------------------------------------------------------------------
 // Aides de sélection (utilisées par la génération — Tranche 4).
 // ---------------------------------------------------------------------------
 
 /** Toutes les statistiques d'un thème donné. */
 export const statsByTheme = (theme: StatTheme): StatEntry[] =>
-  statbank.filter((s) => s.theme === theme);
+  activeStats.filter((s) => s.theme === theme);
 
 /** Toutes les statistiques d'un périmètre donné. */
 export const statsByScope = (scope: StatScope): StatEntry[] =>
-  statbank.filter((s) => s.scope === scope);
+  activeStats.filter((s) => s.scope === scope);
 
 /** Statistiques « France » + « monde » primaires : socle sûr pour le freemium. */
 export const coreFrenchAndGlobalStats = (): StatEntry[] =>
-  statbank.filter(
+  activeStats.filter(
     (s) =>
       s.provenance === 'primaire' &&
       (s.scope === 'france' || s.scope === 'monde'),
@@ -1716,20 +1768,15 @@ export const coreFrenchAndGlobalStats = (): StatEntry[] =>
 
 /** Statistiques du socle des 11 sources validé (S01…S14). */
 export const socleStats = (): StatEntry[] =>
-  statbank.filter((s) => s.source.inSocle);
+  activeStats.filter((s) => s.source.inSocle);
 
 /** Statistiques de la couche France complémentaire (FR1…FR4, hors socle). */
 export const franceLayerStats = (): StatEntry[] =>
-  statbank.filter((s) => !s.source.inSocle);
+  activeStats.filter((s) => !s.source.inSocle);
 
 /** Statistiques d'une source donnée, par son code (`'S06'`, `'FR2'`…). */
 export const statsBySource = (sourceId: string): StatEntry[] =>
-  statbank.filter((s) => s.source.sourceId === sourceId);
-
-/** Index par id pour citation/vérification rapide. */
-export const statById: Record<string, StatEntry> = Object.fromEntries(
-  statbank.map((s) => [s.id, s]),
-);
+  activeStats.filter((s) => s.source.sourceId === sourceId);
 
 /**
  * Statistiques éclairant **directement** une famille de métiers, par intersection
@@ -1738,11 +1785,11 @@ export const statById: Record<string, StatEntry> = Object.fromEntries(
  * au rattachement « stat → famille » en §3 (`buildUserMessage`).
  */
 export const statsForFamille = (isco: string[]): StatEntry[] =>
-  statbank.filter((s) => s.isco?.some((code) => isco.includes(code)));
+  activeStats.filter((s) => s.isco?.some((code) => isco.includes(code)));
 
 /** Nombre de stats à rattachement ISCO direct par code à 2 chiffres (carte de couverture). */
 export const iscoCoverage = (): Record<string, number> => {
   const counts: Record<string, number> = {};
-  for (const s of statbank) for (const code of s.isco ?? []) counts[code] = (counts[code] ?? 0) + 1;
+  for (const s of activeStats) for (const code of s.isco ?? []) counts[code] = (counts[code] ?? 0) + 1;
   return counts;
 };

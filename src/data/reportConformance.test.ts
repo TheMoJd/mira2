@@ -4,7 +4,7 @@ import { assembleReport, parseCorps, parseSynthese, PreRapportSchema } from './r
 import { validateReport, blockingFindings } from './reportValidation';
 import { buildCitationIndex } from './reportCitations';
 import { renderReportHtml } from './reportHtml';
-import { statById } from './statbank';
+import { getStat } from './statbank';
 import { SOURCES_SECTION_TITLE } from './rapportStructure';
 
 /**
@@ -85,7 +85,7 @@ describe('rapport de référence — le contrat est satisfaisable', () => {
     // Chaque statistique citée dans le rapport reçoit exactement une note.
     const citees = new Set(report.sections.flatMap((s) => s.sources_citees));
     expect(numeros).toHaveLength(citees.size);
-    for (const id of citees) expect(statById[id], `stat ${id}`).toBeDefined();
+    for (const id of citees) expect(getStat(id), `stat ${id}`).toBeDefined();
   });
 
   it('se rend en HTML sans laisser de marqueur brut et avec ses références', () => {

@@ -4,7 +4,7 @@ import type { ReportRenderContext } from './reportHtml';
 import type { PreRapportOutput } from './reportSchema';
 import { assembleReport } from './reportSchema';
 import { CONTACT_URL, SOURCES_SECTION_TITLE, CALIBRAGE_COURT } from './rapportStructure';
-import { statById } from './statbank';
+import { getStat } from './statbank';
 import { RGPD_PDF_FOOTER } from './rgpd';
 
 const ctx: ReportRenderContext = {
@@ -154,7 +154,7 @@ describe('renderReportHtml', () => {
   it('construit la section « Sources de référence » depuis la stat-bank', () => {
     expect(html).toContain(SOURCES_SECTION_TITLE);
     expect(html).toContain('World Economic Forum');
-    expect(html).toContain(statById[WEF].claim.slice(0, 30));
+    expect(html).toContain(getStat(WEF)!.claim.slice(0, 30));
     // Le périmètre est porté par la référence, jamais par le corps du texte.
     expect(html).toContain('Périmètre monde.');
   });
