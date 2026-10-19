@@ -6,7 +6,9 @@
  * les artefacts dans `docs/samples/` pour partage en équipe. Audite au passage que
  * chaque statistique citée existe ET est autorisée dans sa section (garde-fou).
  *
- * Usage : `npx tsx scripts/generate-samples.ts`  (nécessite OPENAI_API_KEY dans .env)
+ * Usage : `npx tsx scripts/generate-samples.ts [--graine]`  (nécessite OPENAI_API_KEY dans .env)
+ * Stat-bank : celle de /admin si SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY sont dans .env
+ * (comme la prod), sinon ou avec `--graine` la graine du code.
  * Les fichiers produits sont versionnés (docs/*.md/.html/.json suivis par git).
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -19,8 +21,8 @@ import type { AskModel } from '../src/data/reportGeneration';
 import { renderReportHtml } from '../src/data/reportHtml';
 import type { ReportRenderContext } from '../src/data/reportHtml';
 import { famillesMetiers } from '../src/data/famillesMetiers';
-import { getStatbank } from '../src/data/statbank';
-import { reportSections, statsForSection, enforceSectionGrid } from '../src/data/rapportStructure';
+import { enforceSectionGrid } from '../src/data/rapportStructure';
+import { loadScriptStatbank, auditCitations, ORIGIN_LABEL } from './lib/scriptStatbank';
 import { validateReport, blockingFindings } from '../src/data/reportValidation';
 import { enrichSiret } from '../netlify/functions/lib/enrichment';
 
@@ -125,28 +127,13 @@ function mapFamilles(declarees: string[]): GenerationContext['famillesDeclarees'
   });
 }
 
-// Audit garde-fou : citations connues + dans la grille de la section.
-const KNOWN = new Set(getStatbank().map((s) => s.id));
-const ALLOWED = new Map(reportSections.map((s) => [s.id, new Set(statsForSection(s).map((x) => x.id))]));
-function audit(report: PreRapportOutput) {
-  let total = 0;
-  const invented: string[] = [];
-  const outOfGrid: string[] = [];
-  for (const sec of report.sections) {
-    const allowed = ALLOWED.get(sec.id) ?? new Set<string>();
-    for (const id of sec.sources_citees) {
-      total++;
-      if (!KNOWN.has(id)) invented.push(`${sec.id}→${id}`);
-      else if (!allowed.has(id)) outOfGrid.push(`${sec.id}→${id}`);
-    }
-  }
-  return { total, invented, outOfGrid };
-}
 
 async function main() {
   const apiKey = readEnv('OPENAI_API_KEY');
   const model = readEnv('OPENAI_MODEL') ?? 'gpt-6.1-sol';
   if (!apiKey) throw new Error('OPENAI_API_KEY absent de .env');
+  // Même banque que la prod (éditée dans /admin), graine en repli ou avec --graine.
+  const bankOrigin = await loadScriptStatbank(readEnv);
   mkdirSync(OUT_DIR, { recursive: true });
   const openai = new OpenAI({ apiKey });
   const dateRapport = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -155,7 +142,7 @@ async function main() {
     c: Company;
     enr: Awaited<ReturnType<typeof enrichSiret>>;
     report: PreRapportOutput;
-    a: ReturnType<typeof audit>;
+    a: ReturnType<typeof auditCitations>;
     bloquants: ReturnType<typeof blockingFindings>;
   };
   const rows: Row[] = [];
@@ -233,7 +220,7 @@ async function main() {
     writeFileSync(`${OUT_DIR}/${c.slug}.report.json`, JSON.stringify(report, null, 2), 'utf8');
     writeFileSync(`${OUT_DIR}/${c.slug}.html`, renderReportHtml(report, renderCtx), 'utf8');
 
-    const a = audit(report);
+    const a = auditCitations(report);
     const bloquants = blockingFindings(findings);
     console.log(
       `  citations=${a.total} inventées=${a.invented.length} hors-grille=${a.outOfGrid.length} contrôles-bloquants=${bloquants.length}`,
@@ -254,7 +241,7 @@ async function main() {
   };
 
   let md = `# Pré-rapports d'exemple — entreprises réelles\n\n`;
-  md += `> Générés par [\`scripts/generate-samples.ts\`](../../scripts/generate-samples.ts) sur de **vraies entreprises**, avec leurs **vraies données** d'enrichissement (INSEE Sirene) et un **vrai appel OpenAI** (modèle \`${model}\`). Régénérer : \`npx tsx scripts/generate-samples.ts\`.\n\n`;
+  md += `> Générés par [\`scripts/generate-samples.ts\`](../../scripts/generate-samples.ts) sur de **vraies entreprises**, avec leurs **vraies données** d'enrichissement (INSEE Sirene) et un **vrai appel OpenAI** (modèle \`${model}\`, stat-bank : ${ORIGIN_LABEL[bankOrigin]}). Régénérer : \`npx tsx scripts/generate-samples.ts\` (\`--graine\` pour forcer la banque du code).\n\n`;
   md += `Chaque rapport est rendu en HTML (ouvrir dans un navigateur, imprimable en PDF) + le JSON structuré brut.\n\n`;
   md += `## Récapitulatif\n\n`;
   md += `| Entreprise | Catégorie | NAF | Effectif | Localisation | Citations | Inventées | Hors-grille | Contrôles bloquants |\n`;
