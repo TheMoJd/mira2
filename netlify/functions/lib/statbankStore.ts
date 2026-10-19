@@ -11,20 +11,16 @@ import { resetActiveStatbank, setActiveStatbank } from '../../../src/data/statba
 import { rowsToStatbank, type StatRow, type StatSourceRow } from '../../../src/data/statbankSchema';
 import { gridSections } from '../../../src/data/rapportStructure';
 import type { AdminClient } from './admin';
-
-/** Plafond de lecture (PostgREST pagine à 1000 lignes par défaut). */
-const MAX_ROWS = 5000;
+import { fetchAll } from './fetchAll';
 
 export async function fetchStatbankRows(
   supabase: AdminClient,
 ): Promise<{ sources: StatSourceRow[]; stats: StatRow[] }> {
   const [sources, stats] = await Promise.all([
-    supabase.from('stat_sources').select('*').order('code').range(0, MAX_ROWS - 1),
-    supabase.from('stats').select('*').order('id').range(0, MAX_ROWS - 1),
+    fetchAll((from, to) => supabase.from('stat_sources').select('*').order('code').range(from, to)),
+    fetchAll((from, to) => supabase.from('stats').select('*').order('id').range(from, to)),
   ]);
-  if (sources.error) throw new Error(`stat_sources : ${sources.error.message}`);
-  if (stats.error) throw new Error(`stats : ${stats.error.message}`);
-  return { sources: sources.data, stats: stats.data };
+  return { sources, stats };
 }
 
 export type StatbankOrigin = 'base' | 'graine';

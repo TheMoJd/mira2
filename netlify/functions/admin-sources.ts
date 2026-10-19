@@ -28,15 +28,18 @@ import {
 import { gridSections } from '../../src/data/rapportStructure';
 import { fail, json, readJson, requireAdmin, serviceClient, type AdminClient } from './lib/admin';
 import { fetchStatbankRows } from './lib/statbankStore';
+import { fetchAll } from './lib/fetchAll';
 
 /** Code Postgres d'une violation d'unicité (clé primaire déjà prise). */
 const UNIQUE_VIOLATION = '23505';
 
 /** Nombre de rapports envoyés citant chaque statistique (`reports.sources`). */
 async function citationCounts(supabase: AdminClient): Promise<Record<string, number>> {
-  const { data, error } = await supabase.from('reports').select('sources').range(0, 9999);
-  if (error) {
-    console.warn('[admin-sources] comptage des citations impossible', error.message);
+  let data: { sources: unknown }[];
+  try {
+    data = await fetchAll((from, to) => supabase.from('reports').select('id, sources').order('id').range(from, to));
+  } catch (err) {
+    console.warn('[admin-sources] comptage des citations impossible', err);
     return {};
   }
   const counts: Record<string, number> = {};
