@@ -14,15 +14,16 @@ import type { HandlerEvent, HandlerResponse } from '@netlify/functions';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../src/types/supabase';
 import { parseRecipients } from './email';
+import { fail as httpFail, json as httpJson, NO_STORE, readJsonBody } from './http';
 
 export type AdminClient = SupabaseClient<Database>;
 
-export const json = (statusCode: number, payload: unknown): HandlerResponse => ({
-  statusCode,
-  headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-  body: JSON.stringify(payload),
-});
-export const fail = (statusCode: number, error: string): HandlerResponse => json(statusCode, { ok: false, error });
+/** Réponses admin : format commun (`lib/http.ts`), jamais mises en cache. */
+export const json = (statusCode: number, payload: unknown): HandlerResponse => httpJson(statusCode, payload, NO_STORE);
+export const fail = (statusCode: number, error: string): HandlerResponse => httpFail(statusCode, error, NO_STORE);
+
+/** Corps JSON (objet) de la requête, `null` si illisible. */
+export const readJson = readJsonBody;
 
 /** Adresses autorisées (`ADMIN_EMAILS`, séparées par des virgules), en minuscules. */
 export function adminEmails(): string[] {
@@ -39,19 +40,6 @@ export function serviceClient(): AdminClient | null {
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-}
-
-/** Corps JSON d'une requête (base64 compris), `null` si illisible. */
-export function readJson(event: HandlerEvent): Record<string, unknown> | null {
-  try {
-    const raw = event.isBase64Encoded ? Buffer.from(event.body ?? '', 'base64').toString('utf8') : event.body ?? '';
-    const parsed: unknown = JSON.parse(raw || '{}');
-    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
 }
 
 export type AdminAuth = { ok: true; email: string; userId: string } | { ok: false; response: HandlerResponse };

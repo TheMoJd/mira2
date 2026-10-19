@@ -33,6 +33,16 @@
   --amber: #f3b13f;
   --cyan: #43c6e8;
 
+  /* Variantes « texte sur fond teinté » des tons sémantiques (badges, bandeaux). */
+  --risk-ink: #b8432a;
+  --risk-soft: rgba(239, 108, 77, 0.12);
+  --amber-ink: #8a5a07;
+  --amber-soft: rgba(243, 177, 63, 0.18);
+  --opp-ink: #17775a;
+  --opp-soft: rgba(44, 193, 143, 0.14);
+  --scrim: rgba(16, 10, 38, 0.45);
+  --bg-glass: rgba(245, 243, 251, 0.9);
+
   --serif: "Newsreader", Georgia, serif;
   --sans: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
@@ -490,8 +500,8 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 }
 .adm-small-btn:hover:not(:disabled) { border-color: var(--violet-300); background: var(--violet-100); }
 .adm-small-btn:disabled { opacity: .45; cursor: not-allowed; }
-.adm-small-btn--danger { color: #b8432a; }
-.adm-small-btn--danger:hover:not(:disabled) { border-color: var(--risk); background: rgba(239,108,77,.08); }
+.adm-small-btn--danger { color: var(--risk-ink); }
+.adm-small-btn--danger:hover:not(:disabled) { border-color: var(--risk); background: var(--risk-soft); }
 .adm-icon-btn {
   width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--line);
   background: var(--paper); cursor: pointer; font-size: 14px; color: var(--ink-2);
@@ -511,7 +521,7 @@ textarea.pr-field { resize: vertical; min-height: 108px; line-height: 1.55; }
 .adm-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .adm-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 .adm-overlay {
-  position: fixed; inset: 0; z-index: 200; background: rgba(16,10,38,.45);
+  position: fixed; inset: 0; z-index: 200; background: var(--scrim);
   display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 16px;
 }
 .adm-modal {

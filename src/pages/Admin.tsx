@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/ui/Logo';
@@ -36,9 +36,17 @@ export default function Admin() {
     setSession(null);
   };
 
+  // Stable : SourcesAdmin en dépend pour `reload`, une fonction neuve à chaque rendu
+  // relancerait le chargement complet de la banque (ex. à l'ouverture de « Mot de passe »).
+  const onAuthLost = useCallback(() => {
+    logout();
+    setSession(null);
+    setExpired(true);
+  }, []);
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(245,243,251,.9)', backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--line-soft)' }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'var(--bg-glass)', backdropFilter: 'blur(14px)', borderBottom: '1px solid var(--line-soft)' }}>
         <div className="wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, height: 64 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <Logo to="/" />
@@ -66,13 +74,7 @@ export default function Admin() {
                 Les seuls chiffres que le modèle a le droit de citer. Chaque statistique est rattachée à un document source, et chaque document liste les sections du rapport qui peuvent le citer.
               </p>
             </div>
-            <SourcesAdmin
-              onAuthLost={() => {
-                logout();
-                setSession(null);
-                setExpired(true);
-              }}
-            />
+            <SourcesAdmin onAuthLost={onAuthLost} />
           </>
         ) : (
           <LoginCard

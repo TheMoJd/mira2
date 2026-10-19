@@ -17,6 +17,7 @@ import { FONCTION_AUTRE } from '../../src/data/contact';
 import { validateContact } from '../../src/components/contact/validation';
 import { normalizePhone } from '../../src/components/prerapport/validation';
 import { notifyContactRequest } from './lib/email';
+import { fail, json, readJsonBody } from './lib/http';
 import { cleanLine, cleanMultiline } from '../../src/data/textClean';
 
 /** Assainit un champ libre (NFC, invisibles supprimés, blancs repliés, cf. `textClean.ts`).
@@ -30,13 +31,6 @@ const clean = (raw: unknown): string => cleanLine(raw, { keepNbsp: false });
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 heure
 
-const json = (statusCode: number, payload: unknown) => ({
-  statusCode,
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(payload),
-});
-const fail = (statusCode: number, error: string) => json(statusCode, { ok: false, error });
-
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') return fail(405, 'Méthode non autorisée.');
 
@@ -49,15 +43,8 @@ export const handler: Handler = async (event) => {
     return fail(415, 'Format attendu : application/json.');
   }
 
-  let body: Record<string, unknown>;
-  try {
-    const raw = event.isBase64Encoded ? Buffer.from(event.body ?? '', 'base64').toString('utf8') : event.body ?? '';
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) throw new Error('payload');
-    body = parsed as Record<string, unknown>;
-  } catch {
-    return fail(400, 'Requête JSON invalide.');
-  }
+  const body = readJsonBody(event);
+  if (!body) return fail(400, 'Requête JSON invalide.');
 
   // --- Anti-abus : honeypot (champ-piège jamais rempli par un humain) ---
   // Rempli ⇒ bot. On renvoie un 202 « ok » factice (sans rien insérer) pour ne

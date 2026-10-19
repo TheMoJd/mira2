@@ -108,9 +108,9 @@ type Tone = 'violet' | 'neutral' | 'risk' | 'amber' | 'opp';
 const TONES: Record<Tone, CSSProperties> = {
   violet: { background: 'var(--violet-100)', color: 'var(--violet)' },
   neutral: { background: 'var(--bg-soft)', color: 'var(--ink-2)' },
-  risk: { background: 'rgba(239,108,77,.12)', color: '#b8432a' },
-  amber: { background: 'rgba(243,177,63,.18)', color: '#8a5a07' },
-  opp: { background: 'rgba(44,193,143,.14)', color: '#17775a' },
+  risk: { background: 'var(--risk-soft)', color: 'var(--risk-ink)' },
+  amber: { background: 'var(--amber-soft)', color: 'var(--amber-ink)' },
+  opp: { background: 'var(--opp-soft)', color: 'var(--opp-ink)' },
 };
 
 export function Badge({ tone = 'neutral', children, title }: { tone?: Tone; children: ReactNode; title?: string }) {
@@ -142,9 +142,9 @@ export function SmallButton({
 /** Bandeau de message (succès, erreur, avertissement). */
 export function Notice({ tone, children }: { tone: 'ok' | 'error' | 'warn'; children: ReactNode }) {
   const palette = {
-    ok: { bg: 'rgba(44,193,143,.12)', fg: '#17775a' },
-    error: { bg: 'rgba(239,108,77,.12)', fg: '#b8432a' },
-    warn: { bg: 'rgba(243,177,63,.16)', fg: '#7a4f05' },
+    ok: { bg: 'var(--opp-soft)', fg: 'var(--opp-ink)' },
+    error: { bg: 'var(--risk-soft)', fg: 'var(--risk-ink)' },
+    warn: { bg: 'var(--amber-soft)', fg: 'var(--amber-ink)' },
   }[tone];
   return (
     <div role={tone === 'error' ? 'alert' : 'status'} style={{ background: palette.bg, color: palette.fg, borderRadius: 'var(--r-sm)', padding: '11px 14px', fontSize: 14, lineHeight: 1.5 }}>

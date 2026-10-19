@@ -113,7 +113,7 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
         <div><strong>{activeSources.length}</strong> documents actifs</div>
         <div><strong>{data.stats.filter((s) => s.archived_at).length}</strong> statistiques archivées</div>
         {data.rejected.length > 0 && (
-          <div style={{ color: 'var(--risk)' }}><strong style={{ color: 'inherit' }}>{data.rejected.length}</strong> écartées à la génération</div>
+          <div style={{ color: 'var(--risk-ink)' }}><strong style={{ color: 'inherit' }}>{data.rejected.length}</strong> écartées à la génération</div>
         )}
       </div>
 
