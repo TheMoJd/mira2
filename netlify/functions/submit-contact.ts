@@ -17,17 +17,14 @@ import { FONCTION_AUTRE } from '../../src/data/contact';
 import { validateContact } from '../../src/components/contact/validation';
 import { normalizePhone } from '../../src/components/prerapport/validation';
 import { notifyContactRequest } from './lib/email';
+import { cleanLine, cleanMultiline } from '../../src/data/textClean';
 
-/** Assainit un champ libre : normalise en NFC (un client peut envoyer un accent
- *  décomposé « a + ◌̀ » que nos listes closes stockent composé « à » — sans NFC
- *  la comparaison échouerait à tort), retire les caractères de contrôle/format
- *  (retours ligne, RTL override…) et replie les espaces. Défense en profondeur :
- *  ces PII partent en base et en email, où elles seraient des vecteurs d'injection. */
-const clean = (raw: unknown): string =>
-  String(raw ?? '').normalize('NFC').replace(/[\p{Cc}\p{Cf}]/gu, '').replace(/\s+/g, ' ').trim();
-/** Nettoie un texte multi-ligne en préservant les sauts de ligne (message libre). */
-const cleanMultiline = (raw: unknown): string =>
-  String(raw ?? '').normalize('NFC').replace(/[\p{Cc}\p{Cf}]/gu, (c) => (c === '\n' ? '\n' : '')).trim();
+/** Assainit un champ libre (NFC, invisibles supprimés, blancs repliés, cf. `textClean.ts`).
+ *  NFC : un client peut envoyer un accent décomposé « a + ◌̀ » que nos listes closes
+ *  stockent composé « à ». Défense en profondeur : ces PII partent en base et en email,
+ *  où des caractères de contrôle seraient des vecteurs d'injection. Insécables repliées :
+ *  ces champs sont comparés à des listes fermées. */
+const clean = (raw: unknown): string => cleanLine(raw, { keepNbsp: false });
 
 /** Anti-abus : plafond de soumissions par email sur une fenêtre glissante. */
 const RATE_LIMIT_MAX = 3;

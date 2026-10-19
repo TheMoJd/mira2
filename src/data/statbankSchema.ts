@@ -28,6 +28,7 @@ import type {
   StatTheme,
 } from './statbank';
 import { famillesMetiers } from './famillesMetiers';
+import { cleanLine } from './textClean';
 
 // ---------------------------------------------------------------------------
 // Vocabulaire contrôlé (forme runtime des unions de `statbank.ts`).
@@ -97,11 +98,11 @@ export interface GridSection {
 // Schémas de saisie.
 // ---------------------------------------------------------------------------
 
-/** Texte libre : NFC (accents composés), sans caractères de contrôle, espaces repliés. */
+/** Texte libre nettoyé par `cleanLine` (invisibles supprimés, insécables gardées). */
 const texte = (min: number, max: number, label: string) =>
   z
     .string()
-    .transform((v) => v.normalize('NFC').replace(/[\p{Cc}\p{Cf}]/gu, ' ').replace(/\s+/g, ' ').trim())
+    .transform((v) => cleanLine(v))
     .pipe(
       z
         .string()
@@ -114,7 +115,7 @@ const texteOptionnel = (max: number, label: string) =>
   z
     .string()
     .nullish()
-    .transform((v) => (v ?? '').normalize('NFC').replace(/[\p{Cc}\p{Cf}]/gu, ' ').replace(/\s+/g, ' ').trim())
+    .transform((v) => cleanLine(v))
     .pipe(z.string().max(max, `${label} : ${max} caractères maximum.`))
     .transform((v) => (v === '' ? null : v));
 

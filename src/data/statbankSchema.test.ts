@@ -134,6 +134,14 @@ describe('statbankSchema — saisie', () => {
     expect(r.originalSource).toBeNull();
   });
 
+  it('nettoie un claim collé depuis un PDF sans casser les mots ni la typographie', () => {
+    const r = statInputSchema.parse({
+      ...VALID_STAT,
+      claim: 'En 2026, 42,5 % des entre­prises interrogées déclarent un usage régulier de l’IA.',
+    });
+    expect(r.claim).toBe('En 2026, 42,5 % des entreprises interrogées déclarent un usage régulier de l’IA.');
+  });
+
   it('refuse un claim avec tiret long ou point-virgule', () => {
     for (const bad of ['Un claim — avec tiret long ici.', 'Un claim avec point-virgule ; ici.']) {
       expect(statInputSchema.safeParse({ ...VALID_STAT, claim: bad }).success, bad).toBe(false);
