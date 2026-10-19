@@ -9,6 +9,41 @@ Statut : `[ ]` à faire · `[~]` en cours · `[x]` fait.
 
 ---
 
+## 🛠️ Interface admin des sources (demande du 19/10/2026)
+
+### [~] A1 · Caroline gère la stat-bank sans passer par le code (S1) : code fait le 19/10, mise en service à faire
+- **Contrat** : depuis `/admin`, Caroline ajoute, corrige, retire (archive) et restaure les
+  documents sources et les statistiques citables, et choisit quelles sections du rapport
+  peuvent citer chaque document (la grille `allowedSources`). Une modification vaut pour les
+  pré-rapports générés ensuite, sans redéploiement.
+- **Fait** : tables `stat_sources` + `stats` (migration `0006`), seed généré depuis la banque du
+  code (`0007`, `scripts/generate-statbank-seed.ts`), contrat de saisie partagé front/serveur
+  (`src/data/statbankSchema.ts`, mêmes règles que `statbank.test.ts`), functions `admin-auth`
+  (Supabase Auth côté serveur + liste blanche `ADMIN_EMAILS`) et `admin-sources` (CRUD,
+  archivage au lieu de suppression), banque active rechargée à chaque génération
+  (`netlify/functions/lib/statbankStore.ts`, repli sur la graine du code si la base ne répond
+  pas). Guide d'usage : [`docs/howto-admin-sources.md`](docs/howto-admin-sources.md).
+- **Mise en service (Moetez)** :
+  1. appliquer `0006_statbank_admin.sql` puis `0007_seed_statbank.sql` (SQL editor) et
+     régénérer `src/types/supabase.ts` (types écrits à la main le 19/10, le MCP ne répondait pas) ;
+  2. Netlify : `ADMIN_EMAILS=caroline@polaria.ai,moetez@polaria.ai` (adresses à confirmer) ;
+  3. Supabase → Authentication → Users → *Add user* → *Create new user* (auto-confirm) pour
+     chaque admin, transmettre le mot de passe provisoire hors email, Caroline le change via
+     le bouton « Mot de passe » de `/admin` ;
+  4. recette : une stat ajoutée puis citée dans un pré-rapport de test (lead moetez@ seulement),
+     une stat archivée qui n'apparaît plus.
+- **Critères** : `npm test` vert (tests `statbankSchema`, `admin-sources`, `admin-auth`,
+  `statbankStore`) ; après seed, la banque chargée depuis la base est identique à la graine
+  (test « le rechargement restitue chaque entrée ») ; un compte hors `ADMIN_EMAILS` reçoit 401.
+- **Ce qui change pour la suite** : après mise en service, la base fait foi. Q7 et Q8 se
+  traitent dans `/admin`, plus dans `statbank.ts` (qui reste la graine des tests et le filet
+  de sécurité). Ne plus éditer `statbankSeed` pour du contenu.
+- **Pistes (non faites)** : historique des modifications (table d'audit, aujourd'hui seuls
+  `updated_by` / `updated_at` et les logs des functions) ; bouton « tester sur un rapport »
+  qui régénère un pré-rapport d'essai avec la banque en cours.
+
+---
+
 ## 🔴 Recette du 08/09/2026 — rapport OVHcloud (gpt-5.4), pipeline refondu « Cyril + Caroline »
 
 **Contexte.** Premier rapport généré en prod par le pipeline refondu (deux appels, contrôles

@@ -41,11 +41,9 @@ import {
   SYNTHESE_SECTION_ID,
 } from './rapportStructure';
 import type { StatEntry } from './statbank';
-import { statbank, statById } from './statbank';
+import { getStat } from './statbank';
 import { markersIn } from './reportCitations';
 import { lireSection } from './reportLecture';
-
-const KNOWN_STAT_IDS = new Set(statbank.map((s) => s.id));
 
 export type ValidationLevel = 'bloquant' | 'avertissement';
 
@@ -450,7 +448,7 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
     const marques = new Set(lecture.notes);
 
     for (const id of marques) {
-      if (!KNOWN_STAT_IDS.has(id)) {
+      if (!getStat(id)) {
         add('V7', 'bloquant', `marqueur inconnu de la stat-bank : [[${id}]].`);
         continue;
       }
@@ -493,7 +491,7 @@ export function validateReport(report: PreRapportOutput): ValidationFinding[] {
           'avertissement',
           `part_taches hors format court : « ${fam.part.brut} ». Attendu « 82 % » ou « jusqu'à 82 % », quinze caractères maximum, sans phrase, sinon null.`,
         );
-      } else if (!fam.explication.notes.some((id) => claimPorte(statById[id], fam.part!.nombre!))) {
+      } else if (!fam.explication.notes.some((id) => claimPorte(getStat(id), fam.part!.nombre!))) {
         add(
           'V14',
           'avertissement',
@@ -552,7 +550,7 @@ export function findingsBrief(findings: ValidationFinding[], sectionId: string):
  */
 export function syncSourcesCitees<T extends PreRapportOutput>(report: T): T {
   for (const section of report.sections) {
-    section.sources_citees = [...new Set(lireSection(section).notes)].filter((id) => KNOWN_STAT_IDS.has(id));
+    section.sources_citees = [...new Set(lireSection(section).notes)].filter((id) => getStat(id) !== undefined);
   }
   return report;
 }

@@ -10,6 +10,7 @@
  *      a. le corps du rapport (§0, §2 → §8) ;
  *      b. la synthèse exécutive §1, à partir de la liste héritée du corps (union des
  *         `sources_citees` de §2 à §7) — aucun chiffre neuf en première page.
+ *   3bis. (avant 3) Chargement de la stat-bank éditée dans l'admin (graine en repli).
  *   4. Assemblage (+ textes figés du code), contrôles V1 → V14, rejeu des sections
  *      en échec (plafond de deux par section), puis marquage pour relecture humaine
  *      s'il reste des échecs bloquants.
@@ -27,16 +28,15 @@ import { generateReport } from '../../src/data/reportGeneration';
 import type { AskModel } from '../../src/data/reportGeneration';
 import type { PreRapportOutput } from '../../src/data/reportSchema';
 import { blockingFindings } from '../../src/data/reportValidation';
-import { statbank } from '../../src/data/statbank';
+import { getStat } from '../../src/data/statbank';
 import { renderReportHtml, REPORT_PAGE_FOOTER_PREFIX } from '../../src/data/reportHtml';
 import type { ReportRenderContext } from '../../src/data/reportHtml';
 import { htmlToPdf } from './lib/pdf';
 import { sendReportEmail, notifyFailure, notifyReview } from './lib/email';
 import { enrichSiret, fetchSiteResume } from './lib/enrichment';
 import { buildGenerationContext } from './lib/context';
-
-/** Ids connus de la stat-bank — filtre les ids cités par le modèle pour un audit propre. */
-const KNOWN_STAT_IDS = new Set(statbank.map((s) => s.id));
+import { loadActiveStatbank } from './lib/statbankStore';
+import type { AdminClient } from './lib/admin';
 
 /**
  * Ids (dédupliqués) des statistiques effectivement citées dans le rapport,
@@ -47,7 +47,7 @@ function citedStatIds(report: PreRapportOutput): string[] {
   const ids = new Set<string>();
   for (const section of report.sections) {
     for (const id of section.sources_citees) {
-      if (KNOWN_STAT_IDS.has(id)) ids.add(id);
+      if (getStat(id)) ids.add(id);
     }
   }
   return [...ids];
@@ -135,6 +135,10 @@ export const handler: Handler = async (event) => {
         .update({ naf_code: ctx.nafCode ?? null, effectif_tranche: ctx.effectifTranche ?? null })
         .eq('id', leadId);
     }
+
+    // Banque de stats éditée dans l'admin : rechargée à CHAQUE génération (une
+    // correction de Caroline vaut pour le rapport suivant), graine du code en repli.
+    await loadActiveStatbank(supabase, `[generate] lead ${leadId} :`);
 
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
     const model = process.env.OPENAI_MODEL ?? 'gpt-6.1-sol';

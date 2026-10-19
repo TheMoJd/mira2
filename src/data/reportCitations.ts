@@ -29,11 +29,9 @@
  */
 
 import type { StatEntry, StatScope } from './statbank';
-import { statbank } from './statbank';
+import { getStat } from './statbank';
 import type { PreRapportOutput } from './reportSchema';
 import { lireSection } from './reportLecture';
-
-const STAT_BY_ID: Map<string, StatEntry> = new Map(statbank.map((s) => [s.id, s]));
 
 export { MARKER_RE, tokenizeCitations, markersIn, stripMarkers } from './reportLecture';
 export type { CitationToken } from './reportLecture';
@@ -79,7 +77,7 @@ export function buildCitationIndex(report: PreRapportOutput): CitationIndex {
     const notes: CitationNote[] = [];
     for (const id of lecture.notes) {
       if (numberById.has(id)) continue;
-      const entry = STAT_BY_ID.get(id);
+      const entry = getStat(id);
       if (!entry) continue;
       const n = next++;
       numberById.set(id, n);

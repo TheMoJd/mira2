@@ -5,7 +5,7 @@ import type { ReportRenderContext } from '../../data/reportHtml';
 import type { PreRapportOutput } from '../../data/reportSchema';
 import { assembleReport } from '../../data/reportSchema';
 import { CONTACT_URL, SOURCES_SECTION_TITLE, CALIBRAGE_COURT } from '../../data/rapportStructure';
-import { statById } from '../../data/statbank';
+import { getStat } from '../../data/statbank';
 
 const context: ReportRenderContext = {
   nomEntreprise: 'ACME',
@@ -15,7 +15,7 @@ const context: ReportRenderContext = {
 };
 
 const WEF = 'wef-2025-skills-transformed-39';
-const citedStat = statById[WEF];
+const citedStat = getStat(WEF)!;
 
 const report: PreRapportOutput = assembleReport(
   {

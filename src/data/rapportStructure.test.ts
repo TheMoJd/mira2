@@ -14,9 +14,9 @@ import {
   CALIBRAGE_COURT,
   LIGNE_PERIMETRE,
 } from './rapportStructure';
-import { statbank } from './statbank';
+import { statbankSeed } from './statbank';
 
-const ALL_SOURCE_IDS = new Set(statbank.map((s) => s.source.sourceId));
+const ALL_SOURCE_IDS = new Set(statbankSeed.map((s) => s.source.sourceId));
 
 describe('rapportStructure — déroulé §0 → §9 (+ §8bis)', () => {
   it('a 11 blocs ordonnés, §8bis intercalé entre §8 et §9, ids uniques', () => {

@@ -15,6 +15,7 @@ import { randomUUID } from 'node:crypto';
 import type { Database } from '../../src/types/supabase';
 import { EMAIL_RE, PHONE_RE, MAX_IDENTITY_LEN, normalizePhone } from '../../src/components/prerapport/validation';
 import { notifySubmitFailure } from './lib/email';
+import { fail, json } from './lib/http';
 
 /**
  * Base de l'URL qui déclenche la génération : le déploiement qui a reçu la soumission,
@@ -47,13 +48,6 @@ const cleanIdentity = (raw: string): string =>
 /** Anti-abus : plafond de soumissions par email sur une fenêtre glissante. */
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 heure
-
-const json = (statusCode: number, payload: unknown) => ({
-  statusCode,
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(payload),
-});
-const fail = (statusCode: number, error: string) => json(statusCode, { ok: false, error });
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') return fail(405, 'Méthode non autorisée.');

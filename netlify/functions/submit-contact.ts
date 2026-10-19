@@ -17,28 +17,19 @@ import { FONCTION_AUTRE } from '../../src/data/contact';
 import { validateContact } from '../../src/components/contact/validation';
 import { normalizePhone } from '../../src/components/prerapport/validation';
 import { notifyContactRequest } from './lib/email';
+import { fail, json, readJsonBody } from './lib/http';
+import { cleanLine, cleanMultiline } from '../../src/data/textClean';
 
-/** Assainit un champ libre : normalise en NFC (un client peut envoyer un accent
- *  décomposé « a + ◌̀ » que nos listes closes stockent composé « à » — sans NFC
- *  la comparaison échouerait à tort), retire les caractères de contrôle/format
- *  (retours ligne, RTL override…) et replie les espaces. Défense en profondeur :
- *  ces PII partent en base et en email, où elles seraient des vecteurs d'injection. */
-const clean = (raw: unknown): string =>
-  String(raw ?? '').normalize('NFC').replace(/[\p{Cc}\p{Cf}]/gu, '').replace(/\s+/g, ' ').trim();
-/** Nettoie un texte multi-ligne en préservant les sauts de ligne (message libre). */
-const cleanMultiline = (raw: unknown): string =>
-  String(raw ?? '').normalize('NFC').replace(/[\p{Cc}\p{Cf}]/gu, (c) => (c === '\n' ? '\n' : '')).trim();
+/** Assainit un champ libre (NFC, invisibles supprimés, blancs repliés, cf. `textClean.ts`).
+ *  NFC : un client peut envoyer un accent décomposé « a + ◌̀ » que nos listes closes
+ *  stockent composé « à ». Défense en profondeur : ces PII partent en base et en email,
+ *  où des caractères de contrôle seraient des vecteurs d'injection. Insécables repliées :
+ *  ces champs sont comparés à des listes fermées. */
+const clean = (raw: unknown): string => cleanLine(raw, { keepNbsp: false });
 
 /** Anti-abus : plafond de soumissions par email sur une fenêtre glissante. */
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 heure
-
-const json = (statusCode: number, payload: unknown) => ({
-  statusCode,
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(payload),
-});
-const fail = (statusCode: number, error: string) => json(statusCode, { ok: false, error });
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') return fail(405, 'Méthode non autorisée.');
@@ -52,15 +43,8 @@ export const handler: Handler = async (event) => {
     return fail(415, 'Format attendu : application/json.');
   }
 
-  let body: Record<string, unknown>;
-  try {
-    const raw = event.isBase64Encoded ? Buffer.from(event.body ?? '', 'base64').toString('utf8') : event.body ?? '';
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) throw new Error('payload');
-    body = parsed as Record<string, unknown>;
-  } catch {
-    return fail(400, 'Requête JSON invalide.');
-  }
+  const body = readJsonBody(event);
+  if (!body) return fail(400, 'Requête JSON invalide.');
 
   // --- Anti-abus : honeypot (champ-piège jamais rempli par un humain) ---
   // Rempli ⇒ bot. On renvoie un 202 « ok » factice (sans rien insérer) pour ne

@@ -9,6 +9,8 @@ import { scrollToTop } from './lib/scroll';
 // Chargé à la demande : page d'atterrissage des anciens liens /rapport/:leadId
 // (le rapport est désormais livré par email, plus affiché en ligne).
 const ReportView = lazy(() => import('./pages/ReportView'));
+// Interface admin (stat-bank) : chunk séparé, jamais chargé par les visiteurs.
+const Admin = lazy(() => import('./pages/Admin'));
 
 /** Remet la vue en haut à chaque changement de route (sinon on hériterait du
  *  scroll de la page précédente). */
@@ -38,6 +40,14 @@ export default function App() {
           element={
             <Suspense fallback={null}>
               <ReportView />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <Suspense fallback={null}>
+              <Admin />
             </Suspense>
           }
         />

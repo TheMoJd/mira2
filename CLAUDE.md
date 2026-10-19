@@ -40,7 +40,7 @@ pour contourner un problème de fins de ligne.
 
 - **`src/App.tsx`** porte le routing : `/` landing, `/pre-diagnostic` wizard (`/pre-rapport`
   redirige en 301, cf. `netlify.toml`), `/contact` formulaire qualifié, `/rapport/:leadId` page
-  héritée, `*` → `/`. **`src/pages/Landing.tsx`** assemble la liste de sections (`<Nav/>`,
+  héritée, `/admin` interface admin de la stat-bank (chunk à part), `*` → `/`. **`src/pages/Landing.tsx`** assemble la liste de sections (`<Nav/>`,
   `<Hero/>`, `<Stats/>`, … `<Footer/>`). Ajouter/retirer une section = éditer cet assemblage.
 - **`src/data/mira.ts` est la source de vérité du contenu de la landing.** Tous les textes,
   chiffres et offres y vivent, typés par `src/data/types.ts`. **Pour changer une copie, éditer
@@ -51,9 +51,15 @@ pour contourner un problème de fins de ligne.
   `netlify/functions/` (IO). Référence détaillée : [`docs/reference-pipeline-prerapport.md`](docs/reference-pipeline-prerapport.md).
   - `rapportStructure.ts` — le déroulé §0 → §9 (+ §8bis), intention, consigne, **grille
     `allowedSources`** section → sources, budgets de mots, textes figés injectés par le code.
-  - `statbank.ts` — les **seuls chiffres citables** (102 entrées sourcées, tag `isco` pour le
-    rattachement stat → famille de métiers en §3) ; `famillesMetiers.ts` — les 29 familles
-    ISCO-08 du champ guidé.
+  - `statbank.ts` — les **seuls chiffres citables** (tag `isco` pour le rattachement stat →
+    famille de métiers en §3). Le tableau du code (`statbankSeed`, 102 entrées) n'est plus que
+    la **graine** : en prod, la banque vit dans Supabase (`stat_sources`, `stats`), éditée par
+    Caroline dans `/admin`, et rechargée au début de chaque génération
+    (`netlify/functions/lib/statbankStore.ts`, repli sur la graine si la base ne répond pas).
+    Le pipeline lit la **banque active** via `getStatbank()` / `getStat(id)`, jamais un tableau
+    figé au chargement. `statbankSchema.ts` = contrat de saisie (zod) partagé admin/serveur et
+    conversion lignes ↔ `StatEntry`. Guide : [`docs/howto-admin-sources.md`](docs/howto-admin-sources.md).
+    `famillesMetiers.ts` — les 29 familles ISCO-08 du champ guidé.
   - `reportPrompt.ts` — `SYSTEM_PROMPT` fixe + messages utilisateur (corps, synthèse, rejeux).
   - `reportSchema.ts` — schémas **zod, source unique** du contrat de sortie : les
     `response_format` OpenAI, les types TS et les parseurs en dérivent. Ne jamais redéclarer
@@ -73,7 +79,8 @@ pour contourner un problème de fins de ligne.
     PDF (`netlify/functions/lib/pdf.ts` → Chromium).
   - `netlify/functions/` : `submit-prerapport` (capture, rate-limit, upload),
     `generate-prerapport-background` (enrichissement INSEE + site, génération, PDF, email),
-    `submit-contact`, `lib/` (context, enrichment, email, pdf).
+    `submit-contact`, `admin-auth` + `admin-sources` (interface admin, liste blanche
+    `ADMIN_EMAILS`), `lib/` (admin, context, enrichment, email, pdf, statbankStore).
 - **`src/components/ui/`** : primitives réutilisables — `Button`, `Head`, `Logo`, `Reveal`,
   `StatCounter`. **`src/components/charts/`** : SVG maison (pas de lib). **`src/hooks/`**.
 - `src/components/report/ReportDocument.tsx` est **orphelin** (plus monté, seul son test
@@ -108,7 +115,7 @@ pour contourner un problème de fins de ligne.
   fait **dans le code et dans le doc, dans la même PR**. Le dernier contrôle en place est `V14` :
   un nouveau contrôle `V15` implique aussi la boucle (`n <= 15`) et l'assertion « V15 fantôme »
   de `reportDocs.test.ts`, qui devient « V16 fantôme ».
-- **Zéro chiffre inventé.** Le modèle ne cite que des entrées de `statbank.ts`, filtrées par
+- **Zéro chiffre inventé.** Le modèle ne cite que des entrées de la stat-bank active, filtrées par
   section (`allowedSources`) ; le code vérifie (V6, V7) et rejoue. Une entrée de stat-bank =
   une source **vérifiée à la source primaire**, avec `claim`, `verbatim`, `source`, `scope`,
   `provenance`, et `isco` quand elle éclaire directement une famille. Ne jamais saisir un
@@ -126,7 +133,8 @@ pour contourner un problème de fins de ligne.
 ## Données (Supabase)
 
 - Projet **`mira-dev`** (ref `saohfhieudjnwjgsotev`, eu-north-1), tables `leads`, `reports`,
-  `contact_requests`, bucket privé `reports` (`<leadId>/prerapport-mira.pdf`). Le front ne
+  `contact_requests`, `stat_sources` + `stats` (stat-bank éditable, migrations 0006/0007 à
+  appliquer), bucket privé `reports` (`<leadId>/prerapport-mira.pdf`). Le front ne
   touche jamais Supabase : tout passe par les functions (clé `service_role`).
 - Les migrations `supabase/migrations/000N_*.sql` sont **appliquées à la main** (SQL editor ou
   MCP) puis versionnées ; vérifier l'état réel de la base avant d'en écrire une (`0005`

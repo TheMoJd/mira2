@@ -7,7 +7,7 @@ import {
   renderNoteText,
 } from './reportCitations';
 import type { PreRapportOutput } from './reportSchema';
-import { statById } from './statbank';
+import { getStat } from './statbank';
 
 const WEF = 'wef-2025-skills-transformed-39';
 const STANFORD = 'stanford-2026-genai-adoption-53';
@@ -113,22 +113,22 @@ describe('buildCitationIndex — numérotation continue, regroupement par sectio
 
 describe('renderNoteText — la ligne de référence', () => {
   it('donne organisation, année, page, formulation et périmètre', () => {
-    const note = renderNoteText(statById[WEF]);
+    const note = renderNoteText(getStat(WEF)!);
     expect(note).toContain('World Economic Forum, 2025');
-    expect(note).toContain(statById[WEF].claim);
+    expect(note).toContain(getStat(WEF)!.claim);
     expect(note).toContain('Périmètre monde.');
   });
 
   it('signale une projection', () => {
-    expect(renderNoteText(statById[PROJECTION])).toContain('Projection.');
+    expect(renderNoteText(getStat(PROJECTION)!)).toContain('Projection.');
   });
 
   it('signale une source commerciale', () => {
-    expect(renderNoteText(statById[PWC_COMMERCIALE])).toContain('Source commerciale.');
+    expect(renderNoteText(getStat(PWC_COMMERCIALE)!)).toContain('Source commerciale.');
   });
 
   it('recrédite une donnée secondaire à sa source d’origine', () => {
-    const note = renderNoteText(statById[CIANUM_SECONDAIRE]);
+    const note = renderNoteText(getStat(CIANUM_SECONDAIRE)!);
     expect(note.startsWith('Epoch AI.')).toBe(true);
     expect(note).toContain('Cité par CIANum, 2025');
   });

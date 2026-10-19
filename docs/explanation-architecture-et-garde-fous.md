@@ -64,7 +64,7 @@ C'est l'invariant produit le plus important. Un rapport qui invente une statisti
 qu'inutile : il détruit la crédibilité. Le système le garantit par **défense en profondeur**,
 à quatre niveaux.
 
-1. **La donnée.** Tous les chiffres citables vivent dans `statbank.ts` — des stats macro
+1. **La donnée.** Tous les chiffres citables vivent dans la stat-bank (graine `statbank.ts`, éditée ensuite dans `/admin` et stockée dans Supabase) — des stats macro
    réelles, publiques, sourcées (chacune avec `verbatim` d'origine pour l'audit). Il n'existe
    aucun chiffre propriétaire ni scoring par métier en V1 (décision CEO D4).
 

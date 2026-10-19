@@ -12,7 +12,7 @@
  * Pour chaque (modèle × entreprise) on relève : tokens, latence, coût $, et l'audit
  * « zéro chiffre inventé » (citations inventées / hors-grille).
  *
- * Usage : `npx tsx scripts/benchmark-models.ts`
+ * Usage : `npx tsx scripts/benchmark-models.ts [--graine]`
  *   Requiert OPENAI_API_KEY dans .env (modèles GPT). ANTHROPIC_API_KEY dans .env pour les
  *   modèles Opus — si absente, les Opus sont SAUTÉS proprement (les GPT tournent quand même).
  * Sorties : `docs/samples/bench/<modele>/<slug>.{report.json,html}` + `bench/README.md`.
@@ -29,8 +29,9 @@ import type { PreRapportOutput } from '../src/data/reportSchema';
 import { renderReportHtml } from '../src/data/reportHtml';
 import type { ReportRenderContext } from '../src/data/reportHtml';
 import { famillesMetiers } from '../src/data/famillesMetiers';
-import { statbank } from '../src/data/statbank';
-import { reportSections, statsForSection, enforceSectionGrid } from '../src/data/rapportStructure';
+import { enforceSectionGrid } from '../src/data/rapportStructure';
+import { loadScriptStatbank, auditCitations, ORIGIN_LABEL } from './lib/scriptStatbank';
+import type { StatbankOrigin } from '../netlify/functions/lib/statbankStore';
 import { enrichSiret } from '../netlify/functions/lib/enrichment';
 
 const OUT_DIR = 'docs/samples/bench';
@@ -134,23 +135,6 @@ function mapFamilles(declarees: string[]): GenerationContext['famillesDeclarees'
   });
 }
 
-// Audit garde-fou (identique à generate-samples.ts) : citations connues + dans la grille.
-const KNOWN = new Set(statbank.map((s) => s.id));
-const ALLOWED = new Map(reportSections.map((s) => [s.id, new Set(statsForSection(s).map((x) => x.id))]));
-function audit(report: PreRapportOutput) {
-  let total = 0;
-  const invented: string[] = [];
-  const outOfGrid: string[] = [];
-  for (const sec of report.sections) {
-    const allowed = ALLOWED.get(sec.id) ?? new Set<string>();
-    for (const id of sec.sources_citees) {
-      total++;
-      if (!KNOWN.has(id)) invented.push(`${sec.id}→${id}`);
-      else if (!allowed.has(id)) outOfGrid.push(`${sec.id}→${id}`);
-    }
-  }
-  return { total, invented, outOfGrid };
-}
 
 function familleVerdicts(report: PreRapportOutput): string {
   const fam = report.sections.find((s) => s.id === 'familles-metiers')?.familles ?? [];
@@ -254,6 +238,8 @@ async function main() {
   const openaiKey = readEnv('OPENAI_API_KEY');
   if (!openaiKey) throw new Error('OPENAI_API_KEY absent de .env');
   const openai = new OpenAI({ apiKey: openaiKey });
+  // Même banque que la prod (éditée dans /admin), graine en repli ou avec --graine.
+  const bankOrigin = await loadScriptStatbank(readEnv);
 
   const anthropicKey = readEnv('ANTHROPIC_API_KEY');
   const anthropic = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : null;
@@ -340,7 +326,7 @@ async function main() {
         writeFileSync(`${dir}/${e.c.slug}.report.json`, JSON.stringify(report, null, 2), 'utf8');
         writeFileSync(`${dir}/${e.c.slug}.html`, renderReportHtml(report, e.renderCtx), 'utf8');
 
-        const a = audit(report);
+        const a = auditCitations(report);
         const cost = (m.prixIn * pt + m.prixOut * ct) / 1e6;
         console.log(
           `  in=${pt} out=${ct} | ${(ms / 1000).toFixed(1)}s | $${cost.toFixed(4)} | ` +
@@ -384,19 +370,20 @@ async function main() {
     }
   }
 
-  writeReadme(results, dateRapport, anthropic !== null);
+  writeReadme(results, dateRapport, anthropic !== null, bankOrigin);
   const nbOk = results.filter((r) => r.ok).length;
   console.log(`\nTerminé : ${nbOk}/${results.length} rapports générés. Comparatif → ${OUT_DIR}/README.md`);
 }
 
 /** Écrit le comparatif Markdown (synthèse par modèle + verdicts §3). */
-function writeReadme(results: BenchResult[], dateRapport: string, anthropicRan: boolean): void {
+function writeReadme(results: BenchResult[], dateRapport: string, anthropicRan: boolean, bankOrigin: StatbankOrigin): void {
   const fmt$ = (n: number) => `$${n.toFixed(4)}`;
   const fmtS = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
   let md = `# Benchmark modèles — pré-rapport MIRA\n\n`;
   md += `> Généré le ${dateRapport} par [\`scripts/benchmark-models.ts\`](../../../scripts/benchmark-models.ts). `;
   md += `Même prompt, même schéma, même entrée — seule variable : le modèle. `;
+  md += `Stat-bank : ${ORIGIN_LABEL[bankOrigin]}. `;
   md += `Corpus = **6TM** (vrai client, réponses wizard réelles saisies par Cyril). `;
   md += `**Sorties non committées (confidentiel).**\n\n`;
   if (!anthropicRan) {
