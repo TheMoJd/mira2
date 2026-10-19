@@ -105,6 +105,17 @@ describe('statbankSchema — archivage et grille éditée', () => {
     const loaded = rowsToStatbank(sources, stats, gridSections());
     expect(loaded.stats.some((s) => s.source.sourceId === 'S06')).toBe(false);
     expect(Object.values(loaded.grid).some((codes) => codes.includes('S06'))).toBe(false);
+    // Retrait voulu : rien à signaler à l'admin.
+    expect(loaded.rejected).toEqual([]);
+  });
+
+  it('un document non conforme écarte ses stats, avec une raison qui le dit', () => {
+    const { sources, stats } = seededTables();
+    sources.find((s) => s.code === 'S06')!.year = 1800;
+    const loaded = rowsToStatbank(sources, stats, gridSections());
+    expect(loaded.rejected.find((r) => r.id === 'S06')).toMatchObject({ kind: 'source' });
+    const statRejet = loaded.rejected.find((r) => r.kind === 'stat');
+    expect(statRejet?.reason).toMatch(/S06 écarté/);
   });
 
   it('la grille éditée prime sur celle du code dans statsForSection', () => {
@@ -122,7 +133,7 @@ describe('statbankSchema — archivage et grille éditée', () => {
     const { sources, stats } = seededTables();
     stats[0].claim = 'Un claim avec un point-virgule ; interdit dans le rapport.';
     const loaded = rowsToStatbank(sources, stats, gridSections());
-    expect(loaded.rejected.map((r) => r.id)).toEqual([stats[0].id]);
+    expect(loaded.rejected).toEqual([{ kind: 'stat', id: stats[0].id, reason: expect.stringMatching(/point-virgule/) }]);
   });
 });
 

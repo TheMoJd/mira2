@@ -294,8 +294,19 @@ export interface LoadedStatbank {
   stats: StatEntry[];
   /** Grille éditée : section → codes des sources actives autorisées. */
   grid: Record<string, string[]>;
-  /** Lignes actives écartées parce qu'elles ne passent plus le contrat (journalisées). */
-  rejected: { id: string; reason: string }[];
+  /**
+   * Lignes actives écartées parce qu'elles ne passent plus le contrat (édition SQL,
+   * règle durcie, section retirée…). Journalisées à la génération et affichées dans
+   * l'admin : sans ça, une ligne « active » dans l'admin serait ignorée en silence.
+   */
+  rejected: RejectedRow[];
+}
+
+export interface RejectedRow {
+  kind: 'source' | 'stat';
+  /** Code du document ou id de la statistique. */
+  id: string;
+  reason: string;
 }
 
 /**
@@ -314,11 +325,17 @@ export function rowsToStatbank(
   const sourceSchema = sourceInputSchema(gridIds);
 
   const activeSources = new Map<string, SourceInput & { inSocle: boolean }>();
+  const archivedSources = new Set<string>();
+  const rejectedSources = new Set<string>();
   for (const row of sources) {
-    if (row.archived_at) continue;
+    if (row.archived_at) {
+      archivedSources.add(row.code);
+      continue;
+    }
     const parsed = sourceSchema.safeParse({ ...row, sections: row.sections.filter((s) => gridIds.includes(s)) });
     if (!parsed.success) {
-      rejected.push({ id: row.code, reason: firstIssue(parsed.error) });
+      rejected.push({ kind: 'source', id: row.code, reason: firstIssue(parsed.error) });
+      rejectedSources.add(row.code);
       continue;
     }
     activeSources.set(parsed.data.code, { ...parsed.data, inSocle: parsed.data.code.startsWith('S') });
@@ -329,12 +346,17 @@ export function rowsToStatbank(
     if (row.archived_at) continue;
     const src = activeSources.get(row.source_code);
     if (!src) {
-      rejected.push({ id: row.id, reason: `document ${row.source_code} absent ou archivé` });
+      // Document archivé : retrait voulu, pas une anomalie à signaler.
+      if (archivedSources.has(row.source_code)) continue;
+      const reason = rejectedSources.has(row.source_code)
+        ? `document ${row.source_code} écarté (voir sa fiche)`
+        : `document ${row.source_code} introuvable`;
+      rejected.push({ kind: 'stat', id: row.id, reason });
       continue;
     }
     const parsed = statInputSchema.safeParse(statRowToInput(row));
     if (!parsed.success) {
-      rejected.push({ id: row.id, reason: firstIssue(parsed.error) });
+      rejected.push({ kind: 'stat', id: row.id, reason: firstIssue(parsed.error) });
       continue;
     }
     const s = parsed.data;

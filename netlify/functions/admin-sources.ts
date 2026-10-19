@@ -20,6 +20,7 @@
 import type { Handler } from '@netlify/functions';
 import {
   firstIssue,
+  rowsToStatbank,
   sourceInputSchema,
   sourceInputToRow,
   statInputSchema,
@@ -62,7 +63,19 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod === 'GET') {
     try {
       const [{ sources, stats }, citations] = await Promise.all([fetchStatbankRows(supabase), citationCounts(supabase)]);
-      return json(200, { ok: true, sources, stats, gridSections: sections, citations, email: by });
+      // Même lecture que la génération (`loadActiveStatbank`) : l'admin voit exactement
+      // ce qui sera citable, et ce qui sera écarté en silence et pourquoi.
+      const loaded = rowsToStatbank(sources, stats, sections);
+      return json(200, {
+        ok: true,
+        sources,
+        stats,
+        gridSections: sections,
+        citations,
+        email: by,
+        citableCount: loaded.stats.length,
+        rejected: loaded.rejected,
+      });
     } catch (err) {
       console.error('[admin-sources] lecture impossible', err);
       return fail(500, 'Lecture de la banque impossible. La migration 0006 est-elle appliquée ?');

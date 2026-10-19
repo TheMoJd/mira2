@@ -6,7 +6,7 @@
  * limite la durée d'exposition du jeton. Le jeton d'accès est rafraîchi une minute
  * avant expiration, et une fois de plus si le serveur répond 401.
  */
-import type { GridSection, StatRow, StatSourceRow } from '../data/statbankSchema';
+import type { GridSection, RejectedRow, StatRow, StatSourceRow } from '../data/statbankSchema';
 
 export interface AdminSession {
   email: string;
@@ -23,6 +23,10 @@ export interface AdminData {
   /** Nombre de rapports envoyés citant chaque statistique. */
   citations: Record<string, number>;
   email: string;
+  /** Statistiques que la génération pourra citer (même lecture qu'elle, côté serveur). */
+  citableCount: number;
+  /** Lignes actives que la génération écarte, avec la raison. */
+  rejected: RejectedRow[];
 }
 
 const KEY = 'mira-admin-session';

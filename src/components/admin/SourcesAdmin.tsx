@@ -96,15 +96,29 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
     if (!filtering) return true;
     return (statsBySource.get(src.code)?.length ?? 0) > 0 || (q !== '' && fold(`${src.code} ${src.report} ${src.org}`).includes(q));
   });
-  const activeStats = data.stats.filter((s) => !s.archived_at && activeSources.some((src) => src.code === s.source_code));
+  const rejectedById = new Map(data.rejected.map((r) => [`${r.kind}:${r.id}`, r.reason]));
 
   return (
     <div style={{ display: 'grid', gap: 22 }}>
       <div className="adm-summary">
-        <div><strong>{activeStats.length}</strong> statistiques citables</div>
+        <div><strong>{data.citableCount}</strong> statistiques citables</div>
         <div><strong>{activeSources.length}</strong> documents actifs</div>
-        <div><strong>{data.stats.length - data.stats.filter((s) => !s.archived_at).length}</strong> statistiques archivées</div>
+        <div><strong>{data.stats.filter((s) => s.archived_at).length}</strong> statistiques archivées</div>
+        {data.rejected.length > 0 && (
+          <div style={{ color: 'var(--risk)' }}><strong style={{ color: 'inherit' }}>{data.rejected.length}</strong> écartées à la génération</div>
+        )}
       </div>
+
+      {data.citableCount === 0 && (
+        <Notice tone="error">
+          Aucune statistique citable en base : la génération utilise la banque d’origine du code tant que la banque reste vide.
+        </Notice>
+      )}
+      {data.rejected.length > 0 && (
+        <Notice tone="error">
+          {data.rejected.length} ligne{data.rejected.length > 1 ? 's' : ''} active{data.rejected.length > 1 ? 's' : ''} ne respecte{data.rejected.length > 1 ? 'nt' : ''} plus les règles de saisie et {data.rejected.length > 1 ? 'sont' : 'est'} ignorée{data.rejected.length > 1 ? 's' : ''} par la génération. Elles portent le badge « Écartée à la génération » : les ouvrir et les enregistrer à nouveau pour les corriger.
+        </Notice>
+      )}
 
       <Notice tone="warn">
         Chaque modification s’applique aux pré-rapports générés à partir de maintenant. Les rapports déjà envoyés ne changent pas.
@@ -185,6 +199,9 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
                 <Badge>{src.nature === 'recherche' ? 'Recherche' : 'Commerciale'}</Badge>
                 <span>{total} stat{total > 1 ? 's' : ''}</span>
                 {src.archived_at && <Badge tone="risk">Archivé</Badge>}
+                {rejectedById.has(`source:${src.code}`) && (
+                  <Badge tone="risk" title={rejectedById.get(`source:${src.code}`)}>Écarté à la génération : {rejectedById.get(`source:${src.code}`)}</Badge>
+                )}
                 {src.sections.length === 0 ? (
                   <Badge tone="risk" title="Aucune section n’est autorisée à citer ce document">Citée nulle part</Badge>
                 ) : (
@@ -214,6 +231,9 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
                               {s.page && <span>{s.page}</span>}
                               <span title="Rapports envoyés qui citent cette statistique">{cited > 0 ? `citée dans ${cited} rapport${cited > 1 ? 's' : ''}` : 'jamais citée'}</span>
                               {s.archived_at && <Badge tone="risk">Archivée</Badge>}
+                              {rejectedById.has(`stat:${s.id}`) && (
+                                <Badge tone="risk" title={rejectedById.get(`stat:${s.id}`)}>Écartée à la génération : {rejectedById.get(`stat:${s.id}`)}</Badge>
+                              )}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>

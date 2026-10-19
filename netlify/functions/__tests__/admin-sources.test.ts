@@ -81,6 +81,17 @@ const VALID_STAT = {
   originalSource: '',
 };
 
+const NOW = '2026-10-19T00:00:00Z';
+const SOURCE_ROW = {
+  in_socle: true, nature: 'recherche', report: 'WEF, Future of Jobs 2025', org: 'WEF', year: 2025,
+  sections: ['competences'], note: null, archived_at: null as string | null, updated_at: NOW, updated_by: null,
+};
+const STAT_ROW = {
+  source_code: 'S06', value: 41, unit: '%', claim: 'En 2026, 41 % des employeurs prévoient de réduire leurs effectifs.',
+  verbatim: '41%', theme: 'emploi', scope: 'monde', provenance: 'primaire', projection: false, isco: [] as string[],
+  page: null, original_source: null, archived_at: null as string | null, updated_at: NOW, updated_by: null,
+};
+
 beforeEach(() => {
   process.env.SUPABASE_URL = 'http://localhost:54321';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test';
@@ -89,8 +100,11 @@ beforeEach(() => {
     'tok-caroline': { id: 'u1', email: 'caroline@polaria.ai' },
     'tok-intrus': { id: 'u2', email: 'prospect@exemple.fr' },
   };
-  h.sources = [{ code: 'S06', archived_at: null }, { code: 'S99', archived_at: '2026-10-01T00:00:00Z' }];
-  h.stats = [{ id: 'wef-existante', source_code: 'S06' }];
+  h.sources = [
+    { ...SOURCE_ROW, code: 'S06' },
+    { ...SOURCE_ROW, code: 'S99', archived_at: '2026-10-01T00:00:00Z' },
+  ];
+  h.stats = [{ ...STAT_ROW, id: 'wef-existante' }];
   h.writes = [];
   h.insertError = null;
 });
@@ -115,6 +129,16 @@ describe('admin-sources — contrôle d’accès', () => {
   it('refuse tout si ADMIN_EMAILS n’est pas configurée', async () => {
     delete process.env.ADMIN_EMAILS;
     expect((await call('GET')).status).toBe(500);
+  });
+});
+
+describe('admin-sources — lecture', () => {
+  it('compte les stats citables comme la génération et signale les lignes écartées', async () => {
+    h.stats.push({ ...STAT_ROW, id: 'claim-fautive', claim: 'Une formulation devenue fautive ; avec point-virgule.' });
+    const { status, payload } = await call('GET');
+    expect(status).toBe(200);
+    expect(payload.citableCount).toBe(1);
+    expect(payload.rejected).toEqual([{ kind: 'stat', id: 'claim-fautive', reason: expect.stringMatching(/point-virgule/) }]);
   });
 });
 
