@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import WizardButton from '../prerapport/WizardButton';
-import { Badge, Field, Notice } from './adminUi';
+import { Badge, Field, Notice, useDirtyTracking } from './adminUi';
 import {
   CLAIM_FORBIDDEN_RE,
   ISCO_CODES,
@@ -30,6 +30,8 @@ interface StatFormProps {
   gridSections: GridSection[];
   onSubmit: (data: unknown) => Promise<void>;
   onCancel: () => void;
+  /** Prévenu quand la saisie diverge (ou plus) de l'état initial. */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 /** Libellés des familles par code ISCO (un code peut couvrir plusieurs familles). */
@@ -51,7 +53,7 @@ function suggestId(source: StatSourceRow | undefined): string {
   return org ? `${org}-${source.year}-` : '';
 }
 
-export default function StatForm({ initial, defaultSourceCode, sources, gridSections, onSubmit, onCancel }: StatFormProps) {
+export default function StatForm({ initial, defaultSourceCode, sources, gridSections, onSubmit, onCancel, onDirtyChange }: StatFormProps) {
   const editing = !!initial;
   const start = initial ? statRowToInput(initial) : null;
   const firstSource = sources.find((s) => s.code === defaultSourceCode) ?? sources[0];
@@ -73,6 +75,7 @@ export default function StatForm({ initial, defaultSourceCode, sources, gridSect
   const [saving, setSaving] = useState(false);
 
   const data = { id, sourceCode, value, unit, claim, verbatim, theme, scope, provenance, projection, isco, page, originalSource };
+  useDirtyTracking(data, onDirtyChange);
   const parsed = statInputSchema.safeParse(data);
   const warnings = parsed.success ? statWarnings(parsed.data) : [];
   const claimHasForbidden = CLAIM_FORBIDDEN_RE.test(claim);

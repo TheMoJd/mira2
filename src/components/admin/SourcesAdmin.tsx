@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import WizardButton from '../prerapport/WizardButton';
 import { Badge, Modal, Notice, SmallButton } from './adminUi';
 import SourceForm from './SourceForm';
@@ -26,6 +26,14 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
   const [themeFilter, setThemeFilter] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  /** Saisie en cours dans la modale ouverte (lu par la modale avant de se fermer). */
+  const formDirty = useRef(false);
+  const setFormDirty = useCallback((dirty: boolean) => (formDirty.current = dirty), []);
+  const isFormDirty = useCallback(() => formDirty.current, []);
+  const closeEditor = useCallback(() => {
+    formDirty.current = false;
+    setEditing(null);
+  }, []);
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -274,16 +282,17 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
       </div>
 
       {editing?.kind === 'source' && (
-        <Modal title={editing.row ? `Modifier le document ${editing.row.code}` : 'Nouveau document source'} onClose={() => setEditing(null)}>
+        <Modal title={editing.row ? `Modifier le document ${editing.row.code}` : 'Nouveau document source'} onClose={closeEditor} isDirty={isFormDirty}>
           <SourceForm
             initial={editing.row}
             takenCodes={data.sources.map((s) => s.code)}
             gridSections={data.gridSections}
-            onCancel={() => setEditing(null)}
+            onCancel={closeEditor}
+            onDirtyChange={setFormDirty}
             onSubmit={async (payload) => {
               try {
                 await write({ action: editing.row ? 'updateSource' : 'createSource', data: payload }, editing.row ? 'Document enregistré.' : 'Document ajouté.');
-                setEditing(null);
+                closeEditor();
               } catch (err) {
                 if (err instanceof AdminAuthError) return onAuthLost();
                 throw err;
@@ -294,17 +303,18 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
       )}
 
       {editing?.kind === 'stat' && (
-        <Modal title={editing.row ? 'Modifier la statistique' : 'Nouvelle statistique'} onClose={() => setEditing(null)}>
+        <Modal title={editing.row ? 'Modifier la statistique' : 'Nouvelle statistique'} onClose={closeEditor} isDirty={isFormDirty}>
           <StatForm
             initial={editing.row}
             defaultSourceCode={editing.sourceCode}
             sources={activeSources}
             gridSections={data.gridSections}
-            onCancel={() => setEditing(null)}
+            onCancel={closeEditor}
+            onDirtyChange={setFormDirty}
             onSubmit={async (payload) => {
               try {
                 await write({ action: editing.row ? 'updateStat' : 'createStat', data: payload }, editing.row ? 'Statistique enregistrée.' : 'Statistique ajoutée.');
-                setEditing(null);
+                closeEditor();
               } catch (err) {
                 if (err instanceof AdminAuthError) return onAuthLost();
                 throw err;

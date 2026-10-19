@@ -1,11 +1,42 @@
-import { useEffect, useId } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 /** Primitives de l'interface admin. Outil interne : sobre, dense, lisible. */
 
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+interface ModalProps {
+  title: string;
+  onClose: () => void;
+  /** Saisie en cours non enregistrée ? Si oui, fermer demande confirmation. */
+  isDirty?: () => boolean;
+  children: ReactNode;
+}
+
+/**
+ * Fenêtre modale. Échap, la croix et un clic sur le fond passent par `requestClose`,
+ * qui demande confirmation s'il y a une saisie en cours : un geste réflexe ne doit pas
+ * effacer dix minutes de saisie. Les refs gardent les écouteurs stables même si le
+ * parent repasse des fonctions neuves à chaque rendu.
+ */
+export function Modal({ title, onClose, isDirty, children }: ModalProps) {
+  const latest = useRef({ onClose, isDirty });
+  latest.current = { onClose, isDirty };
+  /** Le clic a-t-il COMMENCÉ sur le fond ? (une sélection de texte tirée hors d'un champ ne ferme rien) */
+  const downOnBackdrop = useRef(false);
+
+  const requestClose = useCallback(() => {
+    const { onClose: close, isDirty: dirty } = latest.current;
+    if (dirty?.() && !window.confirm('Abandonner la saisie en cours ? Elle ne sera pas enregistrée.')) return;
+    close();
+  }, []);
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      // Échap sert d'abord à refermer une liste de suggestions ou un menu déroulant.
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'SELECT' || (t.tagName === 'INPUT' && t.hasAttribute('list')))) return;
+      requestClose();
+    };
     window.addEventListener('keydown', onKey);
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -13,19 +44,41 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = overflow;
     };
-  }, [onClose]);
+  }, [requestClose]);
 
   return (
-    <div className="adm-overlay" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="adm-overlay"
+      role="presentation"
+      onMouseDown={(e) => (downOnBackdrop.current = e.target === e.currentTarget)}
+      onMouseUp={(e) => {
+        if (downOnBackdrop.current && e.target === e.currentTarget) requestClose();
+        downOnBackdrop.current = false;
+      }}
+    >
       <div className="adm-modal" role="dialog" aria-modal="true" aria-label={title}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
           <h2 className="display" style={{ fontSize: 24, margin: 0, color: 'var(--ink)' }}>{title}</h2>
-          <button type="button" className="adm-icon-btn" onClick={onClose} aria-label="Fermer">✕</button>
+          <button type="button" className="adm-icon-btn" onClick={requestClose} aria-label="Fermer">✕</button>
         </div>
         {children}
       </div>
     </div>
   );
+}
+
+/**
+ * Suivi « saisie modifiée » d'un formulaire : compare l'état courant à celui du
+ * premier rendu et prévient le parent à chaque changement.
+ */
+export function useDirtyTracking(current: unknown, onDirtyChange?: (dirty: boolean) => void): void {
+  const snapshot = useRef<string | null>(null);
+  const serialized = JSON.stringify(current);
+  if (snapshot.current === null) snapshot.current = serialized;
+  const dirty = serialized !== snapshot.current;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
 }
 
 interface FieldProps {

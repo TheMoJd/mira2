@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import WizardButton from '../prerapport/WizardButton';
-import { Field, Notice } from './adminUi';
+import { Field, Notice, useDirtyTracking } from './adminUi';
 import { NATURES, firstIssue, sourceInputSchema, type GridSection, type StatSourceRow } from '../../data/statbankSchema';
 
 interface SourceFormProps {
@@ -12,6 +12,8 @@ interface SourceFormProps {
   gridSections: GridSection[];
   onSubmit: (data: unknown) => Promise<void>;
   onCancel: () => void;
+  /** Prévenu quand la saisie diverge (ou plus) de l'état initial. */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 /**
@@ -25,7 +27,7 @@ export function nextFreeCode(prefix: 'S' | 'FR', taken: string[]): string {
   return prefix === 'S' ? `S${String(max + 1).padStart(2, '0')}` : `FR${max + 1}`;
 }
 
-export default function SourceForm({ initial, takenCodes, gridSections, onSubmit, onCancel }: SourceFormProps) {
+export default function SourceForm({ initial, takenCodes, gridSections, onSubmit, onCancel, onDirtyChange }: SourceFormProps) {
   const editing = !!initial;
   const [code, setCode] = useState(initial?.code ?? nextFreeCode('S', takenCodes));
   const [nature, setNature] = useState(initial?.nature ?? 'recherche');
@@ -36,6 +38,8 @@ export default function SourceForm({ initial, takenCodes, gridSections, onSubmit
   const [note, setNote] = useState(initial?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useDirtyTracking({ code, nature, report, org, year, sections, note }, onDirtyChange);
 
   const toggleSection = (id: string) =>
     setSections((cur) => (cur.includes(id) ? cur.filter((s) => s !== id) : [...cur, id]));
