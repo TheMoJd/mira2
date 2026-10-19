@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import WizardButton from '../prerapport/WizardButton';
 import { Field, Notice, useDirtyTracking } from './adminUi';
-import { NATURES, firstIssue, sourceInputSchema, type GridSection, type StatSourceRow } from '../../data/statbankSchema';
+import { NATURES, firstIssue, sourceInputSchema, splitSections, type GridSection, type StatSourceRow } from '../../data/statbankSchema';
 
 interface SourceFormProps {
   /** Document édité ; absent = création. */
@@ -34,7 +34,12 @@ export default function SourceForm({ initial, takenCodes, gridSections, onSubmit
   const [report, setReport] = useState(initial?.report ?? '');
   const [org, setOrg] = useState(initial?.org ?? '');
   const [year, setYear] = useState(String(initial?.year ?? new Date().getFullYear()));
-  const [sections, setSections] = useState<string[]>(initial?.sections ?? []);
+  // Sections retirées du rapport depuis l'enregistrement : écartées (et annoncées),
+  // sinon elles bloqueraient la validation sans case pour les décocher.
+  const [{ kept: initialSections, dropped: droppedSections }] = useState(() =>
+    splitSections(initial?.sections ?? [], gridSections),
+  );
+  const [sections, setSections] = useState<string[]>(initialSections);
   const [note, setNote] = useState(initial?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -125,6 +130,11 @@ export default function SourceForm({ initial, takenCodes, gridSections, onSubmit
         {(id) => <textarea id={id} className="pr-field" rows={3} value={note} onChange={(e) => setNote(e.target.value)} />}
       </Field>
 
+      {droppedSections.length > 0 && (
+        <Notice tone="warn">
+          Section{droppedSections.length > 1 ? 's' : ''} retirée{droppedSections.length > 1 ? 's' : ''} du rapport, supprimée{droppedSections.length > 1 ? 's' : ''} de ce document à l’enregistrement : {droppedSections.join(', ')}.
+        </Notice>
+      )}
       {sections.length === 0 && <Notice tone="warn">Aucune section cochée : ce document ne pourra pas être cité.</Notice>}
       {error && <Notice tone="error">{error}</Notice>}
 

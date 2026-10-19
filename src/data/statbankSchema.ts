@@ -241,6 +241,19 @@ export interface StatRow {
   updated_by: string | null;
 }
 
+/**
+ * Sépare les sections d'un document entre celles que le rapport connaît encore
+ * (`kept`) et celles retirées ou renommées depuis (`dropped`). Le formulaire repart
+ * de `kept` : sinon un id disparu, sans case à décocher, bloquerait l'enregistrement.
+ */
+export function splitSections(
+  sections: readonly string[],
+  gridSections: readonly GridSection[],
+): { kept: string[]; dropped: string[] } {
+  const known = new Set(gridSections.map((g) => g.id));
+  return { kept: sections.filter((s) => known.has(s)), dropped: sections.filter((s) => !known.has(s)) };
+}
+
 /** Colonnes écrites par l'admin pour une source (le reste est géré par la base). */
 export const sourceInputToRow = (s: SourceInput) => ({
   code: s.code,

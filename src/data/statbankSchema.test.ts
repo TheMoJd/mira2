@@ -5,6 +5,7 @@ import {
   sourceInputSchema,
   statInputSchema,
   statWarnings,
+  splitSections,
   type StatRow,
   type StatSourceRow,
 } from './statbankSchema';
@@ -179,5 +180,15 @@ describe('statbankSchema — saisie', () => {
       schema.safeParse({ code: 'S18', nature: 'recherche', report: 'abc', org: 'ab', year: 2026, sections: ['synthese-executive'] })
         .success,
     ).toBe(false);
+  });
+});
+
+describe('splitSections', () => {
+  it('garde les sections connues et isole celles retirées du rapport', () => {
+    const grid = [{ id: 'contexte', label: '§2' }, { id: 'competences', label: '§4' }];
+    expect(splitSections(['contexte', 'ancienne-section', 'competences'], grid)).toEqual({
+      kept: ['contexte', 'competences'],
+      dropped: ['ancienne-section'],
+    });
   });
 });
