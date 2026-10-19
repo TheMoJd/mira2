@@ -53,6 +53,16 @@ function saveSession(s: AdminSession | null): void {
 
 export const logout = (): void => saveSession(null);
 
+/**
+ * Message d'erreur d'une réponse refusée. Une réponse 200 sans `ok: true` (page HTML
+ * servie à la place de la function, function absente du déploiement…) est une erreur :
+ * l'accepter ferait planter l'interface sur des champs manquants.
+ */
+function responseError(res: Response, payload: Record<string, unknown>): string {
+  if (typeof payload.error === 'string') return payload.error;
+  return res.ok ? 'Réponse inattendue du serveur. Réessayer, ou prévenir l’équipe technique.' : `Erreur ${res.status}.`;
+}
+
 async function post(path: string, body: unknown, token?: string): Promise<Record<string, unknown>> {
   const res = await fetch(`/.netlify/functions/${path}`, {
     method: 'POST',
@@ -61,7 +71,7 @@ async function post(path: string, body: unknown, token?: string): Promise<Record
   });
   const payload = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (res.status === 401) throw new AdminAuthError(String(payload.error ?? 'Session expirée.'));
-  if (!res.ok || payload.ok === false) throw new Error(String(payload.error ?? `Erreur ${res.status}.`));
+  if (!res.ok || payload.ok !== true) throw new Error(responseError(res, payload));
   return payload;
 }
 
@@ -113,7 +123,7 @@ export function fetchAdminData(): Promise<AdminData> {
     const res = await fetch('/.netlify/functions/admin-sources', { headers: { authorization: `Bearer ${token}` } });
     const payload = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     if (res.status === 401) throw new AdminAuthError(String(payload.error ?? 'Session expirée.'));
-    if (!res.ok || payload.ok === false) throw new Error(String(payload.error ?? `Erreur ${res.status}.`));
+    if (!res.ok || payload.ok !== true) throw new Error(responseError(res, payload));
     return payload as unknown as AdminData;
   });
 }

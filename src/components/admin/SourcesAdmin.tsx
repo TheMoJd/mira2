@@ -124,7 +124,9 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
       )}
       {data.rejected.length > 0 && (
         <Notice tone="error">
-          {data.rejected.length} ligne{data.rejected.length > 1 ? 's' : ''} active{data.rejected.length > 1 ? 's' : ''} ne respecte{data.rejected.length > 1 ? 'nt' : ''} plus les règles de saisie et {data.rejected.length > 1 ? 'sont' : 'est'} ignorée{data.rejected.length > 1 ? 's' : ''} par la génération. Elles portent le badge « Écartée à la génération » : les ouvrir et les enregistrer à nouveau pour les corriger.
+          {data.rejected.length > 1
+            ? `${data.rejected.length} lignes actives ne respectent plus les règles de saisie et sont ignorées par la génération. Elles portent le badge « Écartée à la génération » : les ouvrir et les enregistrer à nouveau pour les corriger.`
+            : 'Une ligne active ne respecte plus les règles de saisie et est ignorée par la génération. Elle porte le badge « Écartée à la génération » : l’ouvrir et l’enregistrer à nouveau pour la corriger.'}
         </Notice>
       )}
 
