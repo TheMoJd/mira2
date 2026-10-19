@@ -7,7 +7,10 @@
   # Il apparaît légitimement dans docs/samples/README.md (provenance des exemples), ce
   # qui faisait échouer le secrets scanning Netlify. On l'exclut du scan ; les vrais
   # secrets (OPENAI_API_KEY, SUPABASE_SERVICE_ROLE_KEY) restent scannés.
-  SECRETS_SCAN_OMIT_KEYS = "OPENAI_MODEL"
+  # ADMIN_EMAILS : liste d'adresses @polaria.ai autorisées sur /admin, pas un secret
+  # (la sécurité vient des comptes Supabase Auth). Ces adresses figurent dans
+  # .env.example, TODO.md et les tests : sans exclusion, le scan bloquait le build.
+  SECRETS_SCAN_OMIT_KEYS = "OPENAI_MODEL,ADMIN_EMAILS"
 
 # Netlify Functions (Tranche 2+) — bundle esbuild, dossier dédié.
 [functions]
