@@ -9,8 +9,6 @@
  * touche jamais Supabase en direct — tout passe par cette function.
  */
 import type { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../../src/types/supabase';
 import type { ContactForm } from '../../src/types/contact';
 import { emptyContactForm } from '../../src/types/contact';
 import { FONCTION_AUTRE } from '../../src/data/contact';
@@ -18,6 +16,7 @@ import { validateContact } from '../../src/components/contact/validation';
 import { normalizePhone } from '../../src/components/prerapport/validation';
 import { notifyContactRequest } from './lib/email';
 import { fail, json, readJsonBody } from './lib/http';
+import { createServiceClient } from './lib/supabase';
 import { cleanLine, cleanMultiline } from '../../src/data/textClean';
 
 /** Assainit un champ libre (NFC, invisibles supprimés, blancs repliés, cf. `textClean.ts`).
@@ -77,9 +76,7 @@ export const handler: Handler = async (event) => {
   const firstError = Object.values(errors)[0];
   if (firstError) return fail(422, firstError);
 
-  const supabase = createClient<Database>(supabaseUrl, serviceKey, {
-    auth: { persistSession: false },
-  });
+  const supabase = createServiceClient(supabaseUrl, serviceKey);
 
   // --- Anti-abus : rate-limit par email (fenêtre glissante) ---
   const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();

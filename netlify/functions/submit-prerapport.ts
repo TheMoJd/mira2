@@ -9,13 +9,12 @@
  * front ne touche jamais Supabase en direct — tout passe par cette function.
  */
 import type { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
 import { parse as parseMultipart, getBoundary } from 'parse-multipart-data';
 import { randomUUID } from 'node:crypto';
-import type { Database } from '../../src/types/supabase';
 import { EMAIL_RE, PHONE_RE, MAX_IDENTITY_LEN, normalizePhone } from '../../src/components/prerapport/validation';
 import { notifySubmitFailure } from './lib/email';
 import { fail, json } from './lib/http';
+import { createServiceClient } from './lib/supabase';
 
 /**
  * Base de l'URL qui déclenche la génération : le déploiement qui a reçu la soumission,
@@ -131,9 +130,7 @@ export const handler: Handler = async (event) => {
   if (!consentRgpd) return fail(422, 'Le consentement RGPD est nécessaire.');
   if (siret && !/^\d{14}$/.test(siret)) return fail(422, 'Le SIRET doit comporter 14 chiffres.');
 
-  const supabase = createClient<Database>(supabaseUrl, serviceKey, {
-    auth: { persistSession: false },
-  });
+  const supabase = createServiceClient(supabaseUrl, serviceKey);
 
   // --- Anti-abus : rate-limit par email (fenêtre glissante) ---
   const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
