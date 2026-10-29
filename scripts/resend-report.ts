@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
-import { REPORT_EMAIL_HTML, REPORT_EMAIL_SUBJECT } from '../netlify/functions/lib/email';
+import { REPORT_EMAIL_HTML, REPORT_EMAIL_SUBJECT, parseRecipients } from '../netlify/functions/lib/email';
 
 // --- mini parseur .env (évite une dépendance dotenv) ---
 const env: Record<string, string> = {};
@@ -39,11 +39,12 @@ if (dlErr || !blob) throw new Error(`Download PDF échoué : ${dlErr?.message}`)
 const pdf = Buffer.from(await blob.arrayBuffer());
 console.log(`PDF téléchargé : ${pdf.length} octets pour ${lead.email}`);
 
+const replyTo = parseRecipients(env.RESEND_REPLY_TO);
 const resend = new Resend(env.RESEND_API_KEY);
 const { data, error } = await resend.emails.send({
   from: env.RESEND_FROM,
   to: [lead.email],
-  replyTo: env.RESEND_REPLY_TO || undefined,
+  ...(replyTo.length > 0 ? { replyTo } : {}),
   subject: REPORT_EMAIL_SUBJECT,
   html: REPORT_EMAIL_HTML,
   attachments: [{ filename: 'prerapport-mira.pdf', content: pdf.toString('base64') }],

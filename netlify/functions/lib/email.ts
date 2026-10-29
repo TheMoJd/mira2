@@ -26,7 +26,7 @@ const escapeHtml = (s: string): string =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c);
 
 /** Liste d'adresses séparées par des virgules (« a@x.fr, b@y.fr ») → tableau nettoyé.
- *  Même format pour `CONTACT_NOTIFY_EMAIL` et `REPORT_BCC_EMAIL`. */
+ *  Même format pour `CONTACT_NOTIFY_EMAIL`, `REPORT_BCC_EMAIL` et `RESEND_REPLY_TO`. */
 export function parseRecipients(raw: string | undefined): string[] {
   return (raw ?? '')
     .split(',')
@@ -82,10 +82,11 @@ export async function sendReportEmail({ to, pdf }: SendReportArgs): Promise<Send
 
   const html = REPORT_EMAIL_HTML;
 
-  // Optionnel : route les réponses des prospects vers une boîte qu'on relève vraiment
-  // (ex. moetez@polaria.ai) plutôt que vers l'adresse d'envoi `@mira-audit.fr`, qui
-  // n'a pas de boîte derrière. Absent → les réponses repartent vers le `from`.
-  const replyTo = process.env.RESEND_REPLY_TO;
+  // Optionnel : route les réponses des prospects vers des boîtes qu'on relève vraiment
+  // (ex. moetez@polaria.ai, liste à virgules acceptée) plutôt que vers l'adresse
+  // d'envoi `@mira-audit.fr`, qui n'a pas de boîte derrière. Absent → les réponses
+  // repartent vers le `from`.
+  const replyTo = parseRecipients(process.env.RESEND_REPLY_TO);
   // Optionnel : l'équipe reçoit une copie cachée de chaque rapport envoyé. Le
   // prospect ne voit pas ces adresses (CCI), et la mention RGPD l'en informe.
   const bcc = parseRecipients(process.env.REPORT_BCC_EMAIL);
@@ -96,7 +97,7 @@ export async function sendReportEmail({ to, pdf }: SendReportArgs): Promise<Send
       from,
       to: [to],
       ...(bcc.length > 0 ? { bcc } : {}),
-      ...(replyTo ? { replyTo } : {}),
+      ...(replyTo.length > 0 ? { replyTo } : {}),
       subject: REPORT_EMAIL_SUBJECT,
       html,
       attachments: [{ filename: PDF_FILENAME, content: pdf.toString('base64') }],
@@ -123,6 +124,7 @@ export async function notifyContactRequest(form: ContactForm): Promise<void> {
   const from = senderOrNull();
   // Plusieurs destinataires possibles : liste séparée par des virgules.
   const recipients = parseRecipients(process.env.CONTACT_NOTIFY_EMAIL || process.env.OPS_EMAIL);
+  const replyTo = parseRecipients(process.env.RESEND_REPLY_TO);
   if (!from || recipients.length === 0) {
     console.warn('[email] CONTACT_NOTIFY_EMAIL/OPS_EMAIL absent — notification contact ignorée (demande enregistrée).');
     return;
@@ -169,7 +171,7 @@ export async function notifyContactRequest(form: ContactForm): Promise<void> {
     const { error } = await resend.emails.send({
       from,
       to: recipients,
-      ...(process.env.RESEND_REPLY_TO ? { replyTo: process.env.RESEND_REPLY_TO } : {}),
+      ...(replyTo.length > 0 ? { replyTo } : {}),
       subject: `[MIRA] Demande de contact — ${form.prenom} ${form.nom} (${form.entreprise})`,
       html,
     });

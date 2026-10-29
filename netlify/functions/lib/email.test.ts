@@ -66,6 +66,17 @@ describe('sendReportEmail — copie cachée équipe', () => {
     for (const payload of h.sent) expect(payload).not.toHaveProperty('bcc');
   });
 
+  it('les réponses du prospect vont à toutes les adresses de RESEND_REPLY_TO (liste à virgules)', async () => {
+    vi.stubEnv('RESEND_REPLY_TO', 'a@mira.test, b@mira.test,c@mira.test');
+    await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
+    expect(h.sent[0].replyTo).toEqual(['a@mira.test', 'b@mira.test', 'c@mira.test']);
+  });
+
+  it('pas de replyTo quand RESEND_REPLY_TO est vide', async () => {
+    await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
+    expect(h.sent[0]).not.toHaveProperty('replyTo');
+  });
+
   it('le prospect est informé de la transmission à l’équipe (mention RGPD)', async () => {
     await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
     expect(String(h.sent[0].html)).toContain('Une copie en est transmise à l\'équipe MIRA');
