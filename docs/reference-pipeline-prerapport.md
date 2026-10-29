@@ -154,7 +154,7 @@ le diagnostic terminé** (le fichier porte le même avertissement).
 | [`lib/enrichment.ts`](../netlify/functions/lib/enrichment.ts) | `enrichSiret(siret)` | SIRET (14 chiffres) → `{ nomEntreprise, nafCode, nafLibelle, effectifTranche, categorieEntreprise, anneeCreation, localisation, actif }` via `recherche-entreprises.api.gouv.fr` (gratuit, sans clé). Tous les champs sont best-effort (souvent partiels). Retourne `{}` en cas d'échec. |
 | | `fetchSiteResume(siteUrl)` | URL → résumé texte (≤ 2500 car.). Suit les redirections **manuellement** en re-validant l'hôte (anti-SSRF). Retourne `undefined` en cas d'échec. |
 | [`lib/pdf.ts`](../netlify/functions/lib/pdf.ts) | `htmlToPdf(html, opts?)` | HTML autoportant → `Buffer` PDF A4 via `puppeteer-core` + `@sparticuz/chromium`. Override local par `CHROME_EXECUTABLE_PATH`. |
-| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf, nomEntreprise})` | Resend, PDF en pièce jointe. Copie cachée à `REPORT_BCC_EMAIL` si définie (liste à virgules, même pièce jointe). Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie, les réponses des prospects partent vers cette boîte (sinon vers le `from`). |
+| [`lib/email.ts`](../netlify/functions/lib/email.ts) | `sendReportEmail({to, pdf})` | Resend, PDF en pièce jointe. Texte fixe `REPORT_EMAIL_HTML` (proposition d'un échange de 20 minutes), réutilisé par `scripts/resend-report.ts`. Copie cachée à `REPORT_BCC_EMAIL` si définie (liste à virgules, même pièce jointe). Retourne `'sent' \| 'skipped' \| 'error'` — `'skipped'` si Resend non configuré (jamais de throw). Si `RESEND_REPLY_TO` est définie (liste à virgules), les réponses des prospects partent vers ces boîtes (sinon vers le `from`). |
 | | `notifyFailure({leadId, error})` | Email de repli ops : génération en échec, ou rapport généré mais email non parti (no-op loggé si `OPS_EMAIL`/Resend absents). |
 | | `notifyReview({leadId, findings})` | Alerte ops quand le rapport part avec des contrôles bloquants encore en échec après les rejeux (`reports.needs_review = true`, TODO Q9) : lead et liste des contrôles. |
 | | `notifySubmitFailure({email, error})` | Alerte ops quand une demande n'a pas pu être enregistrée (base indisponible) : erreur et adresse saisie. |
@@ -287,7 +287,7 @@ en production. Voir [`.env.example`](../.env.example).
 | `OPENAI_MODEL` | optionnel | generate | Modèle. Défaut : `gpt-6.1-sol`. |
 | `RESEND_API_KEY` | optionnel | email | Absent → email `skipped` (le PDF reste stocké). |
 | `RESEND_FROM` | optionnel | email | Adresse expéditeur (domaine vérifié). Format « Nom <adresse> » ou adresse seule. |
-| `RESEND_REPLY_TO` | optionnel | email | Boîte qui reçoit les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
+| `RESEND_REPLY_TO` | optionnel | email(s), virgules | Boîte(s) qui reçoivent les réponses des prospects (le domaine d'envoi n'a pas de boîte derrière). Absent → réponses vers le `from`. |
 | `OPS_EMAIL` | conseillé en prod | email | Destinataire des alertes ops : `notifyFailure`, `notifyReview`, `notifySubmitFailure`. Vide → incidents visibles dans les logs seulement. |
 | `REPORT_BCC_EMAIL` | optionnel | email | Copie cachée (CCI) de chaque rapport envoyé au prospect, PDF compris. Une ou plusieurs adresses séparées par des virgules. Vide ou absent → pas de CCI. |
 | `CHROME_EXECUTABLE_PATH` | dev local | pdf | Chemin vers Chrome/Edge local (le binaire `@sparticuz/chromium` est Linux). |

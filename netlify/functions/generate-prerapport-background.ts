@@ -197,7 +197,7 @@ export const handler: Handler = async (event) => {
         : null) as unknown as Database['public']['Tables']['reports']['Insert']['validation_findings'],
     });
 
-    const emailResult = await sendReportEmail({ to: lead.email, pdf, nomEntreprise: ctx.nomEntreprise });
+    const emailResult = await sendReportEmail({ to: lead.email, pdf });
     console.log(`[generate] email lead ${leadId} : ${emailResult}`);
     // Le rapport est généré et stocké → statut `sent`. Mais si l'envoi était
     // configuré et a échoué, le client n'a rien reçu : on alerte l'ops sans
