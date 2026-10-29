@@ -44,28 +44,43 @@ function senderOrNull(): string | null {
 export interface SendReportArgs {
   to: string;
   pdf: Buffer;
-  nomEntreprise?: string;
 }
 
 export type SendResult = 'sent' | 'skipped' | 'error';
 
+export const REPORT_EMAIL_SUBJECT = 'Votre pré-rapport MIRA';
+
+/** Corps de l'email de livraison du pré-rapport. Partagé avec `scripts/resend-report.ts`
+ *  pour qu'un renvoi manuel parte avec le même texte que l'envoi automatique. */
+export const REPORT_EMAIL_HTML = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#160f2e;line-height:1.6;font-size:15px">
+    <p>Bonjour,</p>
+    <p>Comme convenu, vous trouverez en pièce jointe votre pré-rapport MIRA, réalisé à partir des données publiques disponibles et des évolutions de l'intelligence artificielle dans vos familles de métiers.</p>
+    <p>Ce premier éclairage vous permet d'identifier les transformations possibles, les opportunités à explorer et les enjeux à anticiper pour votre organisation.</p>
+    <p>Mais au-delà des tendances générales, une question essentielle se pose : où en est réellement votre entreprise dans sa transformation par l'IA ?</p>
+    <p>Chaque organisation possède ses propres enjeux, son niveau de maturité et ses priorités.</p>
+    <p>C'est pourquoi nous vous proposons un premier échange de 20 minutes, sans engagement, pour :</p>
+    <ul style="margin:0 0 1em;padding-left:22px">
+      <li>Comprendre votre contexte et vos enjeux.</li>
+      <li>Identifier votre niveau actuel de maturité face à l'IA.</li>
+      <li>Échanger sur les opportunités et les premières pistes d'action adaptées à votre organisation.</li>
+    </ul>
+    <p>Cet échange pourra, si cela s'avère pertinent, ouvrir la voie à un diagnostic plus approfondi et à une feuille de route concrète, adaptée à vos équipes et à vos objectifs.</p>
+    <p>Vous souhaitez faire le point ? Répondez simplement à cet e-mail et nous conviendrons d'un créneau.</p>
+    <p>Au plaisir d'échanger,</p>
+    <p>L'équipe ${EMAIL_SENDER_NAME}<br><a href="https://mira-audit.fr" style="color:#160f2e">mira-audit.fr</a></p>
+    <hr style="border:none;border-top:1px solid #eee;margin:22px 0">
+    <p style="font-size:11px;color:#8a83a6">${RGPD_EMAIL_NOTICE}</p>
+  </div>`;
+
 /** Envoie le pré-rapport (PDF joint). Retourne le statut sans jamais throw. */
-export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs): Promise<SendResult> {
+export async function sendReportEmail({ to, pdf }: SendReportArgs): Promise<SendResult> {
   const from = senderOrNull();
   if (!from) {
     console.warn('[email] RESEND_API_KEY/RESEND_FROM absent — envoi ignoré (PDF stocké).');
     return 'skipped';
   }
 
-  const cible = nomEntreprise ? ` de ${escapeHtml(nomEntreprise)}` : '';
-  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#160f2e;line-height:1.6;font-size:15px">
-    <p>Bonjour,</p>
-    <p>Votre pré-rapport MIRA${cible} est prêt : vous le trouverez en pièce jointe (PDF).</p>
-    <p>Il applique l'état de l'art public à vos familles de métiers. Chaque chiffre y est sourcé. Pour aller plus loin (diagnostic à partir de vos données internes, feuille de route), répondez simplement à cet email.</p>
-    <p>L'équipe ${EMAIL_SENDER_NAME}</p>
-    <hr style="border:none;border-top:1px solid #eee;margin:22px 0">
-    <p style="font-size:11px;color:#8a83a6">${RGPD_EMAIL_NOTICE}</p>
-  </div>`;
+  const html = REPORT_EMAIL_HTML;
 
   // Optionnel : route les réponses des prospects vers une boîte qu'on relève vraiment
   // (ex. moetez@polaria.ai) plutôt que vers l'adresse d'envoi `@mira-audit.fr`, qui
@@ -82,7 +97,7 @@ export async function sendReportEmail({ to, pdf, nomEntreprise }: SendReportArgs
       to: [to],
       ...(bcc.length > 0 ? { bcc } : {}),
       ...(replyTo ? { replyTo } : {}),
-      subject: 'Votre pré-rapport MIRA',
+      subject: REPORT_EMAIL_SUBJECT,
       html,
       attachments: [{ filename: PDF_FILENAME, content: pdf.toString('base64') }],
     });

@@ -70,6 +70,16 @@ describe('sendReportEmail — copie cachée équipe', () => {
     await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
     expect(String(h.sent[0].html)).toContain('Une copie en est transmise à l\'équipe MIRA');
   });
+
+  it('propose un échange de 20 minutes et invite à répondre à l’email', async () => {
+    await sendReportEmail({ to: 'prospect@client.test', pdf: PDF });
+    const html = String(h.sent[0].html);
+    expect(h.sent[0].subject).toBe('Votre pré-rapport MIRA');
+    expect(html).toContain('premier échange de 20 minutes, sans engagement');
+    expect(html).toContain('Répondez simplement à cet e-mail');
+    // Règle de style sur le texte lu (balises retirées, les `style=` contiennent des `;`).
+    expect(html.replace(/<[^>]*>/g, '')).not.toMatch(/[—–;]/);
+  });
 });
 
 describe('alertes ops (OPS_EMAIL)', () => {
