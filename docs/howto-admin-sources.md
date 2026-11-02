@@ -10,6 +10,7 @@ Le pré-rapport ne cite **que** des statistiques de la stat-bank. L'admin en gè
 - **Les documents sources** (`S01`…, `FR1`…) : titre, organisation, année, nature de
   l'éditeur (recherche ou commerciale) et **les sections du rapport autorisées à les citer**.
   Le préfixe du code dit l'appartenance au socle : `S` = socle, `FR` = couche France.
+  Facultatif : un **lien vers le document** (voir plus bas).
 - **Les statistiques** : valeur, unité, formulation citable (*claim*), citation d'origine
   (*verbatim*), thème, périmètre, provenance, projection, page, et les familles de métiers
   (ISCO) qu'elles éclairent directement.
@@ -34,6 +35,23 @@ reprend pas la valeur telle quelle.
 Ce que l'interface ne peut pas vérifier : que le chiffre est **exact dans le document
 d'origine**. Une statistique n'est saisie qu'après vérification à la source primaire, comme
 pour la banque du code.
+
+## Le lien vers le document
+
+Chaque document peut porter un **lien** (champ « Lien vers le document », facultatif) : l'URL
+du PDF ou de la page de la source primaire. Il sert à retrouver le document pour revérifier
+un chiffre, rien d'autre. La fiche du document dans la liste affiche alors « Ouvrir le
+document », qui l'ouvre dans un nouvel onglet.
+
+- Seules les adresses complètes en `https://` (ou `http://`) sont acceptées. Un chemin de
+  fichier sur un poste (`C:\…`) ne marcherait pour personne d'autre.
+- Le lien n'est **jamais montré dans le rapport** et n'est pas lu par la génération : le
+  modèle ne cite que la formulation (*claim*) des statistiques.
+- Pas de pièce jointe : la banque est faite de publications publiques (OCDE, INSEE, OIT…),
+  un lien suffit. Si un document privé devait entrer un jour, on reconsidérera un dépôt de
+  fichier.
+- La **date de consultation** du lien se note dans la « Note interne » (ex. « PDF consulté
+  le 02/11/2026 »), il n'y a pas de champ dédié.
 
 ## Supprimer = archiver
 
@@ -70,6 +88,14 @@ cité** : l'interface le signale par le badge « Citée nulle part ».
 
 Tant que la migration n'est pas appliquée, la génération continue avec la banque du code
 (repli automatique, signalé dans les logs « repli sur la graine du code »).
+
+### Lien vers le document (migration 0008)
+
+Appliquer `supabase/migrations/0008_stat_sources_url.sql` dans le SQL editor **avant** de
+déployer le code qui l'utilise. Dès ce déploiement, chaque création ou modification de
+document écrit la colonne `url` : sans la migration, l'enregistrement d'un document échoue
+(« L'enregistrement a échoué côté base »). La lecture et la génération, elles, continuent de
+fonctionner. La migration est additive et rejouable.
 
 ## Régénérer le seed
 

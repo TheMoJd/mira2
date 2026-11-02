@@ -84,7 +84,7 @@ const VALID_STAT = {
 const NOW = '2026-10-19T00:00:00Z';
 const SOURCE_ROW = {
   in_socle: true, nature: 'recherche', report: 'WEF, Future of Jobs 2025', org: 'WEF', year: 2025,
-  sections: ['competences'], note: null, archived_at: null as string | null, updated_at: NOW, updated_by: null,
+  sections: ['competences'], note: null, url: null, archived_at: null as string | null, updated_at: NOW, updated_by: null,
 };
 const STAT_ROW = {
   source_code: 'S06', value: 41, unit: '%', claim: 'En 2026, 41 % des employeurs prévoient de réduire leurs effectifs.',
@@ -192,6 +192,29 @@ describe('admin-sources — écritures', () => {
     expect((await call('POST', { action: 'createSource', data: doc })).status).toBe(200);
     expect(h.writes[0]).toMatchObject({ table: 'stat_sources', op: 'insert', payload: { code: 'S18', sections: ['contexte', 'competences'] } });
     expect((await call('POST', { action: 'createSource', data: { ...doc, sections: ['synthese-executive'] } })).status).toBe(400);
+  });
+
+  it('écrit le lien vers le document à la création et à la mise à jour', async () => {
+    const lien = 'https://www.oecd.org/fr/publications/employment-outlook-2026.pdf';
+    const doc = { code: 'S18', nature: 'recherche', report: 'OCDE, Employment Outlook 2026', org: 'OCDE', year: 2026, sections: ['contexte'] };
+    expect((await call('POST', { action: 'createSource', data: { ...doc, url: ` ${lien} ` } })).status).toBe(200);
+    expect(h.writes[0]).toMatchObject({ table: 'stat_sources', op: 'insert', payload: { code: 'S18', url: lien } });
+
+    const maj = { ...doc, code: 'S06', url: 'https://www.weforum.org/publications/the-future-of-jobs-report-2025/' };
+    expect((await call('POST', { action: 'updateSource', data: maj })).status).toBe(200);
+    expect(h.writes[1]).toMatchObject({ table: 'stat_sources', op: 'update', key: 'S06', payload: { url: maj.url } });
+
+    // Vider le champ efface le lien (et ne le laisse pas en place).
+    expect((await call('POST', { action: 'updateSource', data: { ...maj, url: '' } })).status).toBe(200);
+    expect(h.writes[2].payload.url).toBeNull();
+  });
+
+  it('refuse un lien non http(s), sans rien écrire', async () => {
+    const doc = { code: 'S18', nature: 'recherche', report: 'OCDE, Employment Outlook 2026', org: 'OCDE', year: 2026, url: 'javascript:alert(1)' };
+    const { status, payload } = await call('POST', { action: 'createSource', data: doc });
+    expect(status).toBe(400);
+    expect(String(payload.error)).toMatch(/Lien vers le document/);
+    expect(h.writes).toEqual([]);
   });
 
   it('rejette une action inconnue', async () => {

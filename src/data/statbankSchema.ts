@@ -120,6 +120,36 @@ const texteOptionnel = (max: number, label: string) =>
     .transform((v) => (v === '' ? null : v));
 
 /**
+ * Lien facultatif : vide → `null`, sinon une adresse complète en `http(s)://`
+ * (même règle que le `check` de la migration 0008). Refuse `javascript:`, `file:`
+ * et les chemins locaux, qui n'ont rien à faire derrière un lien cliquable.
+ */
+const lienOptionnel = (max: number, label: string) =>
+  z
+    .string()
+    .nullish()
+    .transform((v) => (v ?? '').trim())
+    .pipe(
+      z
+        .string()
+        .max(max, `${label} : ${max} caractères maximum.`)
+        .refine(
+          (v) => v === '' || isHttpUrl(v),
+          `${label} : une adresse complète commençant par https:// ou http://.`,
+        ),
+    )
+    .transform((v) => (v === '' ? null : v));
+
+function isHttpUrl(v: string): boolean {
+  if (!/^https?:\/\//.test(v)) return false;
+  try {
+    return new URL(v).hostname !== '';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Saisie d'un document source. `sections` = les sections du rapport autorisées à
  * citer ce document (grille « section → sources » inversée, vue côté source).
  */
@@ -143,6 +173,7 @@ export const sourceInputSchema = (gridSectionIds: readonly string[]) =>
       .default([])
       .transform((v) => [...new Set(v)]),
     note: texteOptionnel(1000, 'Note interne'),
+    url: lienOptionnel(2000, 'Lien vers le document'),
   });
 export type SourceInput = z.infer<ReturnType<typeof sourceInputSchema>>;
 
@@ -217,6 +248,8 @@ export interface StatSourceRow {
   year: number;
   sections: string[];
   note: string | null;
+  /** Lien vers le document (migration 0008). Réservé à l'admin. */
+  url: string | null;
   archived_at: string | null;
   updated_at: string;
   updated_by: string | null;
@@ -263,6 +296,7 @@ export const sourceInputToRow = (s: SourceInput) => ({
   year: s.year,
   sections: s.sections,
   note: s.note,
+  url: s.url,
 });
 
 /** Colonnes écrites par l'admin pour une statistique. */
@@ -345,7 +379,9 @@ export function rowsToStatbank(
       archivedSources.add(row.code);
       continue;
     }
-    const parsed = sourceSchema.safeParse({ ...row, sections: row.sections.filter((s) => gridIds.includes(s)) });
+    // Le lien ne sert qu'à l'admin : un lien mal formé (édition SQL) ne doit pas
+    // écarter le document, et ses stats, de la génération.
+    const parsed = sourceSchema.safeParse({ ...row, url: null, sections: row.sections.filter((s) => gridIds.includes(s)) });
     if (!parsed.success) {
       rejected.push({ kind: 'source', id: row.code, reason: firstIssue(parsed.error) });
       rejectedSources.add(row.code);
@@ -426,6 +462,7 @@ export function seedRows(seed: readonly StatEntry[], codeGrid: Record<string, re
         .filter(([, codes]) => codes.includes(s.source.sourceId))
         .map(([id]) => id),
       note: null,
+      url: null,
     });
   }
   const stats = seed.map((s) => ({

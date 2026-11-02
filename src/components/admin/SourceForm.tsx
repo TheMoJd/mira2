@@ -34,6 +34,7 @@ export default function SourceForm({ initial, takenCodes, gridSections, onSubmit
   const [report, setReport] = useState(initial?.report ?? '');
   const [org, setOrg] = useState(initial?.org ?? '');
   const [year, setYear] = useState(String(initial?.year ?? new Date().getFullYear()));
+  const [url, setUrl] = useState(initial?.url ?? '');
   // Sections retirées du rapport depuis l'enregistrement : écartées (et annoncées),
   // sinon elles bloqueraient la validation sans case pour les décocher.
   const [{ kept: initialSections, dropped: droppedSections }] = useState(() =>
@@ -44,14 +45,14 @@ export default function SourceForm({ initial, takenCodes, gridSections, onSubmit
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useDirtyTracking({ code, nature, report, org, year, sections, note }, onDirtyChange);
+  useDirtyTracking({ code, nature, report, org, year, url, sections, note }, onDirtyChange);
 
   const toggleSection = (id: string) =>
     setSections((cur) => (cur.includes(id) ? cur.filter((s) => s !== id) : [...cur, id]));
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const data = { code, nature, report, org, year, sections, note };
+    const data = { code, nature, report, org, year, url, sections, note };
     const parsed = sourceInputSchema(gridSections.map((g) => g.id)).safeParse(data);
     if (!parsed.success) return setError(firstIssue(parsed.error));
     setError(null);
@@ -108,6 +109,10 @@ export default function SourceForm({ initial, takenCodes, gridSections, onSubmit
           {(id) => <input id={id} className="pr-field" inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value)} />}
         </Field>
       </div>
+
+      <Field label="Lien vers le document (facultatif)" hint="URL du PDF ou de la page de la source primaire. Jamais montré dans le rapport.">
+        {(id) => <input id={id} type="url" className="pr-field" placeholder="https://" value={url} onChange={(e) => setUrl(e.target.value)} />}
+      </Field>
 
       <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-1)', marginBottom: 8 }}>
