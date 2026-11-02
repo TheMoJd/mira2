@@ -42,6 +42,26 @@ Statut : `[ ]` à faire · `[~]` en cours · `[x]` fait.
   `updated_by` / `updated_at` et les logs des functions) ; bouton « tester sur un rapport »
   qui régénère un pré-rapport d'essai avec la banque en cours.
 
+### [~] A2 · Lien vers le document d'une source (S1) : code fait le 02/11, migration à appliquer
+- **Contrat** : sur la fiche d'un document de `/admin`, Caroline renseigne un lien facultatif
+  vers le PDF ou la page de la source primaire, et l'ouvre depuis la liste (« Ouvrir le
+  document »). Le lien ne sert qu'à l'humain pour revérifier la source : jamais dans le
+  rapport, jamais lu par la génération.
+- **Décisions (Moetez, 02/11)** : un lien suffit, pas de pièce jointe (banque faite de
+  publications publiques, rien dans le pipeline ne lit le document). Un dépôt de fichier
+  (bucket privé) est à reconsidérer seulement si des documents privés arrivent. La date de
+  consultation reste dans la « Note interne », sans champ dédié.
+- **Fait** : colonne `stat_sources.url` (migration `0008`, `check` `https?://` et 2000
+  caractères maximum), champ `url` du contrat `sourceInputSchema` (vide → `null`, `http(s)`
+  seulement), champ du formulaire, lien dans la liste. Pas dans `StatEntry` : un lien mal
+  formé en base n'écarte pas le document de la génération.
+- **Mise en service (Moetez)** : appliquer `0008_stat_sources_url.sql` (SQL editor) **avant**
+  de déployer, sinon l'enregistrement d'un document échoue.
+- **Critères** : `npm test` vert (`statbankSchema` : lien gardé, trimé, vide → `null`,
+  `javascript:` / `ftp://` / chemin local refusés ; `admin-sources` : lien écrit à la création
+  et à la mise à jour) ; recette : un lien saisi sur un document s'ouvre depuis la liste.
+- **Dépend de** : A1 (admin en service).
+
 ---
 
 ## 🔴 Recette du 08/09/2026 — rapport OVHcloud (gpt-5.4), pipeline refondu « Cyril + Caroline »

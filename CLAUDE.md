@@ -133,7 +133,7 @@ pour contourner un problème de fins de ligne.
 ## Données (Supabase)
 
 - Projet **`mira-dev`** (ref `saohfhieudjnwjgsotev`, eu-north-1), tables `leads`, `reports`,
-  `contact_requests`, `stat_sources` + `stats` (stat-bank éditable, migrations 0006/0007 à
+  `contact_requests`, `stat_sources` + `stats` (stat-bank éditable, migrations 0006/0007/0008 à
   appliquer), bucket privé `reports` (`<leadId>/prerapport-mira.pdf`). Le front ne
   touche jamais Supabase : tout passe par les functions (clé `service_role`).
 - Les migrations `supabase/migrations/000N_*.sql` sont **appliquées à la main** (SQL editor ou

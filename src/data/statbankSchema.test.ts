@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  firstIssue,
   rowsToStatbank,
   seedRows,
   sourceInputSchema,
@@ -180,6 +181,35 @@ describe('statbankSchema — saisie', () => {
       schema.safeParse({ code: 'S18', nature: 'recherche', report: 'abc', org: 'ab', year: 2026, sections: ['synthese-executive'] })
         .success,
     ).toBe(false);
+  });
+
+  it('garde un lien http(s) vers le document, espaces retirés, vide ou absent → null', () => {
+    const schema = sourceInputSchema(gridSections().map((g) => g.id));
+    const doc = { code: 'FR6', nature: 'recherche', report: 'DARES 2026', org: 'DARES', year: 2026 };
+    const lien = 'https://www.oecd.org/content/dam/oecd/fr/publications/rapport.pdf';
+    expect(schema.parse({ ...doc, url: `  ${lien}  ` }).url).toBe(lien);
+    expect(schema.parse({ ...doc, url: 'http://www.insee.fr/fr/statistiques/1' }).url).toBe('http://www.insee.fr/fr/statistiques/1');
+    expect(schema.parse({ ...doc, url: '   ' }).url).toBeNull();
+    expect(schema.parse(doc).url).toBeNull();
+  });
+
+  it('refuse un lien qui n’est pas une adresse web complète', () => {
+    const schema = sourceInputSchema(gridSections().map((g) => g.id));
+    const doc = { code: 'FR6', nature: 'recherche', report: 'DARES 2026', org: 'DARES', year: 2026 };
+    for (const bad of ['javascript:alert(1)', 'ftp://ftp.insee.fr/doc.pdf', 'file:///C:/docs/rapport.pdf', 'C:\\docs\\rapport.pdf', 'www.oecd.org', 'https://']) {
+      const r = schema.safeParse({ ...doc, url: bad });
+      expect(r.success, bad).toBe(false);
+      if (!r.success) expect(firstIssue(r.error), bad).toMatch(/Lien vers le document/);
+    }
+    expect(schema.safeParse({ ...doc, url: `https://exemple.fr/${'a'.repeat(2000)}` }).success).toBe(false);
+  });
+
+  it('un lien mal formé en base n’écarte pas le document de la génération', () => {
+    const { sources, stats } = seededTables();
+    sources.find((s) => s.code === 'S06')!.url = 'javascript:alert(1)';
+    const loaded = rowsToStatbank(sources, stats, gridSections());
+    expect(loaded.rejected).toEqual([]);
+    expect(loaded.stats).toHaveLength(statbankSeed.length);
   });
 });
 

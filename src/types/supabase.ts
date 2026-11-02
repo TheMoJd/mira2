@@ -199,6 +199,7 @@ export type Database = {
           sections: string[]
           updated_at: string
           updated_by: string | null
+          url: string | null
           year: number
         }
         Insert: {
@@ -212,6 +213,7 @@ export type Database = {
           sections?: string[]
           updated_at?: string
           updated_by?: string | null
+          url?: string | null
           year: number
         }
         Update: {
@@ -225,6 +227,7 @@ export type Database = {
           sections?: string[]
           updated_at?: string
           updated_by?: string | null
+          url?: string | null
           year?: number
         }
         Relationships: []

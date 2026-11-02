@@ -219,6 +219,13 @@ export default function SourcesAdmin({ onAuthLost }: { onAuthLost: () => void })
                 )}
               </div>
               {src.note && <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--ink-2)', fontStyle: 'italic' }}>{src.note}</p>}
+              {src.url && (
+                <p style={{ margin: '6px 0 0', fontSize: 13 }}>
+                  <a href={src.url} target="_blank" rel="noopener noreferrer" title={src.url} style={{ color: 'var(--violet)', fontWeight: 600 }}>
+                    Ouvrir le document ↗
+                  </a>
+                </p>
+              )}
 
               {expanded && (
                 <ul className="adm-stats">
